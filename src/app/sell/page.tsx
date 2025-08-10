@@ -44,31 +44,34 @@ export default function SellPage() {
   const API = "https://pirkauto-backend.onrender.com/api/public/listings";
 
   const submit = async () => {
-    if (!data.brand || !data.model || !data.price || !data.mileage) {
-      alert("Įveskite markę, modelį, kainą ir ridą");
-      return;
-    }
-    setSaving(true);
-    try {
-      const title = `${data.brand} ${data.model} ${data.year}`.trim();
-      const price = Number(String(data.price).replace(",", "."));
-      const mileage = Number(String(data.mileage).replace(/\s/g, ""));
+  if (!data.brand || !data.model || !data.price || !data.mileage) {
+    alert("Įveskite markę, modelį, kainą ir ridą");
+    return;
+  }
+  setSaving(true);
+  try {
+    const title = `${data.brand} ${data.model} ${data.year}`.trim();
+    const price = Number(String(data.price).replace(",", "."));
+    const mileage = Number(String(data.mileage).replace(/\s/g, ""));
 
-      const res = await fetch(API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, price, mileage }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const saved = await res.json();
-      alert(`Skelbimas sukurtas! ID: ${saved.id}`);
-      window.location.href = "/search";
-    } catch (e: any) {
-      alert("Nepavyko pateikti: " + (e?.message || "Nežinoma klaida"));
-    } finally {
-      setSaving(false);
-    }
-  };
+    const res = await fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, price, mileage }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const saved = await res.json();
+    alert(`Skelbimas sukurtas! ID: ${saved.id}`);
+    window.location.href = "/search";
+  } catch (e: unknown) {
+    const msg =
+      e instanceof Error ? e.message : typeof e === "string" ? e : JSON.stringify(e);
+    alert("Nepavyko pateikti: " + msg);
+  } finally {
+    setSaving(false);
+  }
+};
+
 
   return (
     <section className="space-y-6">
