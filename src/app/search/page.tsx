@@ -58,7 +58,7 @@ export default function SearchPage() {
             {items.map((item) => (
               <Link
                 key={item.id}
-                href={`/listing/${item.id}`}
+                href={`/listing/?id=${item.id}`}
                 className="rounded-lg border bg-white p-4 hover:shadow"
               >
                 <div className="aspect-video w-full rounded bg-gray-100 mb-3 overflow-hidden">

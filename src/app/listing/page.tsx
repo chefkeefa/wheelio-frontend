@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type Listing = {
@@ -17,9 +17,10 @@ type Listing = {
 
 const API_BASE = "https://pirkauto-backend.onrender.com/api/public";
 
-export default function ListingByQueryPage() {
+function ListingInner() {
   const params = useSearchParams();
   const id = useMemo(() => params.get("id") ?? "", [params]);
+
   const [item, setItem] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -100,5 +101,13 @@ export default function ListingByQueryPage() {
         ) : null}
       </aside>
     </section>
+  );
+}
+
+export default function ListingPage() {
+  return (
+    <Suspense fallback={<section className="rounded-lg border bg-white p-5">Kraunama…</section>}>
+      <ListingInner />
+    </Suspense>
   );
 }
