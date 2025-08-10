@@ -32,36 +32,54 @@ const initial: FormData = {
 export default function SellPage() {
   const [step, setStep] = useState(1);
   const [data, setData] = useState<FormData>(initial);
+  const [saving, setSaving] = useState(false);
 
   const next = () => setStep((s) => Math.min(s + 1, 4));
   const back = () => setStep((s) => Math.max(s - 1, 1));
+  const update =
+    (field: keyof FormData) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setData((d) => ({ ...d, [field]: e.target.value }));
 
-  const update = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setData((d) => ({ ...d, [field]: e.target.value }));
+  const API = "https://pirkauto-backend.onrender.com/api/public/listings";
 
-  const submit = () => {
-    // Пока просто выводим данные — позже привяжем к бэку
-    console.log("Sell form submit", data);
-    alert("Skelbimas išsaugotas (demo). Vėliau prijungsime tikrą API.");
-    setStep(1);
-    setData(initial);
+  const submit = async () => {
+    if (!data.brand || !data.model || !data.price || !data.mileage) {
+      alert("Įveskite markę, modelį, kainą ir ridą");
+      return;
+    }
+    setSaving(true);
+    try {
+      const title = `${data.brand} ${data.model} ${data.year}`.trim();
+      const price = Number(String(data.price).replace(",", "."));
+      const mileage = Number(String(data.mileage).replace(/\s/g, ""));
+
+      const res = await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, price, mileage }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const saved = await res.json();
+      alert(`Skelbimas sukurtas! ID: ${saved.id}`);
+      window.location.href = "/search";
+    } catch (e: any) {
+      alert("Nepavyko pateikti: " + (e?.message || "Nežinoma klaida"));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <section className="space-y-6">
       <h1 className="text-2xl font-bold">Parduoti automobilį</h1>
 
-      {/* Индикатор шагов */}
       <div className="grid grid-cols-4 gap-2">
         {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className={`h-2 rounded ${i <= step ? "bg-black" : "bg-gray-200"}`}
-          />
+          <div key={i} className={`h-2 rounded ${i <= step ? "bg-black" : "bg-gray-200"}`} />
         ))}
       </div>
 
-      {/* Контент шага */}
       <div className="rounded-lg border bg-white p-5 space-y-4">
         {step === 1 && (
           <>
@@ -91,7 +109,7 @@ export default function SellPage() {
             <div className="grid sm:grid-cols-2 gap-4">
               <input className="rounded border px-3 py-2" placeholder="Vardas" value={data.name} onChange={update("name")} />
               <input className="rounded border px-3 py-2" placeholder="Telefonas" value={data.phone} onChange={update("phone")} />
-              <input className="rounded border px-3 py-2" placeholder="El. paštas" value={data.email} onChange={update("email")} />
+              <input type="email" className="rounded border px-3 py-2" placeholder="El. paštas" value={data.email} onChange={update("email")} />
               <input className="rounded border px-3 py-2" placeholder="Miestas" value={data.city} onChange={update("city")} />
             </div>
           </>
@@ -118,31 +136,25 @@ export default function SellPage() {
               </div>
               <div className="sm:col-span-2">
                 <div className="font-medium mb-1">Aprašymas</div>
-                <div className="rounded border bg-gray-50 p-3 min-h-16">
-                  {data.description || "—"}
-                </div>
+                <div className="rounded border bg-gray-50 p-3 min-h-16">{data.description || "—"}</div>
               </div>
             </div>
           </>
         )}
       </div>
 
-      {/* Кнопки навигации */}
       <div className="flex items-center justify-between">
-        <button
-          onClick={back}
-          disabled={step === 1}
-          className="px-4 py-2 rounded-md border disabled:opacity-50"
-        >
+        <button onClick={back} disabled={step === 1 || saving} className="px-4 py-2 rounded-md border disabled:opacity-50">
           Atgal
         </button>
+
         {step < 4 ? (
-          <button onClick={next} className="px-4 py-2 rounded-lg bg-black text-white">
+          <button onClick={next} disabled={saving} className="px-4 py-2 rounded-lg bg-black text-white disabled:opacity-50">
             Toliau
           </button>
         ) : (
-          <button onClick={submit} className="px-4 py-2 rounded-lg bg-black text-white">
-            Pateikti (demo)
+          <button onClick={submit} disabled={saving} className="px-4 py-2 rounded-lg bg-black text-white disabled:opacity-50">
+            {saving ? "Pateikiama..." : "Pateikti"}
           </button>
         )}
       </div>
