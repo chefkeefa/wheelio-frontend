@@ -1,26 +1,46 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+/* ===== Figma-токены (пока базовые; подгоним точные значения на следующем шаге) ===== */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+   /* primary = почти чёрный */
+  --primary: 0 0% 7%;
+  --primary-fg: 0 0% 100%;
+
+  /* текст/фон */
+  --foreground: 0 0% 4%;
+  --background: 0 0% 100%;
+
+  /* карточки/бордеры/мьютед */
+  --card: 0 0% 100%;
+  --border: 220 13% 91%;      /* #E5E7EB */
+  --muted: 220 14% 96%;       /* #F3F4F6 ~ F5F6F8 */
+  --muted-fg: 215 16% 47%;    /* #6B7280 */
+
+  /* кольцо фокуса */
+  --ring: 210 100% 40%;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Базовые применения токенов */
+html, body {
+  background: hsl(var(--bg));
+  color: hsl(var(--fg));
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ===== Утилиты/пресеты в духе макета ===== */
+.btn {
+  @apply inline-flex items-center justify-center rounded-2xl px-4 py-2 bg-black text-white hover:opacity-90 active:opacity-80;
 }
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.btn-outline {
+  @apply inline-flex items-center justify-center rounded-2xl px-4 py-2 border border-[hsl(var(--border))] text-gray-900 hover:bg-[hsl(var(--muted))];
+}
+.card {
+  @apply rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-[0_2px_12px_rgba(0,0,0,0.06)];
+}
+.input {
+  @apply w-full rounded-2xl border border-[hsl(var(--border))] bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--ring))];
+}
+.link {
+  @apply underline underline-offset-4 hover:opacity-80;
 }
