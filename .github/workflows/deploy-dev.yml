@@ -1,0 +1,44 @@
+name: Deploy to dev.pirkauto.lt
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build (Next.js static export)
+        run: npm run build
+
+      # Заливаем содержимое ./out на сервер через FTPS
+      - name: FTP Deploy to Hostinger (dev)
+        uses: SamKirkland/FTP-Deploy-Action@v4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT }}
+          protocol: ftps
+          security: strict
+          local-dir: ./out
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          # Чистим лишнее в целевой папке, но не трогаем служебные файлы
+          dangerous-clean-slate: true
+          exclude: |
+            **/.git*
+            **/.github/**
+            **/node_modules/**
