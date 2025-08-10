@@ -2,7 +2,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 type Listing = {
   id: string;
@@ -12,15 +13,21 @@ type Listing = {
   thumbnail?: string;
 };
 
-export default function SearchPage() {
+const API = "https://pirkauto-backend.onrender.com/api/public/listings";
+
+function SearchInner() {
   const [items, setItems] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const params = useSearchParams();
+  const createdId = useMemo(() => params.get("created"), [params]);
+
   useEffect(() => {
-    // Загружаем статический JSON из public/
-    fetch("https://pirkauto-backend.onrender.com/api/public/listings")
+    fetch(API)
       .then((r) => r.json())
-      .then((data: Listing[]) => setItems(data))
+      .then((data: Listing[]) =>
+        setItems([...data].sort((a, b) => Number(b.id) - Number(a.id))) // новые сверху
+      )
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
   }, []);
@@ -49,6 +56,13 @@ export default function SearchPage() {
           </span>
         </div>
 
+        {/* Баннер после создания */}
+        {createdId ? (
+          <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-900">
+            Skelbimas #{createdId} sėkmingai sukurtas.
+          </div>
+        ) : null}
+
         {loading ? (
           <div className="text-gray-500">Kraunama…</div>
         ) : items.length === 0 ? (
@@ -62,7 +76,6 @@ export default function SearchPage() {
                 className="rounded-lg border bg-white p-4 hover:shadow"
               >
                 <div className="aspect-video w-full rounded bg-gray-100 mb-3 overflow-hidden">
-                  {/* Если положишь public/placeholder-car.jpg — картинка появится */}
                   {item.thumbnail ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover" />
@@ -77,5 +90,13 @@ export default function SearchPage() {
         )}
       </div>
     </section>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<section className="rounded-lg border bg-white p-5">Kraunama…</section>}>
+      <SearchInner />
+    </Suspense>
   );
 }
