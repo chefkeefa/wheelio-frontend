@@ -18,7 +18,7 @@ export default function SearchPage() {
 
   useEffect(() => {
     // Загружаем статический JSON из public/
-    fetch("/data/listings.json")
+    fetch("https://pirkauto-backend.onrender.com/api/public/listings")
       .then((r) => r.json())
       .then((data: Listing[]) => setItems(data))
       .catch(() => setItems([]))
