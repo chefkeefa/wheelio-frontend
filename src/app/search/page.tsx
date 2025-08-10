@@ -135,6 +135,7 @@ function SearchInner() {
                       src={item.thumbnail}
                       alt={item.title}
                       className="w-full h-full object-cover"
+                       loading="lazy"
                     />
                   ) : null}
                 </div>

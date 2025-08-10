@@ -10,6 +10,7 @@ type Listing = {
   title: string;
   price: number;
   mileage: number;
+  thumbnail?: string;
   fuel?: string;
   transmission?: string;
   power?: string;
@@ -48,9 +49,23 @@ function ListingInner() {
 
   return (
     <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      {/* Левая часть — галерея-заглушка */}
+      {/* Левая часть — фото + миниатюры */}
       <div className="lg:col-span-7 space-y-4">
-        <div className="aspect-video w-full rounded-lg bg-gray-200" />
+        <div className="aspect-video w-full rounded-lg bg-gray-200 overflow-hidden flex items-center justify-center">
+          {item?.thumbnail ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={item.thumbnail}
+              alt={item?.title ?? "Nuotrauka"}
+              className="w-full h-full object-cover"
+              loading="eager"
+            />
+          ) : (
+            <span className="text-gray-500">Nuotrauka nepateikta</span>
+          )}
+        </div>
+
+        {/* мини-галерея — пока плейсхолдеры */}
         <div className="grid grid-cols-5 gap-2">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="aspect-video rounded bg-gray-100" />
@@ -75,15 +90,26 @@ function ListingInner() {
             <div className="rounded-lg border bg-white p-5 space-y-2">
               <h1 className="text-2xl font-bold">{item.title}</h1>
               <div className="text-2xl">{item.price.toLocaleString()} €</div>
-              <div className="text-gray-600">Rida: {item.mileage.toLocaleString()} km</div>
+              <div className="text-gray-600">
+                Rida: {item.mileage.toLocaleString()} km
+              </div>
             </div>
 
             <div className="rounded-lg border bg-white p-5">
               <h2 className="font-semibold mb-3">Pagrindinė informacija</h2>
               <ul className="text-sm text-gray-700 space-y-1">
-                <li><span className="text-gray-500">Kuras:</span> {item.fuel ?? "—"}</li>
-                <li><span className="text-gray-500">Pavarų dėžė:</span> {item.transmission ?? "—"}</li>
-                <li><span className="text-gray-500">Galia:</span> {item.power ?? "—"}</li>
+                <li>
+                  <span className="text-gray-500">Kuras:</span>{" "}
+                  {item.fuel ?? "—"}
+                </li>
+                <li>
+                  <span className="text-gray-500">Pavarų dėžė:</span>{" "}
+                  {item.transmission ?? "—"}
+                </li>
+                <li>
+                  <span className="text-gray-500">Galia:</span>{" "}
+                  {item.power ?? "—"}
+                </li>
               </ul>
             </div>
 
@@ -91,10 +117,15 @@ function ListingInner() {
               <h2 className="font-semibold mb-3">Pardavėjas</h2>
               <div className="text-sm text-gray-700">Privatus pardavėjas</div>
               <div className="text-sm text-gray-700">Lietuva</div>
-              <button className="mt-3 w-full rounded-lg bg-black text-white py-2">Siųsti žinutę</button>
+              <button className="mt-3 w-full rounded-lg bg-black text-white py-2">
+                Siųsti žinutę
+              </button>
             </div>
 
-            <Link href="/search" className="block text-center text-blue-600 hover:underline">
+            <Link
+              href="/search"
+              className="block text-center text-blue-600 hover:underline"
+            >
               ← Grįžti į paiešką
             </Link>
           </>
