@@ -1,0 +1,23 @@
+[
+  {
+    "id": "1",
+    "title": "BMW 3-Series 2016",
+    "price": 9800,
+    "mileage": 185000,
+    "thumbnail": "/placeholder-car.jpg"
+  },
+  {
+    "id": "2",
+    "title": "VW Golf 2018",
+    "price": 8700,
+    "mileage": 150000,
+    "thumbnail": "/placeholder-car.jpg"
+  },
+  {
+    "id": "3",
+    "title": "Audi A4 2015",
+    "price": 9200,
+    "mileage": 210000,
+    "thumbnail": "/placeholder-car.jpg"
+  }
+]
