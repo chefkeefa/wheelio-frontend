@@ -48,96 +48,110 @@ function ListingInner() {
   }, [id]);
 
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      {/* Левая часть — фото + миниатюры */}
-      <div className="lg:col-span-7 space-y-4">
-        <div className="aspect-video w-full rounded-lg bg-gray-200 overflow-hidden flex items-center justify-center">
-          {item?.thumbnail ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={item.thumbnail}
-              alt={item?.title ?? "Nuotrauka"}
-              className="w-full h-full object-cover"
-              loading="eager"
-            />
-          ) : (
-            <span className="text-gray-500">Nuotrauka nepateikta</span>
-          )}
-        </div>
-
-        {/* мини-галерея — пока плейсхолдеры */}
-        <div className="grid grid-cols-5 gap-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="aspect-video rounded bg-gray-100" />
-          ))}
-        </div>
+    <section className="space-y-4">
+      {/* хлебные крошки */}
+      <div className="text-sm text-[hsl(var(--muted-fg))]">
+        <Link href="/search" className="hover:underline">Paieška</Link>
+        <span className="mx-2">/</span>
+        <span>Skelbimas</span>
       </div>
 
-      {/* Правая колонка с данными */}
-      <aside className="lg:col-span-5 space-y-4">
-        {loading ? (
-          <div className="rounded-lg border bg-white p-5">Kraunama…</div>
-        ) : err ? (
-          <div className="rounded-lg border bg-white p-5 space-y-3">
-            <div className="text-red-600 font-semibold">Klaida</div>
-            <div className="text-sm text-gray-700">{err}</div>
-            <Link href="/search" className="text-blue-600 hover:underline">
-              ← Grįžti į paiešką
-            </Link>
+      {loading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-7 card h-[50vh] animate-pulse" />
+          <div className="lg:col-span-5 space-y-4">
+            <div className="card h-28 animate-pulse" />
+            <div className="card h-40 animate-pulse" />
+            <div className="card h-36 animate-pulse" />
           </div>
-        ) : item ? (
-          <>
-            <div className="rounded-lg border bg-white p-5 space-y-2">
-              <h1 className="text-2xl font-bold">{item.title}</h1>
-              <div className="text-2xl">{item.price.toLocaleString()} €</div>
-              <div className="text-gray-600">
-                Rida: {item.mileage.toLocaleString()} km
+        </div>
+      ) : err ? (
+        <div className="card p-5 space-y-3">
+          <div className="text-red-600 font-semibold">Klaida</div>
+          <div className="text-sm text-gray-700">{err}</div>
+          <Link href="/search" className="link">← Grįžti į paiešką</Link>
+        </div>
+      ) : item ? (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Левая колонка — фото и галерея */}
+          <div className="lg:col-span-7 space-y-4">
+            <div className="card overflow-hidden">
+              <div className="relative aspect-video bg-[hsl(var(--muted))]">
+                {item.thumbnail ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={item.thumbnail}
+                    alt={item.title}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    loading="eager"
+                  />
+                ) : (
+                  <div className="absolute inset-0 grid place-items-center text-[hsl(var(--muted-fg))]">
+                    Nuotrauka nepateikta
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="rounded-lg border bg-white p-5">
-              <h2 className="font-semibold mb-3">Pagrindinė informacija</h2>
-              <ul className="text-sm text-gray-700 space-y-1">
-                <li>
-                  <span className="text-gray-500">Kuras:</span>{" "}
-                  {item.fuel ?? "—"}
-                </li>
-                <li>
-                  <span className="text-gray-500">Pavarų dėžė:</span>{" "}
-                  {item.transmission ?? "—"}
-                </li>
-                <li>
-                  <span className="text-gray-500">Galia:</span>{" "}
-                  {item.power ?? "—"}
-                </li>
-              </ul>
+            {/* мини-галерея — плейсхолдеры под будущие фото */}
+            <div className="grid grid-cols-5 gap-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="card h-16 bg-[hsl(var(--muted))]" />
+              ))}
+            </div>
+          </div>
+
+          {/* Правая колонка — панели с данными */}
+          <aside className="lg:col-span-5 space-y-4">
+            {/* Заголовок + цена */}
+            <div className="card p-5 space-y-2">
+              <h1 className="text-3xl font-semibold tracking-tight">{item.title}</h1>
+              <div className="text-2xl font-semibold">{item.price.toLocaleString()} €</div>
+              <div className="text-[hsl(var(--muted-fg))]">Rida: {item.mileage.toLocaleString()} km</div>
             </div>
 
-            <div className="rounded-lg border bg-white p-5">
-              <h2 className="font-semibold mb-3">Pardavėjas</h2>
-              <div className="text-sm text-gray-700">Privatus pardavėjas</div>
-              <div className="text-sm text-gray-700">Lietuva</div>
-              <button className="mt-3 w-full rounded-lg bg-black text-white py-2">
-                Siųsti žinutę
-              </button>
+            {/* Характеристики */}
+            <div className="card p-5">
+              <h2 className="mb-3 text-xl font-semibold">Pagrindinė informacija</h2>
+              <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                <div>
+                  <dt className="text-[hsl(var(--muted-fg))]">Kuras</dt>
+                  <dd className="text-gray-900">{item.fuel ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-[hsl(var(--muted-fg))]">Pavarų dėžė</dt>
+                  <dd className="text-gray-900">{item.transmission ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-[hsl(var(--muted-fg))]">Galia</dt>
+                  <dd className="text-gray-900">{item.power ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-[hsl(var(--muted-fg))]">Būklė</dt>
+                  <dd className="text-gray-900">—</dd>
+                </div>
+              </dl>
             </div>
 
-            <Link
-              href="/search"
-              className="block text-center text-blue-600 hover:underline"
-            >
-              ← Grįžti į paiešką
-            </Link>
-          </>
-        ) : null}
-      </aside>
+            {/* Контакты/действия */}
+            <div className="card p-5 space-y-3">
+              <h2 className="text-xl font-semibold">Pardavėjas</h2>
+              <div className="text-sm text-gray-700">Privatus pardavėjas · Lietuva</div>
+              <button className="btn w-full">Siųsti žinutę</button>
+              <Link href="/search" className="block text-center link">
+                ← Grįžti į paiešką
+              </Link>
+            </div>
+          </aside>
+        </div>
+      ) : null}
     </section>
   );
 }
 
 export default function ListingPage() {
   return (
-    <Suspense fallback={<section className="rounded-lg border bg-white p-5">Kraunama…</section>}>
+    <Suspense fallback={<section className="card p-5">Kraunama…</section>}>
       <ListingInner />
     </Suspense>
   );
