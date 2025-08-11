@@ -1,76 +1,131 @@
 "use client";
 
-import { useState } from "react";
+import { usePriceRange } from "@/components/filters/price/usePriceRange";
 
 interface PriceRangeSliderProps {
   minPrice?: number;
   maxPrice?: number;
-  onRangeChange?: (min: number, max: number) => void;
+  step?: number;
+  onRangeChange?: (min: number, max: number) => void; // max = Infinity при режиме ">"
 }
 
-export default function PriceRangeSlider({ 
-  minPrice = 0, 
-  maxPrice = 100000,
-  onRangeChange 
+export default function PriceRangeSlider({
+  minPrice = 0,
+  maxPrice = 100_000,
+  step = 1_000,
+  onRangeChange,
 }: PriceRangeSliderProps) {
-  const [minValue, setMinValue] = useState(minPrice);
-  const [maxValue, setMaxValue] = useState(maxPrice);
+  const {
+    minValue,
+    maxValue,
+    maxOverflow,
+    rawMin,
+    rawMax,
+    trackRef,
+    fmt,
+    leftPct,
+    rightPct,
+    setDragging,
+    onMinInput,
+    onMaxInput,
+    commitMin,
+    commitMax,
+    onKey,
+    handleTrackPointerDown,
+  } = usePriceRange({ minPrice, maxPrice, step, onChange: onRangeChange });
 
-  const handleMinChange = (value: string) => {
-    const numValue = parseInt(value) || 0;
-    setMinValue(numValue);
-    onRangeChange?.(numValue, maxValue);
-  };
-
-  const handleMaxChange = (value: string) => {
-    const numValue = parseInt(value) || 100000;
-    setMaxValue(numValue);
-    onRangeChange?.(minValue, numValue);
-  };
+  const rightLabel = (maxOverflow ? ">" : "") + fmt.format(maxPrice) + "€";
 
   return (
-    <div className="space-y-4">
-      <label className="block text-base font-semibold text-black">
-        Price
-      </label>
-      
-      {/* Price Range Visual */}
-      <div className="relative h-3.5">
-        <img 
-          src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/9bac64b5-48be-456b-a718-83895127a733" 
-          alt="Price Range" 
-          className="w-full h-full object-cover"
+    <div className="space-y-3">
+      <label className="block text-base font-semibold text-black">Price</label>
+
+      <div className="flex justify-between text-base font-semibold text-black">
+        <span>{fmt.format(minPrice)}€</span>
+        <span>{rightLabel}</span>
+      </div>
+
+      {/* ТОНКИЙ слайдер */}
+      <div
+        ref={trackRef}
+        className="relative h-2 rounded-full bg-[#d9d9d9]"
+        onPointerDown={handleTrackPointerDown}
+        style={{ cursor: "pointer" }}
+      >
+        <div
+          className="absolute top-0 h-full rounded-full"
+          style={{
+            left: `${leftPct}%`,
+            width: `${Math.max(rightPct - leftPct, 0)}%`,
+            background: "hsl(var(--accent))",
+          }}
+        />
+
+        <button
+          type="button"
+          role="slider"
+          aria-label="Минимальная цена"
+          aria-valuemin={minPrice}
+          aria-valuemax={maxPrice}
+          aria-valuenow={minValue}
+          tabIndex={0}
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-3 w-3 rounded-full border bg-white border-[hsl(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--accent))]"
+          style={{ left: `${leftPct}%`, touchAction: "none" as any, cursor: "grab" }}
+          onPointerDown={() => setDragging("min")}
+          onKeyDown={(e) => onKey("min", e)}
+        />
+
+        <button
+          type="button"
+          role="slider"
+          aria-label="Максимальная цена"
+          aria-valuemin={minPrice}
+          aria-valuemax={maxPrice}
+          aria-valuenow={maxOverflow ? maxPrice : maxValue}
+          tabIndex={0}
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-3 w-3 rounded-full border bg-white border-[hsl(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--accent))]"
+          style={{ left: `${rightPct}%`, touchAction: "none" as any, cursor: "grab" }}
+          onPointerDown={() => setDragging("max")}
+          onKeyDown={(e) => onKey("max", e)}
         />
       </div>
-      
-      {/* Price Inputs */}
+
       <div className="flex gap-3">
-        <div className="flex-1">
+        <div className="relative flex-1">
           <input
             type="text"
-            placeholder="000,000"
-            value={minValue === 0 ? "" : minValue.toLocaleString()}
-            onChange={(e) => handleMinChange(e.target.value.replace(/,/g, ""))}
-            className="w-full h-10 px-3 bg-[#d9d9d9] rounded-lg text-base font-semibold text-[#8c8c8c] placeholder-[#8c8c8c]"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder="0"
+            value={rawMin ?? (minValue === minPrice ? "" : fmt.format(minValue))}
+            onChange={(e) => onMinInput(e.target.value)}
+            onBlur={commitMin}
+            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), commitMin())}
+            className="h-10 w-full rounded-lg bg-[#d9d9d9] px-3 pr-8 text-base font-semibold text-[#8c8c8c] placeholder-[#8c8c8c]"
           />
-          <span className="text-base font-semibold text-[#8c8c8c]">€</span>
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-base font-semibold text-[#8c8c8c]">€</span>
         </div>
-        <div className="flex-1">
+
+        <div className="relative flex-1">
+          {maxOverflow && (
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base font-semibold text-[#8c8c8c]">{">"}</span>
+          )}
           <input
             type="text"
-            placeholder="000,000"
-            value={maxValue === 100000 ? "" : maxValue.toLocaleString()}
-            onChange={(e) => handleMaxChange(e.target.value.replace(/,/g, ""))}
-            className="w-full h-10 px-3 bg-[#d9d9d9] rounded-lg text-base font-semibold text-[#8c8c8c] placeholder-[#8c8c8c]"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder={fmt.format(maxPrice)}
+            value={
+              rawMax ??
+              (maxOverflow ? fmt.format(maxPrice) : (maxValue === maxPrice ? "" : fmt.format(maxValue)))
+            }
+            onChange={(e) => onMaxInput(e.target.value)}
+            onBlur={commitMax}
+            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), commitMax())}
+            className={`h-10 w-full rounded-lg bg-[#d9d9d9] ${maxOverflow ? "pl-8" : "pl-3"} pr-8 text-base font-semibold text-[#8c8c8c] placeholder-[#8c8c8c]`}
           />
-          <span className="text-base font-semibold text-[#8c8c8c]">€</span>
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-base font-semibold text-[#8c8c8c]">€</span>
         </div>
-      </div>
-      
-      {/* Price Labels */}
-      <div className="flex justify-between text-base font-semibold text-black">
-        <span>0€</span>
-        <span>100,000€</span>
       </div>
     </div>
   );

@@ -1,6 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
   theme: {
     container: {
       center: true,
@@ -18,6 +22,8 @@ module.exports = {
         primary: "hsl(var(--primary))",
         "primary-foreground": "hsl(var(--primary-fg))",
         ring: "hsl(var(--ring))",
+        accent: "hsl(var(--accent))",
+        "accent-foreground": "hsl(var(--accent-fg))",
       },
       borderRadius: {
         xl: "1rem",
