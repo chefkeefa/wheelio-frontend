@@ -2,12 +2,14 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FilterDropdown from "../components/FilterDropdown";
 import PriceRangeSlider from "../components/PriceRangeSlider";
 import CarCard from "../components/CarCard";
 import Icon from "@/components/ui/Icon";
+
+/* ================== Типы и константы ================== */
 
 type Listing = {
   id: string;
@@ -69,7 +71,7 @@ const mockListings: Listing[] = Array.from({ length: 13 }, (_, i) => ({
   registrationYear: null,
 }));
 
-// Опции пробега -> числовой предел
+// Преобразование опции пробега -> числовой предел
 const mileageCapFromOption = (opt: string): number | null => {
   if (opt === "Any") return null;
   const digits = opt.replace(/[^\d]/g, "");
@@ -77,7 +79,19 @@ const mileageCapFromOption = (opt: string): number | null => {
   return parseInt(digits, 10);
 };
 
-export default function HomePage() {
+/* ================== Обёртка с Suspense ================== */
+
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <HomePageInner />
+    </Suspense>
+  );
+}
+
+/* ================== Основной компонент страницы ================== */
+
+function HomePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -101,16 +115,13 @@ export default function HomePage() {
     reg: DEFAULTS.reg,
     mileage: DEFAULTS.mileage,
     priceMin: DEFAULTS.priceMin,
-    priceMax: DEFAULTS.priceMax as number, // используем number; Infinity тоже number
+    priceMax: DEFAULTS.priceMax as number, // number; допускаем Infinity
   });
 
-  // Флаг: пользователь нажал Search хотя бы раз
   const [hasSearched, setHasSearched] = useState(false);
-
-  // Токен для полного сброса слайдера
   const [resetToken, setResetToken] = useState(0);
 
-  // Инициализация из URL
+  // Инициализация из URL (разрешено — мы в Suspense)
   useEffect(() => {
     const m = searchParams.get("mark") ?? DEFAULTS.mark;
     const mo = searchParams.get("model") ?? DEFAULTS.model;
@@ -120,7 +131,6 @@ export default function HomePage() {
     const pmaxParam = searchParams.get("pmax");
     const pmax = pmaxParam === "inf" ? Infinity : parseInt(pmaxParam ?? "", 10);
 
-    // Есть ли что в URL
     const anyQuery =
       (m && m !== DEFAULTS.mark) ||
       (mo && mo !== DEFAULTS.model) ||
@@ -129,15 +139,13 @@ export default function HomePage() {
       Number.isFinite(pmin) ||
       typeof pmaxParam === "string";
 
-    // Проставляем UI
     setSelectedMark(m);
     setSelectedModel(mo);
     setSelectedRegistration(r);
     setSelectedMileage(ml);
 
     if (Number.isFinite(pmin)) setPriceMin(pmin);
-    if (typeof pmaxParam === "string")
-      setPriceMax(Number.isNaN(pmax) ? DEFAULTS.priceMax : pmax);
+    if (typeof pmaxParam === "string") setPriceMax(Number.isNaN(pmax) ? DEFAULTS.priceMax : pmax);
 
     if (anyQuery) {
       setApplied({
@@ -147,16 +155,12 @@ export default function HomePage() {
         mileage: ml,
         priceMin: Number.isFinite(pmin) ? pmin : DEFAULTS.priceMin,
         priceMax:
-          pmaxParam === "inf"
-            ? Infinity
-            : Number.isFinite(pmax)
-            ? pmax
-            : DEFAULTS.priceMax,
+          pmaxParam === "inf" ? Infinity : Number.isFinite(pmax) ? pmax : DEFAULTS.priceMax,
       });
       setHasSearched(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // только при первом рендере
+  }, []);
 
   // Загрузка данных
   useEffect(() => {
@@ -168,7 +172,6 @@ export default function HomePage() {
         const raw = (await res.json().catch(() => [])) as unknown;
         const arr = Array.isArray(raw) ? (raw as ApiListing[]) : [];
 
-        // Нормализация/обогащение
         const normalized: Listing[] = arr.map((x: ApiListing, i: number) => {
           const yearRaw =
             x.registrationYear ??
@@ -186,9 +189,7 @@ export default function HomePage() {
             price: asNumber(x.price, 0),
             mileage: asNumber(x.mileage, 0),
             thumbnail:
-              typeof x.thumbnail === "string" && x.thumbnail.length > 0
-                ? x.thumbnail
-                : undefined,
+              typeof x.thumbnail === "string" && x.thumbnail.length > 0 ? x.thumbnail : undefined,
             make: x.make ?? x.mark ?? null,
             model: x.model ?? null,
             registrationYear:
@@ -200,7 +201,6 @@ export default function HomePage() {
           };
         });
 
-        // Сортировка по id
         const sorted = [...normalized].sort((a, b) => {
           const na = Number(a.id);
           const nb = Number(b.id);
@@ -285,15 +285,12 @@ export default function HomePage() {
     const cap = mileageCapFromOption(applied.mileage);
 
     return (items.length ? items : mockListings).filter((it) => {
-      // Цена
       const priceOk =
         it.price >= applied.priceMin &&
         (Number.isFinite(applied.priceMax) ? it.price <= applied.priceMax : true);
 
-      // Пробег
       const mileageOk = cap == null ? true : it.mileage <= cap;
 
-      // Марка/модель — сначала пробуем поля, иначе ищем в title
       const titleLower = it.title.toLowerCase();
       const makeLower = (it.make ?? "").toLowerCase();
       const modelLower = (it.model ?? "").toLowerCase();
@@ -312,18 +309,13 @@ export default function HomePage() {
           ? modelLower === applied.model.toLowerCase()
           : titleLower.includes(applied.model.toLowerCase());
 
-      // Год регистрации
       let year: number | null = it.registrationYear ?? null;
       if (year == null) {
         const m = it.title.match(/\b(19|20)\d{2}\b/);
         if (m) year = Number(m[0]);
       }
       const regOk =
-        applied.reg === "Any"
-          ? true
-          : year != null
-          ? String(year) === applied.reg
-          : true;
+        applied.reg === "Any" ? true : year != null ? String(year) === applied.reg : true;
 
       return priceOk && mileageOk && markOk && modelOk && regOk;
     });
@@ -335,10 +327,14 @@ export default function HomePage() {
   // Чипсы активных фильтров (без цены)
   const chips = useMemo(() => {
     const res: Array<{ key: keyof typeof applied; label: string; value: string }> = [];
-    if (applied.mark !== DEFAULTS.mark) res.push({ key: "mark", label: "Mark", value: applied.mark });
-    if (applied.model !== DEFAULTS.model) res.push({ key: "model", label: "Model", value: applied.model });
-    if (applied.reg !== DEFAULTS.reg) res.push({ key: "reg", label: "Year", value: applied.reg });
-    if (applied.mileage !== DEFAULTS.mileage) res.push({ key: "mileage", label: "Mileage", value: applied.mileage });
+    if (applied.mark !== DEFAULTS.mark)
+      res.push({ key: "mark", label: "Mark", value: applied.mark });
+    if (applied.model !== DEFAULTS.model)
+      res.push({ key: "model", label: "Model", value: applied.model });
+    if (applied.reg !== DEFAULTS.reg)
+      res.push({ key: "reg", label: "Year", value: applied.reg });
+    if (applied.mileage !== DEFAULTS.mileage)
+      res.push({ key: "mileage", label: "Mileage", value: applied.mileage });
     return res;
   }, [applied]);
 
@@ -370,7 +366,6 @@ export default function HomePage() {
             loading="eager"
           />
           <div className="absolute inset-0 bg-black/30" />
-          {/* Заголовок: левый верх, как у Price/Model */}
           <div className="absolute left-6 top-6 md:left-16 md:top-8">
             <h1 className="text-base font-semibold text-white">
               buy and sell a car easily!
@@ -379,7 +374,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SEARCH FILTERS — чуть перекрываем HERO */}
+      {/* SEARCH FILTERS — перекрываем HERO */}
       <section className="container -mt-10 md:-mt-16">
         <div className="relative z-10 rounded-[40px] bg-[hsl(var(--muted))] p-6 md:p-8">
           <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-4">
@@ -465,57 +460,24 @@ export default function HomePage() {
       )}
 
       {/* ЧИПСЫ АКТИВНЫХ ФИЛЬТРОВ */}
-      {hasSearched && ((applied.mark !== DEFAULTS.mark) || (applied.model !== DEFAULTS.model) || (applied.reg !== DEFAULTS.reg) || (applied.mileage !== DEFAULTS.mileage)) && (
+      {hasSearched && chips.length > 0 && (
         <section className="container -mt-6">
           <div className="flex flex-wrap gap-2">
-            {applied.mark !== DEFAULTS.mark && (
+            {chips.map((c) => (
               <button
+                key={c.key}
                 type="button"
-                onClick={() => removeChip("mark")}
+                onClick={() => removeChip(c.key)}
                 className="group inline-flex items-center gap-2 rounded-full border border-[hsl(var(--accent))] bg-white px-3 py-1 text-sm font-semibold text-black shadow-sm hover:bg-[hsl(var(--muted))]"
                 title="Remove filter"
               >
-                <span className="opacity-70">Mark:</span>
-                <span>{applied.mark}</span>
-                <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[hsl(var(--accent))] text-white leading-none">×</span>
+                <span className="opacity-70">{c.label}:</span>
+                <span>{c.value}</span>
+                <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[hsl(var(--accent))] text-white leading-none">
+                  ×
+                </span>
               </button>
-            )}
-            {applied.model !== DEFAULTS.model && (
-              <button
-                type="button"
-                onClick={() => removeChip("model")}
-                className="group inline-flex items-center gap-2 rounded-full border border-[hsl(var(--accent))] bg-white px-3 py-1 text-sm font-semibold text-black shadow-sm hover:bg-[hsl(var(--muted))]"
-                title="Remove filter"
-              >
-                <span className="opacity-70">Model:</span>
-                <span>{applied.model}</span>
-                <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[hsl(var(--accent))] text-white leading-none">×</span>
-              </button>
-            )}
-            {applied.reg !== DEFAULTS.reg && (
-              <button
-                type="button"
-                onClick={() => removeChip("reg")}
-                className="group inline-flex items-center gap-2 rounded-full border border-[hsl(var(--accent))] bg-white px-3 py-1 text-sm font-semibold text-black shadow-sm hover:bg-[hsl(var(--muted))]"
-                title="Remove filter"
-              >
-                <span className="opacity-70">Year:</span>
-                <span>{applied.reg}</span>
-                <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[hsl(var(--accent))] text-white leading-none">×</span>
-              </button>
-            )}
-            {applied.mileage !== DEFAULTS.mileage && (
-              <button
-                type="button"
-                onClick={() => removeChip("mileage")}
-                className="group inline-flex items-center gap-2 rounded-full border border-[hsl(var(--accent))] bg-white px-3 py-1 text-sm font-semibold text-black shadow-sm hover:bg-[hsl(var(--muted))]"
-                title="Remove filter"
-              >
-                <span className="opacity-70">Mileage:</span>
-                <span>{applied.mileage}</span>
-                <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[hsl(var(--accent))] text-white leading-none">×</span>
-              </button>
-            )}
+            ))}
           </div>
         </section>
       )}
