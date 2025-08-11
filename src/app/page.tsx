@@ -99,7 +99,7 @@ export default function HomePage() {
               options={["Any", "3 Series", "C-Class", "A4", "Golf"]}
             />
             <FilterDropdown
-              label="1st registration form"
+              label="1st registration year"
               value={selectedRegistration}
               onChange={setSelectedRegistration}
               options={["Any", "2020", "2019", "2018", "2017"]}
