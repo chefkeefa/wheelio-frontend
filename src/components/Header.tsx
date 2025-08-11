@@ -33,7 +33,9 @@ export default function Header() {
               key={item.href}
               href={item.href}
               className={`text-2xl font-bold transition-colors hover:text-[hsl(var(--accent))] ${
-                pathname === item.href ? "text-black" : "text-black"
+                pathname === item.href
+                  ? "text-[hsl(var(--accent))]"
+                  : "text-black"
               }`}
             >
               {item.label}
