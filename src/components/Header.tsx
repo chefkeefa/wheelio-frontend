@@ -15,7 +15,7 @@ export default function Header() {
 
   return (
     <header className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
-      <div className="container flex items-center justify-between py-4 gap-6">
+      <div className="container relative flex items-center justify-between py-4">
         {/* Logo */}
         <Link href="/" className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -27,7 +27,7 @@ export default function Header() {
         </Link>
 
         {/* Navigation */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex items-center gap-8">
           {nav.map((item) => (
             <Link
               key={item.href}
