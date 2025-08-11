@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===== Figma-токены (пока базовые; подгоним точные значения на следующем шаге) ===== */
+/* ===== Updated Design System Tokens ===== */
 :root {
   /* Primary — почти чёрный из кнопок */
   --primary: 0 0% 7%;        /* #111111 */
@@ -20,13 +20,15 @@
 
   /* Кольцо фокуса */
   --ring: 210 100% 40%;
+  /* Accent color from design */
+  --accent: 39.8 54% 67.8%;   /* #D9A339 */
+  --accent-fg: 0 0% 0%;       /* чёрный текст на золотом для контраста */
 }
-
 
 /* Базовые применения токенов */
 html, body {
-  background: hsl(var(--bg));
-  color: hsl(var(--fg));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
 /* ===== Утилиты/пресеты в духе макета ===== */
@@ -44,6 +46,17 @@ html, body {
 }
 .link {
   @apply underline underline-offset-4 hover:opacity-80;
+}
+.btn-accent {
+  @apply inline-flex items-center justify-center rounded-2xl px-4 py-2;
+  color: hsl(var(--accent-fg));
+  background-color: hsl(var(--accent));
+}
+.btn-accent:hover { filter: brightness(0.95); }
+
+/* Container for consistent spacing */
+.container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }
 
 /* ===== Типографика под макет ===== */

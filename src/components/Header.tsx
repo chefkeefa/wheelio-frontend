@@ -3,100 +3,96 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 
 const nav = [
-  { href: "/search", label: "Paieška" },
-  { href: "/sell",   label: "Parduoti" },
-  { href: "/about",  label: "Apie" },
+  { href: "/", label: "Buy" },
+  { href: "/sell", label: "Sell" },
+  { href: "/about", label: "About" },
 ];
 
 export default function Header() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-
-  const isActive = (href: string) =>
-    pathname === href || (href !== "/" && pathname.startsWith(href));
 
   return (
-    <header className="w-full">
-      <div className="container flex h-16 items-center justify-between gap-4">
-        {/* Лого/бренд */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-xl bg-black text-xs font-bold text-white">
-            PA
-          </div>
-          <span className="text-lg font-semibold tracking-tight">PirkAuto</span>
+    <header className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
+      <div className="container flex items-center justify-between py-4 gap-6">
+        {/* Logo */}
+        <Link href="/" className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/7f022d24-1b31-4803-8e40-c416838c1f51"
+            alt="PirkAuto"
+            className="h-11 w-auto"
+          />
         </Link>
 
-        {/* Навигация (desktop) */}
-        <nav className="hidden items-center gap-2 md:flex">
+        {/* Navigation */}
+        <nav className="hidden md:flex items-center gap-8">
           {nav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`rounded-xl px-3 py-2 text-sm transition
-                ${
-                  isActive(item.href)
-                    ? "bg-[hsl(var(--muted))] text-black"
-                    : "text-gray-600 hover:bg-[hsl(var(--muted))] hover:text-black"
-                }`}
+              className={`text-2xl font-bold transition-colors hover:text-[hsl(var(--accent))] ${
+                pathname === item.href ? "text-black" : "text-black"
+              }`}
             >
               {item.label}
             </Link>
           ))}
         </nav>
 
-        {/* Действия (desktop) */}
-        <div className="hidden items-center gap-2 md:flex">
-          <Link href="/login" className="btn-outline">Prisijungti</Link>
-          <Link href="/register" className="btn">Registruotis</Link>
-        </div>
+        {/* User Controls */}
+        <div className="flex items-center gap-3">
+          <button
+            className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg transition-colors"
+            aria-label="Theme"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/155afc12-1cca-432b-88d5-a29631055898"
+              alt="Theme"
+              className="w-8 h-8"
+            />
+          </button>
 
-        {/* Бургер (mobile) */}
-        <button
-          aria-label="Menu"
-          onClick={() => setOpen((v) => !v)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[hsl(var(--border))] md:hidden"
-        >
-          <div className="space-y-1">
-            <span className="block h-0.5 w-5 bg-current" />
-            <span className="block h-0.5 w-5 bg-current" />
-            <span className="block h-0.5 w-5 bg-current" />
-          </div>
-        </button>
+          <button
+            className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg transition-colors"
+            aria-label="Language"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/e227dbe4-3d0c-4fdc-991c-c9cb0e0914d6"
+              alt="Language"
+              className="w-8 h-8"
+            />
+          </button>
+
+          <button
+            className="p-2 hover:bg-[hsl(var(--muted))] rounded-lg transition-colors"
+            aria-label="Time"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/039dc914-363a-4e9b-871d-763cb46d6eab"
+              alt="Time"
+              className="w-8 h-8"
+            />
+          </button>
+
+          <Link
+            href="/login"
+            className="flex items-center gap-2 p-2 hover:bg-[hsl(var(--muted))] rounded-lg transition-colors"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/c641c5f5-0fa7-401c-9c03-514273c50cf3"
+              alt="User"
+              className="w-8 h-8"
+            />
+            <span className="text-xl font-semibold">Login</span>
+          </Link>
+        </div>
       </div>
-
-      {/* Мобильное меню */}
-      {open && (
-        <div className="bg-white md:hidden border-t border-[hsl(var(--border))]">
-          <div className="container space-y-2 py-3">
-            {nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={`block rounded-xl px-3 py-2 text-sm
-                  ${
-                    isActive(item.href)
-                      ? "bg-[hsl(var(--muted))] text-black"
-                      : "text-gray-700 hover:bg-[hsl(var(--muted))]"
-                  }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-            <div className="flex gap-2 pt-2">
-              <Link href="/login" onClick={() => setOpen(false)} className="btn-outline flex-1 text-center">
-                Prisijungti
-              </Link>
-              <Link href="/register" onClick={() => setOpen(false)} className="btn flex-1 text-center">
-                Registruotis
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   );
 }
