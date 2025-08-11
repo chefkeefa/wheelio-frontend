@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type React from "react";
 
 export function usePriceRange({
@@ -21,43 +21,62 @@ export function usePriceRange({
   const [dragging, setDragging] = useState<null | "min" | "max">(null);
   const fmt = useMemo(() => new Intl.NumberFormat("lt-LT"), []);
 
-  const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
-  const snap = (v: number) => Math.round(v / step) * step;
-  const toPct = (v: number) => ((v - minPrice) / (maxPrice - minPrice)) * 100;
-  const parseDigits = (s: string) => {
+  const clamp = useCallback((v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi), []);
+  const snap = useCallback((v: number) => Math.round(v / step) * step, [step]);
+  const toPct = useCallback((v: number) => ((v - minPrice) / (maxPrice - minPrice)) * 100, [minPrice, maxPrice]);
+
+  const parseDigits = useCallback((s: string) => {
     const d = s.replace(/[^\d]/g, "");
     return d ? parseInt(d, 10) : NaN;
-  };
-  const emit = (minV: number, maxV: number, overflow = maxOverflow) => {
-    onChange?.(minV, overflow ? Infinity : maxV);
-  };
-  const setMinSafe = (v: number) => {
-    const next = clamp(snap(v), minPrice, maxOverflow ? maxPrice : maxValue);
-    setMinValue(next);
-    emit(next, maxOverflow ? maxPrice : maxValue);
-  };
-  const setMaxSafe = (v: number) => {
-    const next = clamp(snap(v), minValue, maxPrice);
-    setMaxOverflow(false);
-    setMaxValue(next);
-    emit(minValue, next, false);
-  };
-  const valueFromClientX = (clientX: number) => {
-    const rect = trackRef.current!.getBoundingClientRect();
-    const px = clamp(clientX - rect.left, 0, rect.width);
-    const ratio = rect.width ? px / rect.width : 0;
-    const raw = minPrice + ratio * (maxPrice - minPrice);
-    return clamp(raw, minPrice, maxPrice);
-  };
+  }, []);
+
+  const emit = useCallback(
+    (minV: number, maxV: number, overflow = maxOverflow) => {
+      onChange?.(minV, overflow ? Infinity : maxV);
+    },
+    [onChange, maxOverflow]
+  );
+
+  const setMinSafe = useCallback(
+    (v: number) => {
+      const next = clamp(snap(v), minPrice, maxOverflow ? maxPrice : maxValue);
+      setMinValue(next);
+      emit(next, maxOverflow ? maxPrice : maxValue);
+    },
+    [clamp, snap, minPrice, maxPrice, maxValue, maxOverflow, emit]
+  );
+
+  const setMaxSafe = useCallback(
+    (v: number) => {
+      const next = clamp(snap(v), minValue, maxPrice);
+      setMaxOverflow(false);
+      setMaxValue(next);
+      emit(minValue, next, false);
+    },
+    [clamp, snap, minValue, maxPrice, emit]
+  );
+
+  const valueFromClientX = useCallback(
+    (clientX: number) => {
+      if (!trackRef.current) return minPrice;
+      const rect = trackRef.current.getBoundingClientRect();
+      const px = clamp(clientX - rect.left, 0, rect.width);
+      const ratio = rect.width ? px / rect.width : 0;
+      const raw = minPrice + ratio * (maxPrice - minPrice);
+      return clamp(raw, minPrice, maxPrice);
+    },
+    [clamp, minPrice, maxPrice]
+  );
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
-      if (!dragging || !trackRef.current) return;
+      if (!dragging) return;
       const val = valueFromClientX(e.clientX);
       if (dragging === "min") setMinSafe(Math.min(val, maxOverflow ? maxPrice : maxValue));
       else setMaxSafe(Math.max(val, minValue));
     };
     const onUp = () => setDragging(null);
+
     if (dragging) {
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp, { once: true });
@@ -66,42 +85,9 @@ export function usePriceRange({
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
     };
-  }, [dragging, minValue, maxValue, maxOverflow]);
-
-  const onKey = (who: "min" | "max", e: React.KeyboardEvent) => {
-    const delta =
-      e.key === "ArrowLeft" || e.key === "ArrowDown" ? -step :
-      e.key === "ArrowRight" || e.key === "ArrowUp" ? step :
-      e.key === "PageDown" ? -step * 10 :
-      e.key === "PageUp" ? step * 10 :
-      e.key === "Home" ? -(1e15) :
-      e.key === "End" ? +(1e15) :
-      0;
-    if (delta !== 0) {
-      e.preventDefault();
-      if (who === "min") setMinSafe(minValue + delta);
-      else setMaxSafe((maxOverflow ? maxPrice : maxValue) + delta);
-    }
-  };
-
-  const handleTrackPointerDown = (e: React.PointerEvent) => {
-    const clicked = valueFromClientX(e.clientX);
-    const distToMin = Math.abs(clicked - minValue);
-    const effectiveMax = maxOverflow ? maxPrice : maxValue;
-    const distToMax = Math.abs(clicked - effectiveMax);
-    if (distToMin <= distToMax) {
-      setDragging("min");
-      setMinSafe(clicked);
-      setRawMin(null);
-    } else {
-      setDragging("max");
-      setMaxSafe(clicked);
-      setRawMax(null);
-    }
-  };
+  }, [dragging, minValue, maxValue, maxOverflow, maxPrice, setMinSafe, setMaxSafe, valueFromClientX]);
 
   return {
-    // state
     minValue,
     maxValue,
     maxOverflow,
@@ -110,10 +96,8 @@ export function usePriceRange({
     trackRef,
     dragging,
     fmt,
-    // derived
     leftPct: toPct(minValue),
     rightPct: toPct(maxOverflow ? maxPrice : maxValue),
-    // actions
     setDragging,
     onMinInput: (s: string) => {
       setRawMin(s);
@@ -153,7 +137,41 @@ export function usePriceRange({
       }
       setRawMax(null);
     },
-    onKey,
-    handleTrackPointerDown,
+    onKey: (who: "min" | "max", e: React.KeyboardEvent) => {
+      const delta =
+        e.key === "ArrowLeft" || e.key === "ArrowDown"
+          ? -step
+          : e.key === "ArrowRight" || e.key === "ArrowUp"
+          ? step
+          : e.key === "PageDown"
+          ? -step * 10
+          : e.key === "PageUp"
+          ? step * 10
+          : e.key === "Home"
+          ? -(1e15)
+          : e.key === "End"
+          ? +(1e15)
+          : 0;
+      if (delta !== 0) {
+        e.preventDefault();
+        if (who === "min") setMinSafe(minValue + delta);
+        else setMaxSafe((maxOverflow ? maxPrice : maxValue) + delta);
+      }
+    },
+    handleTrackPointerDown: (e: React.PointerEvent) => {
+      const clicked = valueFromClientX(e.clientX);
+      const distToMin = Math.abs(clicked - minValue);
+      const effectiveMax = maxOverflow ? maxPrice : maxValue;
+      const distToMax = Math.abs(clicked - effectiveMax);
+      if (distToMin <= distToMax) {
+        setDragging("min");
+        setMinSafe(clicked);
+        setRawMin(null);
+      } else {
+        setDragging("max");
+        setMaxSafe(clicked);
+        setRawMax(null);
+      }
+    },
   };
 }

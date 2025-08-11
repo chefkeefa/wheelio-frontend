@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import FilterDropdown from "../components/FilterDropdown";
 import PriceRangeSlider from "../components/PriceRangeSlider";
 import CarCard from "../components/CarCard";
@@ -17,6 +18,20 @@ type Listing = {
   make?: string | null;
   model?: string | null;
   registrationYear?: number | null;
+};
+
+type ApiListing = {
+  id?: string | number;
+  title?: string;
+  price?: number | string;
+  mileage?: number | string;
+  thumbnail?: string;
+  make?: string;
+  mark?: string;
+  model?: string;
+  registrationYear?: number | string | null;
+  year?: number | string | null;
+  firstRegistration?: { year?: number | string | null } | null;
 };
 
 const API = "https://pirkauto-backend.onrender.com/api/public/listings";
@@ -63,6 +78,9 @@ const mileageCapFromOption = (opt: string): number | null => {
 };
 
 export default function HomePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [items, setItems] = useState<Listing[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -74,7 +92,7 @@ export default function HomePage() {
 
   // Текущие значения цены (живут вместе со слайдером)
   const [priceMin, setPriceMin] = useState<number>(DEFAULTS.priceMin);
-  const [priceMax, setPriceMax] = useState<number>(DEFAULTS.priceMax);
+  const [priceMax, setPriceMax] = useState<number>(DEFAULTS.priceMax); // может быть Infinity
 
   // Применённые фильтры (фиксируются по кнопке "Search offers")
   const [applied, setApplied] = useState({
@@ -83,7 +101,7 @@ export default function HomePage() {
     reg: DEFAULTS.reg,
     mileage: DEFAULTS.mileage,
     priceMin: DEFAULTS.priceMin,
-    priceMax: DEFAULTS.priceMax as number | typeof Infinity,
+    priceMax: DEFAULTS.priceMax as number, // используем number; Infinity тоже number
   });
 
   // Флаг: пользователь нажал Search хотя бы раз
@@ -92,34 +110,87 @@ export default function HomePage() {
   // Токен для полного сброса слайдера
   const [resetToken, setResetToken] = useState(0);
 
+  // Инициализация из URL
+  useEffect(() => {
+    const m = searchParams.get("mark") ?? DEFAULTS.mark;
+    const mo = searchParams.get("model") ?? DEFAULTS.model;
+    const r = searchParams.get("reg") ?? DEFAULTS.reg;
+    const ml = searchParams.get("mileage") ?? DEFAULTS.mileage;
+    const pmin = parseInt(searchParams.get("pmin") ?? "", 10);
+    const pmaxParam = searchParams.get("pmax");
+    const pmax = pmaxParam === "inf" ? Infinity : parseInt(pmaxParam ?? "", 10);
+
+    // Есть ли что в URL
+    const anyQuery =
+      (m && m !== DEFAULTS.mark) ||
+      (mo && mo !== DEFAULTS.model) ||
+      (r && r !== DEFAULTS.reg) ||
+      (ml && ml !== DEFAULTS.mileage) ||
+      Number.isFinite(pmin) ||
+      typeof pmaxParam === "string";
+
+    // Проставляем UI
+    setSelectedMark(m);
+    setSelectedModel(mo);
+    setSelectedRegistration(r);
+    setSelectedMileage(ml);
+
+    if (Number.isFinite(pmin)) setPriceMin(pmin);
+    if (typeof pmaxParam === "string")
+      setPriceMax(Number.isNaN(pmax) ? DEFAULTS.priceMax : pmax);
+
+    if (anyQuery) {
+      setApplied({
+        mark: m,
+        model: mo,
+        reg: r,
+        mileage: ml,
+        priceMin: Number.isFinite(pmin) ? pmin : DEFAULTS.priceMin,
+        priceMax:
+          pmaxParam === "inf"
+            ? Infinity
+            : Number.isFinite(pmax)
+            ? pmax
+            : DEFAULTS.priceMax,
+      });
+      setHasSearched(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // только при первом рендере
+
+  // Загрузка данных
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       try {
         const res = await fetch(API, { cache: "no-store" });
-        const raw = await res.json().catch(() => []);
-        const arr = Array.isArray(raw) ? raw : [];
+        const raw = (await res.json().catch(() => [])) as unknown;
+        const arr = Array.isArray(raw) ? (raw as ApiListing[]) : [];
 
         // Нормализация/обогащение
-        const normalized: Listing[] = arr.map((x: any, i: number) => {
+        const normalized: Listing[] = arr.map((x: ApiListing, i: number) => {
           const yearRaw =
-            x?.registrationYear ??
-            x?.year ??
-            x?.firstRegistration?.year ??
-            null;
+            x.registrationYear ??
+            x.year ??
+            (typeof x.firstRegistration === "object" && x.firstRegistration
+              ? x.firstRegistration.year
+              : null);
+
+          const asNumber = (v: unknown, fallback = 0) =>
+            typeof v === "number" ? v : typeof v === "string" ? Number(v) : fallback;
 
           return {
-            id: String(x?.id ?? i + 1),
-            title: String(x?.title ?? "Text text text"),
-            price: Number(x?.price ?? 0),
-            mileage: Number(x?.mileage ?? 0),
+            id: String(x.id ?? i + 1),
+            title: String(x.title ?? "Text text text"),
+            price: asNumber(x.price, 0),
+            mileage: asNumber(x.mileage, 0),
             thumbnail:
-              typeof x?.thumbnail === "string" && x.thumbnail?.length > 0
+              typeof x.thumbnail === "string" && x.thumbnail.length > 0
                 ? x.thumbnail
                 : undefined,
-            make: x?.make ?? x?.mark ?? null,
-            model: x?.model ?? null,
+            make: x.make ?? x.mark ?? null,
+            model: x.model ?? null,
             registrationYear:
               typeof yearRaw === "number"
                 ? yearRaw
@@ -150,16 +221,40 @@ export default function HomePage() {
     };
   }, []);
 
+  // В URL кладём компактные значения, Infinity -> "inf"
+  const pushToUrl = (s: {
+    mark: string;
+    model: string;
+    reg: string;
+    mileage: string;
+    priceMin: number;
+    priceMax: number; // может быть Infinity
+  }) => {
+    const params = new URLSearchParams();
+    if (s.mark !== DEFAULTS.mark) params.set("mark", s.mark);
+    if (s.model !== DEFAULTS.model) params.set("model", s.model);
+    if (s.reg !== DEFAULTS.reg) params.set("reg", s.reg);
+    if (s.mileage !== DEFAULTS.mileage) params.set("mileage", s.mileage);
+    if (s.priceMin !== DEFAULTS.priceMin) params.set("pmin", String(s.priceMin));
+    if (s.priceMax !== DEFAULTS.priceMax) {
+      params.set("pmax", Number.isFinite(s.priceMax) ? String(s.priceMax) : "inf");
+    }
+    const qs = params.toString();
+    router.replace(qs ? `/?${qs}` : "/", { scroll: false });
+  };
+
   // Сабмит фильтров
   const handleSearch = () => {
-    setApplied({
+    const next = {
       mark: selectedMark,
       model: selectedModel,
       reg: selectedRegistration,
       mileage: selectedMileage,
       priceMin,
       priceMax,
-    });
+    };
+    setApplied(next);
+    pushToUrl(next);
     setHasSearched(true);
   };
 
@@ -171,16 +266,18 @@ export default function HomePage() {
     setSelectedMileage(DEFAULTS.mileage);
     setPriceMin(DEFAULTS.priceMin);
     setPriceMax(DEFAULTS.priceMax);
-    setApplied({
+    const base = {
       mark: DEFAULTS.mark,
       model: DEFAULTS.model,
       reg: DEFAULTS.reg,
       mileage: DEFAULTS.mileage,
       priceMin: DEFAULTS.priceMin,
       priceMax: DEFAULTS.priceMax,
-    });
+    };
+    setApplied(base);
     setHasSearched(false);
     setResetToken((t) => t + 1);
+    router.replace("/", { scroll: false });
   };
 
   // Фильтрация по "applied"
@@ -234,6 +331,32 @@ export default function HomePage() {
 
   const mainListings = filtered.slice(0, 9);
   const latestListings = filtered.slice(9, 13);
+
+  // Чипсы активных фильтров (без цены)
+  const chips = useMemo(() => {
+    const res: Array<{ key: keyof typeof applied; label: string; value: string }> = [];
+    if (applied.mark !== DEFAULTS.mark) res.push({ key: "mark", label: "Mark", value: applied.mark });
+    if (applied.model !== DEFAULTS.model) res.push({ key: "model", label: "Model", value: applied.model });
+    if (applied.reg !== DEFAULTS.reg) res.push({ key: "reg", label: "Year", value: applied.reg });
+    if (applied.mileage !== DEFAULTS.mileage) res.push({ key: "mileage", label: "Mileage", value: applied.mileage });
+    return res;
+  }, [applied]);
+
+  const removeChip = (key: keyof typeof applied) => {
+    const next = { ...applied };
+    if (key === "mark") next.mark = DEFAULTS.mark;
+    if (key === "model") next.model = DEFAULTS.model;
+    if (key === "reg") next.reg = DEFAULTS.reg;
+    if (key === "mileage") next.mileage = DEFAULTS.mileage;
+
+    setSelectedMark(next.mark);
+    setSelectedModel(next.model);
+    setSelectedRegistration(next.reg);
+    setSelectedMileage(next.mileage);
+
+    setApplied(next);
+    pushToUrl(next);
+  };
 
   return (
     <div className="space-y-12">
@@ -295,7 +418,7 @@ export default function HomePage() {
               step={1000}
               onRangeChange={(min, max) => {
                 setPriceMin(min);
-                setPriceMax(max); // может быть Infinity
+                setPriceMax(max); // Infinity допустимо
               }}
             />
 
@@ -329,7 +452,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ПЛАШКА С РЕЗУЛЬТАТОМ ПОИСКА — только количество, по центру */}
+      {/* ПЛАШКА: только количество, по центру */}
       {hasSearched && !loading && (
         <section className="container -mt-2">
           <div className="flex items-center justify-center rounded-2xl border border-[hsl(var(--border))] bg-white px-4 py-3 shadow-card">
@@ -337,6 +460,62 @@ export default function HomePage() {
               <span className="font-extrabold text-[hsl(var(--accent))]">{filtered.length}</span>{" "}
               {filtered.length === 1 ? "offer" : "offers"} found
             </p>
+          </div>
+        </section>
+      )}
+
+      {/* ЧИПСЫ АКТИВНЫХ ФИЛЬТРОВ */}
+      {hasSearched && ((applied.mark !== DEFAULTS.mark) || (applied.model !== DEFAULTS.model) || (applied.reg !== DEFAULTS.reg) || (applied.mileage !== DEFAULTS.mileage)) && (
+        <section className="container -mt-6">
+          <div className="flex flex-wrap gap-2">
+            {applied.mark !== DEFAULTS.mark && (
+              <button
+                type="button"
+                onClick={() => removeChip("mark")}
+                className="group inline-flex items-center gap-2 rounded-full border border-[hsl(var(--accent))] bg-white px-3 py-1 text-sm font-semibold text-black shadow-sm hover:bg-[hsl(var(--muted))]"
+                title="Remove filter"
+              >
+                <span className="opacity-70">Mark:</span>
+                <span>{applied.mark}</span>
+                <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[hsl(var(--accent))] text-white leading-none">×</span>
+              </button>
+            )}
+            {applied.model !== DEFAULTS.model && (
+              <button
+                type="button"
+                onClick={() => removeChip("model")}
+                className="group inline-flex items-center gap-2 rounded-full border border-[hsl(var(--accent))] bg-white px-3 py-1 text-sm font-semibold text-black shadow-sm hover:bg-[hsl(var(--muted))]"
+                title="Remove filter"
+              >
+                <span className="opacity-70">Model:</span>
+                <span>{applied.model}</span>
+                <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[hsl(var(--accent))] text-white leading-none">×</span>
+              </button>
+            )}
+            {applied.reg !== DEFAULTS.reg && (
+              <button
+                type="button"
+                onClick={() => removeChip("reg")}
+                className="group inline-flex items-center gap-2 rounded-full border border-[hsl(var(--accent))] bg-white px-3 py-1 text-sm font-semibold text-black shadow-sm hover:bg-[hsl(var(--muted))]"
+                title="Remove filter"
+              >
+                <span className="opacity-70">Year:</span>
+                <span>{applied.reg}</span>
+                <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[hsl(var(--accent))] text-white leading-none">×</span>
+              </button>
+            )}
+            {applied.mileage !== DEFAULTS.mileage && (
+              <button
+                type="button"
+                onClick={() => removeChip("mileage")}
+                className="group inline-flex items-center gap-2 rounded-full border border-[hsl(var(--accent))] bg-white px-3 py-1 text-sm font-semibold text-black shadow-sm hover:bg-[hsl(var(--muted))]"
+                title="Remove filter"
+              >
+                <span className="opacity-70">Mileage:</span>
+                <span>{applied.mileage}</span>
+                <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[hsl(var(--accent))] text-white leading-none">×</span>
+              </button>
+            )}
           </div>
         </section>
       )}
