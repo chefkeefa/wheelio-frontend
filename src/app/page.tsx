@@ -2,14 +2,17 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { Anybody } from "next/font/google";
 import FilterDropdown from "../components/FilterDropdown";
 import PriceRangeSlider from "../components/PriceRangeSlider";
 import CarCard from "../components/CarCard";
-import Icon from "@/components/ui/Icon";
 
-/* ================== Типы и константы ================== */
+const anybody = Anybody({
+  subsets: ["latin", "latin-ext"],
+  weight: ["800"], // extrabold
+  display: "swap",
+});
 
 type Listing = {
   id: string;
@@ -17,23 +20,6 @@ type Listing = {
   price: number;
   mileage: number;
   thumbnail?: string;
-  make?: string | null;
-  model?: string | null;
-  registrationYear?: number | null;
-};
-
-type ApiListing = {
-  id?: string | number;
-  title?: string;
-  price?: number | string;
-  mileage?: number | string;
-  thumbnail?: string;
-  make?: string;
-  mark?: string;
-  model?: string;
-  registrationYear?: number | string | null;
-  year?: number | string | null;
-  firstRegistration?: { year?: number | string | null } | null;
 };
 
 const API = "https://pirkauto-backend.onrender.com/api/public/listings";
@@ -66,141 +52,47 @@ const mockListings: Listing[] = Array.from({ length: 13 }, (_, i) => ({
       "de102b86-6205-4ee7-8c54-801a1b99f4fe",
     ][i % 9]
   }`,
-  make: null,
-  model: null,
-  registrationYear: null,
 }));
 
-// Преобразование опции пробега -> числовой предел
-const mileageCapFromOption = (opt: string): number | null => {
-  if (opt === "Any") return null;
-  const digits = opt.replace(/[^\d]/g, "");
-  if (!digits) return null;
-  return parseInt(digits, 10);
-};
-
-/* ================== Обёртка с Suspense ================== */
-
-export default function Page() {
-  return (
-    <Suspense fallback={null}>
-      <HomePageInner />
-    </Suspense>
-  );
-}
-
-/* ================== Основной компонент страницы ================== */
-
-function HomePageInner() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
+export default function HomePage() {
   const [items, setItems] = useState<Listing[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // UI-состояние фильтров
+  // Фильтры (UI)
   const [selectedMark, setSelectedMark] = useState(DEFAULTS.mark);
   const [selectedModel, setSelectedModel] = useState(DEFAULTS.model);
   const [selectedRegistration, setSelectedRegistration] = useState(DEFAULTS.reg);
   const [selectedMileage, setSelectedMileage] = useState(DEFAULTS.mileage);
 
-  // Текущие значения цены (живут вместе со слайдером)
+  // Цена — используется в фильтрации
   const [priceMin, setPriceMin] = useState<number>(DEFAULTS.priceMin);
-  const [priceMax, setPriceMax] = useState<number>(DEFAULTS.priceMax); // может быть Infinity
+  const [priceMax, setPriceMax] = useState<number>(DEFAULTS.priceMax);
 
-  // Применённые фильтры (фиксируются по кнопке "Search offers")
-  const [applied, setApplied] = useState({
-    mark: DEFAULTS.mark,
-    model: DEFAULTS.model,
-    reg: DEFAULTS.reg,
-    mileage: DEFAULTS.mileage,
-    priceMin: DEFAULTS.priceMin,
-    priceMax: DEFAULTS.priceMax as number, // number; допускаем Infinity
-  });
-
-  const [hasSearched, setHasSearched] = useState(false);
+  // Токен для жёсткого сброса слайдера
   const [resetToken, setResetToken] = useState(0);
 
-  // Инициализация из URL (разрешено — мы в Suspense)
-  useEffect(() => {
-    const m = searchParams.get("mark") ?? DEFAULTS.mark;
-    const mo = searchParams.get("model") ?? DEFAULTS.model;
-    const r = searchParams.get("reg") ?? DEFAULTS.reg;
-    const ml = searchParams.get("mileage") ?? DEFAULTS.mileage;
-    const pmin = parseInt(searchParams.get("pmin") ?? "", 10);
-    const pmaxParam = searchParams.get("pmax");
-    const pmax = pmaxParam === "inf" ? Infinity : parseInt(pmaxParam ?? "", 10);
-
-    const anyQuery =
-      (m && m !== DEFAULTS.mark) ||
-      (mo && mo !== DEFAULTS.model) ||
-      (r && r !== DEFAULTS.reg) ||
-      (ml && ml !== DEFAULTS.mileage) ||
-      Number.isFinite(pmin) ||
-      typeof pmaxParam === "string";
-
-    setSelectedMark(m);
-    setSelectedModel(mo);
-    setSelectedRegistration(r);
-    setSelectedMileage(ml);
-
-    if (Number.isFinite(pmin)) setPriceMin(pmin);
-    if (typeof pmaxParam === "string") setPriceMax(Number.isNaN(pmax) ? DEFAULTS.priceMax : pmax);
-
-    if (anyQuery) {
-      setApplied({
-        mark: m,
-        model: mo,
-        reg: r,
-        mileage: ml,
-        priceMin: Number.isFinite(pmin) ? pmin : DEFAULTS.priceMin,
-        priceMax:
-          pmaxParam === "inf" ? Infinity : Number.isFinite(pmax) ? pmax : DEFAULTS.priceMax,
-      });
-      setHasSearched(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Загрузка данных
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       try {
         const res = await fetch(API, { cache: "no-store" });
-        const raw = (await res.json().catch(() => [])) as unknown;
-        const arr = Array.isArray(raw) ? (raw as ApiListing[]) : [];
+        const raw = await res.json().catch(() => []);
+        const arr = Array.isArray(raw) ? raw : [];
 
-        const normalized: Listing[] = arr.map((x: ApiListing, i: number) => {
-          const yearRaw =
-            x.registrationYear ??
-            x.year ??
-            (typeof x.firstRegistration === "object" && x.firstRegistration
-              ? x.firstRegistration.year
-              : null);
+        // Нормализация без any
+        const normalized: Listing[] = arr.map((x: Partial<Listing> | null, i: number) => ({
+          id: String(x?.id ?? i + 1),
+          title: String(x?.title ?? "Text text text"),
+          price: Number(x?.price ?? 0),
+          mileage: Number(x?.mileage ?? 0),
+          thumbnail:
+            typeof x?.thumbnail === "string" && x.thumbnail.length > 0
+              ? x.thumbnail
+              : undefined,
+        }));
 
-          const asNumber = (v: unknown, fallback = 0) =>
-            typeof v === "number" ? v : typeof v === "string" ? Number(v) : fallback;
-
-          return {
-            id: String(x.id ?? i + 1),
-            title: String(x.title ?? "Text text text"),
-            price: asNumber(x.price, 0),
-            mileage: asNumber(x.mileage, 0),
-            thumbnail:
-              typeof x.thumbnail === "string" && x.thumbnail.length > 0 ? x.thumbnail : undefined,
-            make: x.make ?? x.mark ?? null,
-            model: x.model ?? null,
-            registrationYear:
-              typeof yearRaw === "number"
-                ? yearRaw
-                : typeof yearRaw === "string" && /^\d{4}$/.test(yearRaw)
-                ? Number(yearRaw)
-                : null,
-          };
-        });
-
+        // Сортировка по id
         const sorted = [...normalized].sort((a, b) => {
           const na = Number(a.id);
           const nb = Number(b.id);
@@ -221,44 +113,6 @@ function HomePageInner() {
     };
   }, []);
 
-  // В URL кладём компактные значения, Infinity -> "inf"
-  const pushToUrl = (s: {
-    mark: string;
-    model: string;
-    reg: string;
-    mileage: string;
-    priceMin: number;
-    priceMax: number; // может быть Infinity
-  }) => {
-    const params = new URLSearchParams();
-    if (s.mark !== DEFAULTS.mark) params.set("mark", s.mark);
-    if (s.model !== DEFAULTS.model) params.set("model", s.model);
-    if (s.reg !== DEFAULTS.reg) params.set("reg", s.reg);
-    if (s.mileage !== DEFAULTS.mileage) params.set("mileage", s.mileage);
-    if (s.priceMin !== DEFAULTS.priceMin) params.set("pmin", String(s.priceMin));
-    if (s.priceMax !== DEFAULTS.priceMax) {
-      params.set("pmax", Number.isFinite(s.priceMax) ? String(s.priceMax) : "inf");
-    }
-    const qs = params.toString();
-    router.replace(qs ? `/?${qs}` : "/", { scroll: false });
-  };
-
-  // Сабмит фильтров
-  const handleSearch = () => {
-    const next = {
-      mark: selectedMark,
-      model: selectedModel,
-      reg: selectedRegistration,
-      mileage: selectedMileage,
-      priceMin,
-      priceMax,
-    };
-    setApplied(next);
-    pushToUrl(next);
-    setHasSearched(true);
-  };
-
-  // Сброс всех фильтров
   const handleReset = () => {
     setSelectedMark(DEFAULTS.mark);
     setSelectedModel(DEFAULTS.model);
@@ -266,93 +120,20 @@ function HomePageInner() {
     setSelectedMileage(DEFAULTS.mileage);
     setPriceMin(DEFAULTS.priceMin);
     setPriceMax(DEFAULTS.priceMax);
-    const base = {
-      mark: DEFAULTS.mark,
-      model: DEFAULTS.model,
-      reg: DEFAULTS.reg,
-      mileage: DEFAULTS.mileage,
-      priceMin: DEFAULTS.priceMin,
-      priceMax: DEFAULTS.priceMax,
-    };
-    setApplied(base);
-    setHasSearched(false);
     setResetToken((t) => t + 1);
-    router.replace("/", { scroll: false });
   };
 
-  // Фильтрация по "applied"
+  // Источник данных
+  const base = items.length > 0 ? items : mockListings;
+
+  // Фильтрация по цене (max может быть Infinity из слайдера)
   const filtered = useMemo(() => {
-    const cap = mileageCapFromOption(applied.mileage);
-
-    return (items.length ? items : mockListings).filter((it) => {
-      const priceOk =
-        it.price >= applied.priceMin &&
-        (Number.isFinite(applied.priceMax) ? it.price <= applied.priceMax : true);
-
-      const mileageOk = cap == null ? true : it.mileage <= cap;
-
-      const titleLower = it.title.toLowerCase();
-      const makeLower = (it.make ?? "").toLowerCase();
-      const modelLower = (it.model ?? "").toLowerCase();
-
-      const markOk =
-        applied.mark === "Any"
-          ? true
-          : makeLower
-          ? makeLower === applied.mark.toLowerCase()
-          : titleLower.includes(applied.mark.toLowerCase());
-
-      const modelOk =
-        applied.model === "Any"
-          ? true
-          : modelLower
-          ? modelLower === applied.model.toLowerCase()
-          : titleLower.includes(applied.model.toLowerCase());
-
-      let year: number | null = it.registrationYear ?? null;
-      if (year == null) {
-        const m = it.title.match(/\b(19|20)\d{2}\b/);
-        if (m) year = Number(m[0]);
-      }
-      const regOk =
-        applied.reg === "Any" ? true : year != null ? String(year) === applied.reg : true;
-
-      return priceOk && mileageOk && markOk && modelOk && regOk;
-    });
-  }, [items, applied]);
+    const maxOk = Number.isFinite(priceMax) ? (v: number) => v <= priceMax : (_: number) => true;
+    return base.filter((it) => it.price >= priceMin && maxOk(it.price));
+  }, [base, priceMin, priceMax]);
 
   const mainListings = filtered.slice(0, 9);
   const latestListings = filtered.slice(9, 13);
-
-  // Чипсы активных фильтров (без цены)
-  const chips = useMemo(() => {
-    const res: Array<{ key: keyof typeof applied; label: string; value: string }> = [];
-    if (applied.mark !== DEFAULTS.mark)
-      res.push({ key: "mark", label: "Mark", value: applied.mark });
-    if (applied.model !== DEFAULTS.model)
-      res.push({ key: "model", label: "Model", value: applied.model });
-    if (applied.reg !== DEFAULTS.reg)
-      res.push({ key: "reg", label: "Year", value: applied.reg });
-    if (applied.mileage !== DEFAULTS.mileage)
-      res.push({ key: "mileage", label: "Mileage", value: applied.mileage });
-    return res;
-  }, [applied]);
-
-  const removeChip = (key: keyof typeof applied) => {
-    const next = { ...applied };
-    if (key === "mark") next.mark = DEFAULTS.mark;
-    if (key === "model") next.model = DEFAULTS.model;
-    if (key === "reg") next.reg = DEFAULTS.reg;
-    if (key === "mileage") next.mileage = DEFAULTS.mileage;
-
-    setSelectedMark(next.mark);
-    setSelectedModel(next.model);
-    setSelectedRegistration(next.reg);
-    setSelectedMileage(next.mileage);
-
-    setApplied(next);
-    pushToUrl(next);
-  };
 
   return (
     <div className="space-y-12">
@@ -366,121 +147,107 @@ function HomePageInner() {
             loading="eager"
           />
           <div className="absolute inset-0 bg-black/30" />
-          <div className="absolute left-6 top-6 md:left-16 md:top-8">
-            <h1 className="text-base font-semibold text-white">
-              buy and sell a car easily!
+          {/* Заголовок: Anybody, 48px, extrabold, переносы строк */}
+          <div className="absolute left-6 top-6 md:left-12 md:top-10">
+            <h1 className={`${anybody.className} text-[48px] font-extrabold leading-tight text-white`}>
+              <span className="block">buy and</span>
+              <span className="block">sell a car</span>
+              <span className="block">easily!</span>
             </h1>
           </div>
         </div>
       </section>
 
-      {/* SEARCH FILTERS — перекрываем HERO */}
-      <section className="container -mt-10 md:-mt-16">
-        <div className="relative z-10 rounded-[40px] bg-[hsl(var(--muted))] p-6 md:p-8">
-          <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-4">
-            <FilterDropdown
-              label="Mark"
-              value={selectedMark}
-              onChange={setSelectedMark}
-              options={["Any", "BMW", "Mercedes", "Audi", "Volkswagen"]}
-            />
-            <FilterDropdown
-              label="Model"
-              value={selectedModel}
-              onChange={setSelectedModel}
-              options={["Any", "3 Series", "C-Class", "A4", "Golf"]}
-            />
-            <FilterDropdown
-              label="1st registration form"
-              value={selectedRegistration}
-              onChange={setSelectedRegistration}
-              options={["Any", "2023", "2022", "2021", "2020", "2019", "2018", "2017"]}
-            />
-            <FilterDropdown
-              label="Mileage up to"
-              value={selectedMileage}
-              onChange={setSelectedMileage}
-              options={["Any", "50,000 km", "100,000 km", "150,000 km"]}
-            />
-          </div>
+      {/* SEARCH FILTERS — заезжает на картинку ~ на треть */}
+      <section className="container">
+        <div
+          className="
+            relative z-10
+            -translate-y-[120px] sm:-translate-y-[160px] md:-translate-y-[200px] lg:-translate-y-[220px] xl:-translate-y-[240px]
+          "
+        >
+          <div className="rounded-[40px] bg-[hsl(var(--muted))] p-6 md:p-8 shadow-card">
+            <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-4">
+              <FilterDropdown
+                label="Mark"
+                value={selectedMark}
+                onChange={setSelectedMark}
+                options={["Any", "BMW", "Mercedes", "Audi", "Volkswagen"]}
+              />
+              <FilterDropdown
+                label="Model"
+                value={selectedModel}
+                onChange={setSelectedModel}
+                options={["Any", "3 Series", "C-Class", "A4", "Golf"]}
+              />
+              <FilterDropdown
+                label="1st registration form"
+                value={selectedRegistration}
+                onChange={setSelectedRegistration}
+                options={["Any", "2020", "2019", "2018", "2017"]}
+              />
+              <FilterDropdown
+                label="Mileage up to"
+                value={selectedMileage}
+                onChange={setSelectedMileage}
+                options={["Any", "50,000 km", "100,000 km", "150,000 km"]}
+              />
+            </div>
 
-          <div className="grid grid-cols-1 items-end gap-8 md:grid-cols-2">
-            {/* Слайдер цены */}
-            <PriceRangeSlider
-              key={`price-${resetToken}`}
-              minPrice={DEFAULTS.priceMin}
-              maxPrice={DEFAULTS.priceMax}
-              step={1000}
-              onRangeChange={(min, max) => {
-                setPriceMin(min);
-                setPriceMax(max); // Infinity допустимо
-              }}
-            />
+            <div className="grid grid-cols-1 items-end gap-8 md:grid-cols-2">
+              {/* Слайдер цены */}
+              <PriceRangeSlider
+                key={`price-${resetToken}`}
+                minPrice={DEFAULTS.priceMin}
+                maxPrice={DEFAULTS.priceMax}
+                step={1000}
+                onRangeChange={(min, max) => {
+                  setPriceMin(min);
+                  setPriceMax(max);
+                }}
+              />
 
-            {/* Правый столбец с кнопкой и ссылками */}
-            <div className="space-y-4">
-              <button
-                type="button"
-                onClick={handleSearch}
-                className="flex h-10 w-full items-center justify-center gap-3 rounded-lg bg-[#5f5f5f] font-semibold text-white transition-colors hover:bg-gray-700"
-              >
-                <Icon name="search" size={24} />
-                Search offers
-              </button>
-
-              <div className="flex w-full justify-end gap-4">
-                <button className="flex items-center gap-2 text-sm font-semibold text-black transition-colors hover:text-[hsl(var(--accent))]">
-                  <Icon name="filter" size={18} />
-                  More filters
+              {/* Правый столбец с кнопкой и ссылками */}
+              <div className="space-y-4">
+                <button className="flex h-10 w-full items-center justify-center gap-3 rounded-lg bg-[#5f5f5f] font-semibold text-white transition-colors hover:bg-gray-700">
+                  <img
+                    src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/a6cc5711-7646-4ec4-95d8-560f208b9c7c"
+                    alt="Search"
+                    className="h-6 w-6"
+                  />
+                  Search offers
                 </button>
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="flex items-center gap-2 text-sm font-semibold text-black transition-colors hover:text-[hsl(var(--accent))]"
-                >
-                  <Icon name="reset" size={18} />
-                  Reset
-                </button>
+
+                <div className="flex w-full justify-end gap-4">
+                  <button className="flex items-center gap-2 text-sm font-semibold text-black transition-colors hover:text-[hsl(var(--accent))]">
+                    <img
+                      src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d30efceb-1604-46a0-82a1-fe94b17e79da"
+                      alt="Filter"
+                      className="h-3.5 w-3.5"
+                    />
+                    More filters
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    className="flex items-center gap-2 text-sm font-semibold text-black transition-colors hover:text-[hsl(var(--accent))]"
+                  >
+                    <img
+                      src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/5245294e-9c33-44e9-a16e-1cc84c6da426"
+                      alt="Reset"
+                      className="h-3.5 w-3.5"
+                    />
+                    Reset
+                  </button>
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Заполнитель, чтобы нижние секции не «подскакивали» при визуальном сдвиге */}
+          <div className="h-[0px] sm:h-[40px] md:h-[60px] lg:h-[80px]" />
         </div>
       </section>
-
-      {/* ПЛАШКА: только количество, по центру */}
-      {hasSearched && !loading && (
-        <section className="container -mt-2">
-          <div className="flex items-center justify-center rounded-2xl border border-[hsl(var(--border))] bg-white px-4 py-3 shadow-card">
-            <p className="text-center text-base font-semibold text-black">
-              <span className="font-extrabold text-[hsl(var(--accent))]">{filtered.length}</span>{" "}
-              {filtered.length === 1 ? "offer" : "offers"} found
-            </p>
-          </div>
-        </section>
-      )}
-
-      {/* ЧИПСЫ АКТИВНЫХ ФИЛЬТРОВ */}
-      {hasSearched && chips.length > 0 && (
-        <section className="container -mt-6">
-          <div className="flex flex-wrap gap-2">
-            {chips.map((c) => (
-              <button
-                key={c.key}
-                type="button"
-                onClick={() => removeChip(c.key)}
-                className="group inline-flex items-center gap-2 rounded-full border border-[hsl(var(--accent))] bg-white px-3 py-1 text-sm font-semibold text-black shadow-sm hover:bg-[hsl(var(--muted))]"
-                title="Remove filter"
-              >
-                <span className="opacity-70">{c.label}:</span>
-                <span>{c.value}</span>
-                <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[hsl(var(--accent))] text-white leading-none">
-                  ×
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* MAIN LISTINGS */}
       <section className="container">

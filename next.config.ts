@@ -1,9 +1,7 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  output: "export",
-  images: { unoptimized: true },
-  trailingSlash: true, // ⬅️ добавили
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // НЕТ output: 'export' — серверный режим
+  images: { unoptimized: true }
 };
 
-export default nextConfig;
+module.exports = nextConfig;
