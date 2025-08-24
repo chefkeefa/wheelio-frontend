@@ -15,9 +15,9 @@ export default function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="relative h-16 border-b border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+    <header className="relative h-24 border-b border-[hsl(var(--border))] bg-[hsl(var(--card))]">
       {/* ЛОГО — у самого левого края */}
-      <div className="absolute inset-y-0 left-0 flex items-center pl-4 md:pl-6">
+      <div className="absolute inset-y-0 left-0 flex items-center pl-6 md:pl-8">
         <Link href="/" className="flex items-center" prefetch={false}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -28,8 +28,8 @@ export default function Header() {
         </Link>
       </div>
 
-      {/* ЦЕНТРАЛЬНОЕ МЕНЮ — остаётся в контейнере по центру */}
-      <div className="container mx-auto flex h-full items-center justify-center">
+      {/* ЦЕНТРАЛЬНОЕ МЕНЮ — расширили контейнер */}
+      <div className="mx-auto w-full max-w-[1440px] lg:max-w-[1600px] 2xl:max-w-[1920px] px-6 md:px-8 flex h-full items-center justify-center">
         <nav className="hidden items-center gap-8 md:flex">
           {nav.map((item) => (
             <Link
@@ -47,7 +47,7 @@ export default function Header() {
       </div>
 
       {/* ПРАВЫЕ КОНТРОЛЫ — у правого края */}
-      <div className="absolute inset-y-0 right-0 flex items-center gap-3 pr-4 md:pr-6">
+      <div className="absolute inset-y-0 right-0 flex items-center gap-3 pr-6 md:pr-8">
         <button
           className="rounded-lg p-2 transition-colors hover:bg-[hsl(var(--muted))]"
           aria-label="Theme"
