@@ -69,8 +69,9 @@ export default function Header() {
           <Icon name="time" size={28} />
         </button>
 
+        {/* Login → ведёт на /auth/login */}
         <Link
-          href="/login"
+          href="/auth/login"
           prefetch={false}
           className="flex items-center gap-2 rounded-lg p-2 transition-colors hover:bg-[hsl(var(--muted))]"
         >
