@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // НЕТ output: 'export' — серверный режим
-  images: { unoptimized: true }
+  // включаем статический экспорт в ./out
+  output: 'export',
+  images: { unoptimized: true }, // чтобы export не упирался в next/image оптимизацию
+  trailingSlash: true,           // удобно для FTP-хостингов (опционально)
 };
 
 module.exports = nextConfig;
