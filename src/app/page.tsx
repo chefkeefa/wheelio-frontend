@@ -1,4 +1,3 @@
-// src/app/page.tsx
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
@@ -7,6 +6,7 @@ import { Anybody } from "next/font/google";
 import FilterDropdown from "../components/FilterDropdown";
 import PriceRangeSlider from "../components/PriceRangeSlider";
 import CarCard from "../components/CarCard";
+import Button from "../components/Button"; // ✅ используем общий компонент
 
 const anybody = Anybody({
   subsets: ["latin", "latin-ext"],
@@ -64,11 +64,11 @@ export default function HomePage() {
   const [selectedRegistration, setSelectedRegistration] = useState(DEFAULTS.reg);
   const [selectedMileage, setSelectedMileage] = useState(DEFAULTS.mileage);
 
-  // Цена — используется в фильтрации
+  // Цена
   const [priceMin, setPriceMin] = useState<number>(DEFAULTS.priceMin);
   const [priceMax, setPriceMax] = useState<number>(DEFAULTS.priceMax);
 
-  // Токен для жёсткого сброса слайдера
+  // Токен для сброса слайдера
   const [resetToken, setResetToken] = useState(0);
 
   useEffect(() => {
@@ -80,7 +80,6 @@ export default function HomePage() {
         const raw = await res.json().catch(() => []);
         const arr = Array.isArray(raw) ? raw : [];
 
-        // Нормализация без any
         const normalized: Listing[] = arr.map((x: Partial<Listing> | null, i: number) => ({
           id: String(x?.id ?? i + 1),
           title: String(x?.title ?? "Text text text"),
@@ -92,7 +91,6 @@ export default function HomePage() {
               : undefined,
         }));
 
-        // Сортировка по id
         const sorted = [...normalized].sort((a, b) => {
           const na = Number(a.id);
           const nb = Number(b.id);
@@ -123,10 +121,8 @@ export default function HomePage() {
     setResetToken((t) => t + 1);
   };
 
-  // Источник данных
   const base = items.length > 0 ? items : mockListings;
 
-  // Фильтрация по цене (max может быть Infinity из слайдера)
   const filtered = useMemo(() => {
     const maxOk = Number.isFinite(priceMax) ? (v: number) => v <= priceMax : (_: number) => true;
     return base.filter((it) => it.price >= priceMin && maxOk(it.price));
@@ -147,7 +143,6 @@ export default function HomePage() {
             loading="eager"
           />
           <div className="absolute inset-0 bg-black/30" />
-          {/* Заголовок: Anybody, 48px, extrabold, переносы строк */}
           <div className="absolute left-6 top-6 md:left-12 md:top-10">
             <h1 className={`${anybody.className} text-[48px] font-extrabold leading-tight text-white`}>
               <span className="block">buy and</span>
@@ -158,7 +153,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SEARCH FILTERS — заезжает на картинку ~ на треть */}
+      {/* SEARCH FILTERS */}
       <section className="container">
         <div
           className="
@@ -195,7 +190,6 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 items-end gap-8 md:grid-cols-2">
-              {/* Слайдер цены */}
               <PriceRangeSlider
                 key={`price-${resetToken}`}
                 minPrice={DEFAULTS.priceMin}
@@ -207,16 +201,13 @@ export default function HomePage() {
                 }}
               />
 
-              {/* Правый столбец с кнопкой и ссылками */}
               <div className="space-y-4">
-                <button className="flex h-10 w-full items-center justify-center gap-3 rounded-lg bg-[#5f5f5f] font-semibold text-white transition-colors hover:bg-gray-700">
-                  <img
-                    src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/a6cc5711-7646-4ec4-95d8-560f208b9c7c"
-                    alt="Search"
-                    className="h-6 w-6"
-                  />
+                <Button
+                  className="h-10 w-full"
+                  icon="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/a6cc5711-7646-4ec4-95d8-560f208b9c7c"
+                >
                   Search offers
-                </button>
+                </Button>
 
                 <div className="flex w-full justify-end gap-4">
                   <button className="flex items-center gap-2 text-sm font-semibold text-black transition-colors hover:text-[hsl(var(--accent))]">
@@ -243,8 +234,6 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-
-          {/* Заполнитель, чтобы нижние секции не «подскакивали» при визуальном сдвиге */}
           <div className="h-[0px] sm:h-[40px] md:h-[60px] lg:h-[80px]" />
         </div>
       </section>
@@ -272,9 +261,7 @@ export default function HomePage() {
           </div>
         )}
         <div className="mt-8 flex justify-center">
-          <button className="rounded-lg bg-[#5f5f5f] px-12 py-3 text-xl font-extrabold text-white transition-colors hover:bg-gray-700">
-            More
-          </button>
+          <Button className="px-12 py-3 text-xl font-extrabold">More</Button>
         </div>
       </section>
 
@@ -296,9 +283,7 @@ export default function HomePage() {
           ))}
         </div>
         <div className="mt-8 flex justify-center">
-          <button className="rounded-lg bg-[#5f5f5f] px-12 py-3 text-xl font-extrabold text-white transition-colors hover:bg-gray-700">
-            More
-          </button>
+          <Button className="px-12 py-3 text-xl font-extrabold">More</Button>
         </div>
       </section>
     </div>

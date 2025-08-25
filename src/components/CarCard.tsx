@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { formatPrice } from "@/lib/format";
+import Button from "@/components/Button";
 
 interface CarCardProps {
   id: string;
@@ -47,13 +48,10 @@ export default function CarCard({
           <div className="text-sm font-bold text-[#5f5f5f]">Price</div>
           <div className="text-xl font-bold text-black">{formatPrice(price)}</div>
 
-          {/* View — центрировано */}
-          <button
-            type="button"
-            className={`w-full ${btnHeight} flex items-center justify-center rounded-lg bg-[#5f5f5f] text-xl font-extrabold text-white transition-colors hover:bg-gray-700`}
-          >
+          {/* View — центрировано, общий стиль, hover оранжевый */}
+          <Button as="div" className={`w-full ${btnHeight} text-xl font-extrabold`}>
             View
-          </button>
+          </Button>
         </div>
       </article>
     </Link>
