@@ -1,7 +1,9 @@
+// src/app/auth/register/page.tsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -117,20 +119,26 @@ export default function RegisterPage() {
                     />
                     <label
                       htmlFor="photo"
-                      className="w-[219px] h-[219px] rounded-full bg-[#cecece] border-2 border-[#d9a339] flex items-center justify-center cursor-pointer overflow-hidden transition-colors"
+                      className="relative w-[219px] h-[219px] rounded-full bg-[#cecece] border-2 border-[#d9a339] flex items-center justify-center cursor-pointer overflow-hidden transition-colors"
                     >
                       {/* image / placeholder */}
                       {photoPreview ? (
-                        <img
+                        <Image
                           src={photoPreview}
                           alt="Profile preview"
-                          className="w-full h-full object-cover rounded-full"
+                          fill
+                          sizes="219px"
+                          className="object-cover rounded-full"
+                          unoptimized
                         />
                       ) : (
-                        <img
+                        <Image
                           src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/5b8932af-d6f8-4bc8-87fa-ac846174e91b"
                           alt="Upload placeholder"
-                          className="w-full h-full object-cover rounded-full opacity-50"
+                          fill
+                          sizes="219px"
+                          className="object-cover rounded-full opacity-50"
+                          unoptimized
                         />
                       )}
 

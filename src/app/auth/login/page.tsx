@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -132,10 +133,13 @@ export default function LoginPage() {
                     onClick={handleGoogleLogin}
                     className="h-[52px] px-4 bg-white border-2 border-[#d9a339] rounded-lg inline-flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors"
                   >
-                    <img
+                    <Image
                       src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/382a4195-a96e-4632-b36d-44e231e8e1e5"
                       alt="Google"
+                      width={20}
+                      height={20}
                       className="w-5 h-5"
+                      unoptimized
                     />
                     <span className="text-[16px] md:text-[20px] font-bold text-black">
                       Continue with Google
@@ -157,7 +161,7 @@ export default function LoginPage() {
 
               {/* Links */}
               <div className="pt-1 text-center space-y-1">
-                <Link href="/auth/register" className="text-[16px] font-bold text-black hover:text-[#d9a339]">
+                <Link href="/auth/register" className="text-[16px] font-bold text_black hover:text-[#d9a339]">
                   {"Don't have an account?"}
                 </Link>
                 <br className="hidden sm:block" />
