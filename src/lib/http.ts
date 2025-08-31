@@ -16,7 +16,7 @@ export class ApiError extends Error {
 export function buildUrl(
   path: string,
   params?: Record<string, unknown>,
-  absoluteBase: string = API_BASE
+  absoluteBase: string = API_BASE,
 ) {
   const base = absoluteBase.endsWith("/") ? absoluteBase : absoluteBase + "/";
   const safePath = path.startsWith("/") ? path.slice(1) : path;
@@ -32,13 +32,18 @@ export function buildUrl(
 
 type FetchJsonInit = RequestInit & {
   timeoutMs?: number;
-  absolute?: boolean; // если true — path уже абсолютный URL
+  /** если true — path уже абсолютный URL */
+  absolute?: boolean;
 };
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null;
+}
 
 /** Универсальный fetch JSON с таймаутом и аккуратными ошибками */
 export async function fetchJson<T = unknown>(
   path: string,
-  init: FetchJsonInit = {}
+  init: FetchJsonInit = {},
 ): Promise<T> {
   const { timeoutMs = 15000, absolute = false, ...rest } = init;
   const controller = new AbortController();
@@ -58,8 +63,13 @@ export async function fetchJson<T = unknown>(
       if (res.status === 204) return undefined as T;
       const ct = res.headers.get("content-type") || "";
       if (!ct.includes("application/json")) {
+        // Пытаемся распарсить текст как JSON, иначе вернём null
         const text = await res.text();
-        return (text ? (JSON.parse(text) as T) : (null as T));
+        try {
+          return (text ? (JSON.parse(text) as T) : (null as T));
+        } catch {
+          return (null as T);
+        }
       }
       return (await res.json()) as T;
     }
@@ -67,25 +77,38 @@ export async function fetchJson<T = unknown>(
     // читаем тело ошибки
     let message = `HTTP ${res.status}`;
     let details: unknown = undefined;
+
     try {
       const text = await res.text();
       if (text) {
         try {
-          const json = JSON.parse(text);
-          details = json;
-          message = (json as any)?.message || message;
+          const parsed: unknown = JSON.parse(text);
+          details = parsed;
+          if (isRecord(parsed) && typeof parsed.message === "string") {
+            message = parsed.message;
+          } else if (typeof text === "string" && text.trim().length > 0) {
+            // если JSON без поля message — падать не будем, оставим HTTP-код
+          }
         } catch {
-          message = text || message;
+          // не JSON — используем сырой текст
+          if (text.trim().length > 0) message = text;
         }
       }
     } catch {
-      /* ignore */
+      // игнорируем ошибку чтения тела
     }
+
     throw new ApiError(message, res.status, details);
-  } catch (err: any) {
-    if (err?.name === "AbortError") throw new ApiError("Request timeout", 408);
+  } catch (err: unknown) {
+    // таймаут
+    if (isRecord(err) && err.name === "AbortError") {
+      throw new ApiError("Request timeout", 408);
+    }
     if (err instanceof ApiError) throw err;
-    throw new ApiError(err?.message || "Network error");
+
+    const msg =
+      (isRecord(err) && typeof err.message === "string" && err.message) || "Network error";
+    throw new ApiError(msg);
   } finally {
     clearTimeout(timer);
   }

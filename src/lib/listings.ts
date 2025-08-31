@@ -1,5 +1,6 @@
 // src/lib/listings.ts
-import { fetchJson, buildUrl } from "@/lib/http"; // <— алиас вместо ./http
+import { fetchJson, buildUrl } from "@/lib/http";
+import { API_BASE } from "@/lib/config";
 
 export type Listing = {
   id: string;
@@ -29,56 +30,99 @@ export type ListingsQuery = {
 const PUBLIC = "/public/listings";
 const PRIVATE = "/listings";
 
-function normalizeList(input: unknown): Listing[] {
-  if (!Array.isArray(input)) return [];
-  return input.map((x: any, i: number) => ({
-    id: String(x?.id ?? i + 1),
-    title: String(x?.title ?? "Text text text"),
-    price: Number.isFinite(Number(x?.price)) ? Number(x?.price) : 0,
-    mileage: Number.isFinite(Number(x?.mileage)) ? Number(x?.mileage) : 0,
-    thumbnail: typeof x?.thumbnail === "string" && x.thumbnail ? x.thumbnail : undefined,
-  }));
+/** Вспомогалки */
+function asRecord(v: unknown): Record<string, unknown> {
+  return v !== null && typeof v === "object" ? (v as Record<string, unknown>) : {};
+}
+function toNum(v: unknown, fallback = 0): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+function toStr(v: unknown, fallback = ""): string {
+  return typeof v === "string" ? v : fallback;
+}
+function toOptStr(v: unknown): string | undefined {
+  return typeof v === "string" && v.length > 0 ? v : undefined;
+}
+function firstPreviewUrl(rec: Record<string, unknown>): string | undefined {
+  const ids = rec["imageIds"];
+  if (Array.isArray(ids) && ids.length > 0) {
+    const raw = ids[0];
+    const idNum = Number(raw);
+    if (Number.isFinite(idNum)) return `${API_BASE}/db/images/${idNum}/preview`;
+  }
+  return undefined;
 }
 
-function normalizeDetail(x: any): ListingDetail {
+function normalizeList(input: unknown): Listing[] {
+  if (!Array.isArray(input)) return [];
+  return input.map((item, i): Listing => {
+    const r = asRecord(item);
+    const thumb = toOptStr(r["thumbnail"]) ?? firstPreviewUrl(r);
+    const idRaw = r["id"];
+    const id = idRaw === undefined || idRaw === null ? String(i + 1) : String(idRaw);
+    return {
+      id,
+      title: toStr(r["title"], "Text text text"),
+      price: toNum(r["price"], 0),
+      mileage: toNum(r["mileage"], 0),
+      thumbnail: thumb,
+    };
+  });
+}
+
+function normalizeDetail(x: unknown): ListingDetail {
+  const r = asRecord(x);
+  const thumb = toOptStr(r["thumbnail"]) ?? firstPreviewUrl(r);
+  const images = Array.isArray(r["images"])
+    ? (r["images"] as unknown[]).filter((s): s is string => typeof s === "string")
+    : [];
+
   return {
-    id: String(x?.id ?? ""),
-    title: String(x?.title ?? "Text text text"),
-    price: Number.isFinite(Number(x?.price)) ? Number(x?.price) : 0,
-    mileage: Number.isFinite(Number(x?.mileage)) ? Number(x?.mileage) : 0,
-    thumbnail: typeof x?.thumbnail === "string" && x.thumbnail ? x.thumbnail : undefined,
-    description: typeof x?.description === "string" ? x.description : undefined,
-    images: Array.isArray(x?.images) ? x.images.filter((s: any) => typeof s === "string") : [],
+    id: toStr(r["id"], ""),
+    title: toStr(r["title"], "Text text text"),
+    price: toNum(r["price"], 0),
+    mileage: toNum(r["mileage"], 0),
+    thumbnail: thumb,
+    description: toOptStr(r["description"]),
+    images,
   };
 }
 
 export async function getPublicListings(query: ListingsQuery = {}): Promise<Listing[]> {
   const url = buildUrl(PUBLIC, query);
-  const data = await fetchJson<any>(url, { method: "GET", absolute: false });
-  const arr = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+  const data = await fetchJson<unknown>(url, { method: "GET", absolute: false });
+  const arr = Array.isArray(data)
+    ? data
+    : Array.isArray(asRecord(data)["data"])
+    ? (asRecord(data)["data"] as unknown[])
+    : [];
   return normalizeList(arr);
 }
 
 export async function getListingById(id: string): Promise<ListingDetail | null> {
   if (!id) return null;
   const url = buildUrl(`${PUBLIC}/${encodeURIComponent(id)}`);
-  const raw = await fetchJson<any>(url, { method: "GET", absolute: false });
+  const raw = await fetchJson<unknown>(url, { method: "GET", absolute: false });
   if (!raw) return null;
-  return normalizeDetail(raw?.data ?? raw);
+  const payload = asRecord(raw)["data"] ?? raw;
+  return normalizeDetail(payload);
 }
 
 export async function createListing(payload: Partial<ListingDetail>): Promise<ListingDetail> {
-  const data = await fetchJson<any>(`${PRIVATE}/create`, {
+  const data = await fetchJson<unknown>(`${PRIVATE}/create`, {
     method: "POST",
     body: JSON.stringify(payload),
+    headers: { "Content-Type": "application/json" },
   });
   return normalizeDetail(data);
 }
 
 export async function editListing(id: string, payload: Partial<ListingDetail>): Promise<ListingDetail> {
-  const data = await fetchJson<any>(`${PRIVATE}/${encodeURIComponent(id)}/edit`, {
+  const data = await fetchJson<unknown>(`${PRIVATE}/${encodeURIComponent(id)}/edit`, {
     method: "POST",
     body: JSON.stringify(payload),
+    headers: { "Content-Type": "application/json" },
   });
   return normalizeDetail(data);
 }
