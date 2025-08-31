@@ -1,136 +1,176 @@
 "use client";
 
-import { usePriceRange } from "@/components/filters/price/usePriceRange";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { anybody } from "@/lib/fonts";
 
-interface PriceRangeSliderProps {
-  minPrice?: number;
-  maxPrice?: number;
+interface Props {
+  minPrice: number;
+  maxPrice: number;
   step?: number;
-  onRangeChange?: (min: number, max: number) => void; // max = Infinity при режиме ">"
+  onRangeChange: (min: number, max: number) => void;
+  className?: string;
 }
 
-export default function PriceRangeSlider({
-  minPrice = 0,
-  maxPrice = 100_000,
-  step = 1_000,
-  onRangeChange,
-}: PriceRangeSliderProps) {
-  const {
-    minValue,
-    maxValue,
-    maxOverflow,
-    rawMin,
-    rawMax,
-    trackRef,
-    fmt,
-    leftPct,
-    rightPct,
-    setDragging,
-    onMinInput,
-    onMaxInput,
-    commitMin,
-    commitMax,
-    onKey,
-    handleTrackPointerDown,
-  } = usePriceRange({ minPrice, maxPrice, step, onChange: onRangeChange });
+type Dragging = "min" | "max" | null;
 
-  const rightLabel = (maxOverflow ? ">" : "") + fmt.format(maxPrice) + "€";
+export default function PriceRangeSlider({
+  minPrice,
+  maxPrice,
+  step = 100,
+  onRangeChange,
+  className = "",
+}: Props) {
+  const [min, setMin] = useState(minPrice);
+  const [max, setMax] = useState(maxPrice);
+  const [dragging, setDragging] = useState<Dragging>(null);
+
+  const trackRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setMin(minPrice);
+    setMax(maxPrice);
+  }, [minPrice, maxPrice]);
+
+  useEffect(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => onRangeChange(min, max));
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [min, max]);
+
+  const clamp = (v: number) => Math.min(Math.max(v, minPrice), maxPrice);
+  const percent = (v: number) => ((v - minPrice) / (maxPrice - minPrice)) * 100;
+  const roundToStep = (v: number) => Math.round(v / step) * step;
+
+  const valueFromPointerX = (clientX: number) => {
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect) return minPrice;
+    const x = Math.min(Math.max(clientX - rect.left, 0), rect.width);
+    const ratio = x / rect.width;
+    const raw = minPrice + ratio * (maxPrice - minPrice);
+    return clamp(roundToStep(raw));
+  };
+
+  const onTrackPointerDown = (e: React.PointerEvent) => {
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    const val = valueFromPointerX(e.clientX);
+    const distToMin = Math.abs(val - min);
+    const distToMax = Math.abs(val - max);
+    const target: Dragging = distToMin <= distToMax ? "min" : "max";
+    setDragging(target);
+    if (target === "min") setMin(Math.min(val, max - step));
+    else setMax(Math.max(val, min + step));
+  };
+
+  const onThumbPointerDown = (which: Dragging) => (e: React.PointerEvent) => {
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    setDragging(which);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!dragging) return;
+    const val = valueFromPointerX(e.clientX);
+    if (dragging === "min") setMin((prev) => Math.min(val, max - step));
+    else setMax((prev) => Math.max(val, min + step));
+  };
+  const endDrag = (e: React.PointerEvent) => {
+    if ((e.currentTarget as HTMLElement).hasPointerCapture?.(e.pointerId)) {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    }
+    setDragging(null);
+  };
+
+  const onThumbKeyDown = (which: Dragging) => (e: React.KeyboardEvent) => {
+    let delta = 0;
+    if (e.key === "ArrowLeft") delta = -step;
+    if (e.key === "ArrowRight") delta = step;
+    if (e.key === "PageDown") delta = -step * 10;
+    if (e.key === "PageUp") delta = step * 10;
+    if (delta !== 0) {
+      e.preventDefault();
+      if (which === "min") setMin((v) => Math.min(clamp(roundToStep(v + delta)), max - step));
+      else setMax((v) => Math.max(clamp(roundToStep(v + delta)), min + step));
+    }
+  };
+
+  const leftPct = useMemo(() => percent(min), [min, minPrice, maxPrice]);
+  const rightPct = useMemo(() => 100 - percent(max), [max, minPrice, maxPrice]);
 
   return (
-    <div className="space-y-3">
-      <label className="block text-base font-semibold text-black">Price</label>
+    <div className={`w-full select-none ${className}`}>
+      {/* label: немного крупнее */}
+      <label className={`${anybody.className} mb-2 block text-[15px] md:text-base font-bold text-[hsl(var(--muted-foreground))]`}>
+        Price range
+      </label>
 
-      <div className="flex justify-between text-base font-semibold text-black">
-        <span>{fmt.format(minPrice)}€</span>
-        <span>{rightLabel}</span>
-      </div>
-
-      {/* ТОНКИЙ слайдер */}
       <div
         ref={trackRef}
-        className="relative h-2 rounded-full bg-[#d9d9d9]"
-        onPointerDown={handleTrackPointerDown}
-        style={{ cursor: "pointer" }}
+        className={["relative h-12", dragging ? "cursor-grabbing" : "cursor-pointer"].join(" ")}
+        onPointerDown={onTrackPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
       >
+        {/* трек — #D9D9D9 */}
+        <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-[#D9D9D9]" />
+        {/* выделение диапазона */}
         <div
-          className="absolute top-0 h-full rounded-full"
-          style={{
-            left: `${leftPct}%`,
-            width: `${Math.max(rightPct - leftPct, 0)}%`,
-            background: "hsl(var(--accent))",
-          }}
+          className="absolute top-1/2 h-2 -translate-y-1/2 rounded-full bg-[hsl(var(--accent))]"
+          style={{ left: `${leftPct}%`, right: `${rightPct}%` }}
         />
 
+        {/* MIN */}
         <button
           type="button"
           role="slider"
-          aria-label="Минимальная цена"
+          aria-label="Minimum price"
           aria-valuemin={minPrice}
-          aria-valuemax={maxPrice}
-          aria-valuenow={minValue}
+          aria-valuemax={max - step}
+          aria-valuenow={min}
           tabIndex={0}
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-3 w-3 rounded-full border bg-white border-[hsl(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--accent))]"
-          style={{ left: `${leftPct}%`, touchAction: "none", cursor: "grab" }}
-          onPointerDown={() => setDragging("min")}
-          onKeyDown={(e) => onKey("min", e)}
+          onKeyDown={onThumbKeyDown("min")}
+          onPointerDown={onThumbPointerDown("min")}
+          className={[
+            "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full outline-none",
+            "after:block after:h-5 after:w-5 after:rounded-full after:border-2 after:border-white after:bg-[hsl(var(--accent))] after:shadow",
+            "before:absolute before:-inset-2 before:rounded-full before:content-['']",
+            dragging === "min" ? "ring-4 ring-[hsl(var(--accent))/0.25]" : "",
+          ].join(" ")}
+          style={{ left: `${leftPct}%` }}
         />
-
+        {/* MAX */}
         <button
           type="button"
           role="slider"
-          aria-label="Максимальная цена"
-          aria-valuemin={minPrice}
+          aria-label="Maximum price"
+          aria-valuemin={min + step}
           aria-valuemax={maxPrice}
-          aria-valuenow={maxOverflow ? maxPrice : maxValue}
+          aria-valuenow={max}
           tabIndex={0}
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-3 w-3 rounded-full border bg-white border-[hsl(var(--accent))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--accent))]"
-          style={{ left: `${rightPct}%`, touchAction: "none", cursor: "grab" }}
-          onPointerDown={() => setDragging("max")}
-          onKeyDown={(e) => onKey("max", e)}
+          onKeyDown={onThumbKeyDown("max")}
+          onPointerDown={onThumbPointerDown("max")}
+          className={[
+            "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full outline-none",
+            "after:block after:h-5 after:w-5 after:rounded-full after:border-2 after:border-white after:bg-[hsl(var(--accent))] after:shadow",
+            "before:absolute before:-inset-2 before:rounded-full before:content-['']",
+            dragging === "max" ? "ring-4 ring-[hsl(var(--accent))/0.25]" : "",
+          ].join(" ")}
+          style={{ left: `${100 - rightPct}%` }}
         />
       </div>
 
-      <div className="flex gap-3">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            placeholder="0"
-            value={rawMin ?? (minValue === minPrice ? "" : fmt.format(minValue))}
-            onChange={(e) => onMinInput(e.target.value)}
-            onBlur={commitMin}
-            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), commitMin())}
-            className="h-10 w-full rounded-lg bg-[#d9d9d9] px-3 pr-8 text-base font-semibold text-[#8c8c8c] placeholder-[#8c8c8c]"
-          />
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-base font-semibold text-[#8c8c8c]">
-            €
-          </span>
-        </div>
-
-        <div className="relative flex-1">
-          {maxOverflow && (
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base font-semibold text-[#8c8c8c]">
-              {">"}
-            </span>
-          )}
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            placeholder={fmt.format(maxPrice)}
-            value={
-              rawMax ?? (maxOverflow ? fmt.format(maxPrice) : maxValue === maxPrice ? "" : fmt.format(maxValue))
-            }
-            onChange={(e) => onMaxInput(e.target.value)}
-            onBlur={commitMax}
-            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), commitMax())}
-            className={`h-10 w-full rounded-lg bg-[#d9d9d9] ${maxOverflow ? "pl-8" : "pl-3"} pr-8 text-base font-semibold text-[#8c8c8c] placeholder-[#8c8c8c]`}
-          />
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-base font-semibold text-[#8c8c8c]">
-            €
-          </span>
-        </div>
+      <div className={`${anybody.className} mt-3 flex items-center justify-between text-sm text-[hsl(var(--muted-foreground))]`}>
+        <span>
+          Min:{" "}
+          <strong className="font-bold text-[hsl(var(--foreground))]">{min.toLocaleString()} €</strong>
+        </span>
+        <span>
+          Max:{" "}
+          <strong className="font-bold text-[hsl(var(--foreground))]">{max.toLocaleString()} €</strong>
+        </span>
       </div>
     </div>
   );

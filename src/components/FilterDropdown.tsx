@@ -1,45 +1,81 @@
-import Icon from "@/components/ui/Icon";
+/* eslint-disable @next/next/no-img-element */
+import React from "react";
+import { anybody } from "@/lib/fonts";
 
-type RawOption = string | { label: string; value: string };
+type Option = string;
+
+interface Props {
+  label: string;
+  value: string;
+  options: Option[];
+  onChange: (value: string) => void;
+  className?: string;
+}
 
 export default function FilterDropdown({
   label,
   value,
   options,
   onChange,
-}: {
-  label: string;
-  value: string;
-  options: RawOption[];
-  onChange: (value: string) => void;
-}) {
-  const id = `fd-${label.replace(/\s+/g, "-").toLowerCase()}`;
-  const normalized = options.map((o) =>
-    typeof o === "string" ? { label: o, value: o } : o
-  );
+  className = "",
+}: Props) {
+  const isAny = typeof value === "string" && value.trim().toLowerCase() === "any";
 
   return (
-    <label htmlFor={id} className="flex flex-col items-start gap-1">
-      <span className="text-base font-semibold text-black">{label}</span>
+    <label className={`flex flex-col gap-2 ${className}`}>
+      {/* label: немного крупнее + Anybody bold */}
+      <span
+        className={`${anybody.className} text-[15px] md:text-base font-bold text-[hsl(var(--muted-foreground))]`}
+      >
+        {label}
+      </span>
 
-      <div className="relative w-full">
+      <div className="relative">
         <select
-          id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-10 w-full rounded-lg bg-[#d9d9d9] px-3 pr-8 text-base font-semibold text-[#8c8c8c]
-                     appearance-none border-0 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--accent))]"
+          className={[
+            anybody.className,
+            // прямоугольник с нужным фоном
+            "w-full appearance-none rounded-xl border border-[hsl(var(--border))] bg-[#D9D9D9]",
+            "px-4 py-2.5 text-[15px]",
+            // подстановка стиля для Any
+            isAny ? "font-normal text-[#8C8C8C]" : "font-bold text-[hsl(var(--foreground))]",
+            "outline-none ring-0 focus:border-[hsl(var(--accent))] transition-colors",
+          ].join(" ")}
         >
-          {normalized.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
+          {options.map((opt) => {
+            const isOptAny = opt.trim().toLowerCase() === "any";
+            return (
+              <option
+                key={opt}
+                value={opt}
+                // подсказка: опции стилизуются ограниченно, но поставим семантику
+                className={isOptAny ? "font-normal text-[#8C8C8C]" : "font-bold"}
+              >
+                {opt}
+              </option>
+            );
+          })}
         </select>
 
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-          <Icon name="chevronDown" size={14} />
-        </span>
+        {/* caret */}
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]"
+          aria-hidden="true"
+        >
+          <path
+            d="M6 9l6 6 6-6"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </div>
     </label>
   );

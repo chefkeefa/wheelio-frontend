@@ -1,9 +1,10 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  // включаем статический экспорт в ./out
-  output: 'export',
-  images: { unoptimized: true }, // чтобы export не упирался в next/image оптимизацию
-  trailingSlash: true,           // удобно для FTP-хостингов (опционально)
+// next.config.ts
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  output: "export",
+  images: { unoptimized: true },
+  trailingSlash: true,
 };
 
-module.exports = nextConfig;
+export default nextConfig;

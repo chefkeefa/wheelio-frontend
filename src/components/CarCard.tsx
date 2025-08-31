@@ -1,59 +1,68 @@
 /* eslint-disable @next/next/no-img-element */
+import React from "react";
 import Link from "next/link";
-import { formatPrice } from "@/lib/format";
-import Button from "@/components/Button";
+import { anybody } from "@/lib/fonts";
 
-interface CarCardProps {
+type Size = "small" | "large";
+
+export interface CarCardProps {
   id: string;
   title: string;
-  description?: string;
   price: number;
-  imageUrl?: string;
-  size?: "large" | "small";
+  imageUrl: string;
+  size?: Size;
+}
+
+function formatPrice(value: number) {
+  try {
+    return new Intl.NumberFormat("lt-LT", {
+      style: "currency",
+      currency: "EUR",
+      maximumFractionDigits: 0,
+    }).format(value);
+  } catch {
+    return `${value.toLocaleString()} €`;
+  }
 }
 
 export default function CarCard({
   id,
   title,
-  description = "text/text/text/text",
   price,
   imageUrl,
   size = "large",
 }: CarCardProps) {
-  const isLarge = size === "large";
-  const src = imageUrl && imageUrl.length > 0 ? imageUrl : "/placeholder-car.jpg";
-  const btnHeight = isLarge ? "h-10" : "h-8";
+  const isSmall = size === "small";
 
   return (
-    <Link href={`/listing?id=${id}`} className="block" prefetch={false}>
-      <article className="overflow-hidden rounded-lg bg-white transition-shadow hover:shadow-lg">
-        {/* Car Image */}
-        <div className={`relative bg-[hsl(var(--muted))] ${isLarge ? "h-64" : "h-52"}`}>
-          <img
-            src={src}
-            alt={title}
-            className="absolute inset-0 h-full w-full rounded border-2 border-[hsl(var(--accent))] object-cover"
-            loading="lazy"
-          />
+    <Link
+      href={`/listing?id=${encodeURIComponent(id)}`}
+      className={[
+        "group block overflow-hidden rounded-2xl",
+        "ring-1 ring-[hsl(var(--border))] bg-white",
+        "transition-all duration-300 hover:shadow-xl hover:-translate-y-[2px]",
+      ].join(" ")}
+    >
+      {/* media */}
+      <div className={["relative w-full", isSmall ? "h-40" : "h-56", "bg-[hsl(var(--muted))]"].join(" ")}>
+        <img
+          src={imageUrl || "/placeholder-car.jpg"}
+          alt={title}
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/5" />
+      </div>
+
+      {/* content */}
+      <div className="p-4">
+        <h3 className={`${anybody.className} line-clamp-2 text-[15px] font-bold text-[hsl(var(--foreground))]`}>
+          {title}
+        </h3>
+        <div className={`${anybody.className} mt-2 text-base font-bold text-[hsl(var(--accent))]`}>
+          {formatPrice(price)}
         </div>
-
-        {/* Card Content */}
-        <div className={`space-y-2 ${isLarge ? "p-6" : "p-4"}`}>
-          <div className="text-sm font-bold text-[#5f5f5f]">Text</div>
-          <h3 className="text-base font-bold text-black">{title}</h3>
-          <p className="text-sm text-[#5f5f5f]">{description}</p>
-
-          <div className="my-3 border-t border-[hsl(var(--accent))]" />
-
-          <div className="text-sm font-bold text-[#5f5f5f]">Price</div>
-          <div className="text-xl font-bold text-black">{formatPrice(price)}</div>
-
-          {/* View — центрировано, общий стиль, hover оранжевый */}
-          <Button as="div" className={`w-full ${btnHeight} text-xl font-extrabold`}>
-            View
-          </Button>
-        </div>
-      </article>
+      </div>
     </Link>
   );
 }
