@@ -4,6 +4,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Icon from "@/components/ui/Icon";
+import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
 
 const nav = [
   { href: "/", label: "Buy" },
@@ -13,6 +15,8 @@ const nav = [
 
 export default function Header() {
   const pathname = usePathname();
+  const { isAuthenticated, user, logout } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   return (
     <header className="relative h-24 border-b border-[hsl(var(--border))] bg-[hsl(var(--card))]">
@@ -69,15 +73,71 @@ export default function Header() {
           <Icon name="time" size={28} />
         </button>
 
-        {/* Login → ведёт на /auth/login */}
-        <Link
-          href="/auth/login"
-          prefetch={false}
-          className="flex items-center gap-2 rounded-lg p-2 transition-colors hover:bg-[hsl(var(--muted))]"
-        >
-          <Icon name="user" size={28} />
-          <span className="text-xl font-semibold">Login</span>
-        </Link>
+        {/* Authentication Section */}
+        {isAuthenticated ? (
+          <div className="relative">
+            {/* Favorites Link */}
+            <Link
+              href="/favorites"
+              className="flex items-center gap-2 rounded-lg p-2 mr-2 transition-colors hover:bg-[hsl(var(--muted))]"
+              aria-label="Favorites"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </Link>
+            
+            {/* User Menu */}
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-2 rounded-lg p-2 transition-colors hover:bg-[hsl(var(--muted))]"
+            >
+              <Icon name="user" size={28} />
+              <span className="text-xl font-semibold">{user?.firstName}</span>
+            </button>
+            
+            {/* Dropdown Menu */}
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                <div className="py-1">
+                  <Link
+                    href="/favorites"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setShowUserMenu(false)}
+                  >
+                    My Favorites
+                  </Link>
+                  <Link
+                    href="/chat"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setShowUserMenu(false)}
+                  >
+                    Messages
+                  </Link>
+                  <hr className="my-1" />
+                  <button
+                    onClick={() => {
+                      logout();
+                      setShowUserMenu(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <Link
+            href="/auth/login"
+            prefetch={false}
+            className="flex items-center gap-2 rounded-lg p-2 transition-colors hover:bg-[hsl(var(--muted))]"
+          >
+            <Icon name="user" size={28} />
+            <span className="text-xl font-semibold">Login</span>
+          </Link>
+        )}
       </div>
     </header>
   );
