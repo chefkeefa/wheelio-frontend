@@ -1,202 +1,40 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
+import { FormEvent, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useLanguage } from "@/context/LanguageContext";
+import { googleLoginUrl, registerUser, requestPhoneCode, verifyPhoneCode, type VerificationChannel } from "@/lib/pirkApi";
 
 export default function RegisterPage() {
-  const { register, isLoading } = useAuth();
-  const router = useRouter();
+  const { language } = useLanguage();
+  const tr = (en:string,lt:string,ru:string)=>language==="LT"?lt:language==="RU"?ru:en;
+  const router=useRouter();
+  const [form,setForm]=useState({email:"",name:"",surname:"",city:"",address:"",zip:"",phone:"",password:"",confirm:""});
+  const [code,setCode]=useState(""); const [token,setToken]=useState(""); const [devCode,setDevCode]=useState("");
+  const [message,setMessage]=useState(""); const [error,setError]=useState(""); const [loading,setLoading]=useState(false);
+  const set=(key:string,value:string)=>setForm((f)=>({...f,[key]:value}));
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: '',
-    phone: ''
-  });
-  const [error, setError] = useState('');
+  async function send(channel:VerificationChannel){ setError(""); setMessage(""); try{ const r=await requestPhoneCode(form.phone,channel); setDevCode(r.devCode||""); setMessage(channel==="SMS"?tr("Code sent by SMS","Kodas išsiųstas SMS","Код отправлен по SMS"):tr("You will receive a call with the code","Jums paskambins ir pasakys kodą","Вам позвонят и продиктуют код")); }catch(e){setError(e instanceof Error?e.message:String(e));}}
+  async function verify(){setError("");try{const r=await verifyPhoneCode(form.phone,code);setToken(r.verificationToken);setMessage(tr("Phone verified ✓","Telefonas patvirtintas ✓","Телефон подтверждён ✓"));}catch(e){setError(e instanceof Error?e.message:String(e));}}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  async function submit(e:FormEvent){e.preventDefault();setError("");if(form.password!==form.confirm){setError(tr("Passwords do not match","Slaptažodžiai nesutampa","Пароли не совпадают"));return;}if(!token){setError(tr("Verify your phone first","Pirmiausia patvirtinkite telefoną","Сначала подтвердите телефон"));return;}setLoading(true);try{await registerUser({email:form.email,name:form.name,surname:form.surname,city:form.city,address:form.address,zip:form.zip,phone:form.phone,verificationToken:token,password:form.password});router.push("/auth/login?registered=1");}catch(e){setError(e instanceof Error?e.message:String(e));}finally{setLoading(false);}}
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    try {
-      await register({
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone || undefined
-      });
-      router.push('/');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500">
-              sign in to your existing account
-            </Link>
-          </p>
-        </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-              {error}
-            </div>
-          )}
-          
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                  First name
-                </label>
-                <input
-                  id="firstName"
-                  name="firstName"
-                  type="text"
-                  autoComplete="given-name"
-                  required
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="First name"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                  Last name
-                </label>
-                <input
-                  id="lastName"
-                  name="lastName"
-                  type="text"
-                  autoComplete="family-name"
-                  required
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Last name"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your email"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                Phone number (optional)
-              </label>
-              <input
-                id="phone"
-                name="phone"
-                type="tel"
-                autoComplete="tel"
-                value={formData.phone}
-                onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your phone number"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your password"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm password
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Confirm your password"
-              />
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Creating account...
-                </>
-              ) : (
-                'Create account'
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+  const input="h-11 w-full rounded-lg bg-[#cecece] px-3 text-black outline-none focus:ring-2 focus:ring-accent";
+  return <main className="bg-background px-4 py-10 text-foreground"><div className="mx-auto max-w-3xl rounded-2xl border-2 border-accent bg-card p-7"><h1 className="mb-6 text-center text-5xl font-bold">{tr("Create account","Sukurti paskyrą","Создать аккаунт")}</h1><form onSubmit={submit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <Field label="E-mail"><input className={input} type="email" required value={form.email} onChange={(e)=>set("email",e.target.value)}/></Field>
+    <Field label={tr("First name","Vardas","Имя")}><input className={input} required value={form.name} onChange={(e)=>set("name",e.target.value)}/></Field>
+    <Field label={tr("Last name","Pavardė","Фамилия")}><input className={input} required value={form.surname} onChange={(e)=>set("surname",e.target.value)}/></Field>
+    <Field label={tr("City","Miestas","Город")}><input className={input} required value={form.city} onChange={(e)=>set("city",e.target.value)}/></Field>
+    <Field label={tr("Address","Adresas","Адрес")}><input className={input} required value={form.address} onChange={(e)=>set("address",e.target.value)}/></Field>
+    <Field label={tr("Post code","Pašto kodas","Почтовый индекс")}><input className={input} required value={form.zip} onChange={(e)=>set("zip",e.target.value)}/></Field>
+    <div className="md:col-span-2 rounded-xl bg-muted p-4"><div className="grid gap-3 md:grid-cols-[1fr_auto_auto]"><input className={input} required placeholder="+3706XXXXXXX" value={form.phone} onChange={(e)=>{set("phone",e.target.value);setToken("");}}/><button type="button" onClick={()=>send("SMS")} className="rounded-lg border border-border px-4 font-bold hover:bg-background">SMS</button><button type="button" onClick={()=>send("CALL")} className="rounded-lg border border-border px-4 font-bold hover:bg-background">{tr("Call me","Paskambinti","Позвонить")}</button></div>
+      <div className="mt-3 flex gap-2"><input className={input} inputMode="numeric" maxLength={6} placeholder={tr("6-digit code","6 skaitmenų kodas","6-значный код")} value={code} onChange={(e)=>setCode(e.target.value.replace(/\D/g,""))}/><button type="button" onClick={verify} className="rounded-lg bg-[#5f5f5f] px-5 font-bold text-white hover:bg-accent">{tr("Verify","Patvirtinti","Подтвердить")}</button></div>
+      {devCode&&<div className="mt-2 text-sm text-amber-600">DEV code: <b>{devCode}</b></div>}{message&&<div className="mt-2 text-sm text-green-600">{message}</div>}</div>
+    <Field label={tr("Password","Slaptažodis","Пароль")}><input className={input} type="password" required value={form.password} onChange={(e)=>set("password",e.target.value)}/></Field>
+    <Field label={tr("Confirm password","Pakartokite slaptažodį","Повторите пароль")}><input className={input} type="password" required value={form.confirm} onChange={(e)=>set("confirm",e.target.value)}/></Field>
+    {error&&<div className="md:col-span-2 rounded-lg bg-red-500/10 p-3 text-red-600">{error}</div>}
+    <button disabled={loading||!token} className="md:col-span-2 h-12 rounded-lg bg-[#5f5f5f] font-bold text-white hover:bg-accent disabled:opacity-50">{loading?"…":tr("Create account","Sukurti paskyrą","Создать аккаунт")}</button>
+  </form><div className="my-5 flex items-center gap-3"><div className="h-px flex-1 bg-border"/><span className="text-xs font-semibold text-muted-foreground">{tr("or","arba","или")}</span><div className="h-px flex-1 bg-border"/></div><a href={googleLoginUrl()} className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-border bg-background font-bold transition hover:bg-muted"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-lg font-black text-[#4285F4]">G</span>{tr("Continue with Google","Tęsti su Google","Продолжить с Google")}</a><Link href="/auth/login" className="mt-5 block text-center font-semibold hover:text-accent">{tr("Already have an account?","Jau turite paskyrą?","Уже есть аккаунт?")}</Link></div></main>;
 }
+function Field({label,children}:{label:string;children:React.ReactNode}){return <label className="block"><span className="mb-1 block font-bold">{label}</span>{children}</label>}

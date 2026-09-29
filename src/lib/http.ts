@@ -16,7 +16,7 @@ export class ApiError extends Error {
 export function buildUrl(
   path: string,
   params?: Record<string, unknown>,
-  absoluteBase: string = API_BASE,
+  absoluteBase: string = API_BASE
 ) {
   const base = absoluteBase.endsWith("/") ? absoluteBase : absoluteBase + "/";
   const safePath = path.startsWith("/") ? path.slice(1) : path;
@@ -32,18 +32,13 @@ export function buildUrl(
 
 type FetchJsonInit = RequestInit & {
   timeoutMs?: number;
-  /** если true — path уже абсолютный URL */
-  absolute?: boolean;
+  absolute?: boolean; // если true — path уже абсолютный URL
 };
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null;
-}
 
 /** Универсальный fetch JSON с таймаутом и аккуратными ошибками */
 export async function fetchJson<T = unknown>(
   path: string,
-  init: FetchJsonInit = {},
+  init: FetchJsonInit = {}
 ): Promise<T> {
   const { timeoutMs = 15000, absolute = false, ...rest } = init;
   const controller = new AbortController();
@@ -57,19 +52,29 @@ export async function fetchJson<T = unknown>(
       headers.set("Content-Type", "application/json");
     }
 
-    const res = await fetch(url, { ...rest, headers, signal: controller.signal });
+    const request: RequestInit = {
+      credentials: "include",
+      ...rest,
+      headers,
+      signal: controller.signal,
+    };
+    let res = await fetch(url, request);
+
+    // NestJS rotates HttpOnly refresh cookies. Refresh once after an expired access cookie.
+    const authPath = new URL(url).pathname;
+    if (res.status === 401 && !/\/auth\/(login|refresh|google)(\/|$)/.test(authPath)) {
+      const refreshed = await fetch(buildUrl("/auth/refresh"), {
+        method: "POST", credentials: "include", headers: { Accept: "application/json" },
+      });
+      if (refreshed.ok) res = await fetch(url, request);
+    }
 
     if (res.ok) {
       if (res.status === 204) return undefined as T;
       const ct = res.headers.get("content-type") || "";
       if (!ct.includes("application/json")) {
-        // Пытаемся распарсить текст как JSON, иначе вернём null
         const text = await res.text();
-        try {
-          return (text ? (JSON.parse(text) as T) : (null as T));
-        } catch {
-          return (null as T);
-        }
+        return (text ? (JSON.parse(text) as T) : (null as T));
       }
       return (await res.json()) as T;
     }
@@ -77,38 +82,26 @@ export async function fetchJson<T = unknown>(
     // читаем тело ошибки
     let message = `HTTP ${res.status}`;
     let details: unknown = undefined;
-
     try {
       const text = await res.text();
       if (text) {
         try {
-          const parsed: unknown = JSON.parse(text);
-          details = parsed;
-          if (isRecord(parsed) && typeof parsed.message === "string") {
-            message = parsed.message;
-          } else if (typeof text === "string" && text.trim().length > 0) {
-            // если JSON без поля message — падать не будем, оставим HTTP-код
-          }
+          const json = JSON.parse(text);
+          details = json;
+          const errorMessage = (json as { message?: unknown })?.message;
+          if (typeof errorMessage === "string" && errorMessage) message = errorMessage;
         } catch {
-          // не JSON — используем сырой текст
-          if (text.trim().length > 0) message = text;
+          message = text || message;
         }
       }
     } catch {
-      // игнорируем ошибку чтения тела
+      /* ignore */
     }
-
     throw new ApiError(message, res.status, details);
   } catch (err: unknown) {
-    // таймаут
-    if (isRecord(err) && err.name === "AbortError") {
-      throw new ApiError("Request timeout", 408);
-    }
+    if (err instanceof Error && err.name === "AbortError") throw new ApiError("Request timeout", 408);
     if (err instanceof ApiError) throw err;
-
-    const msg =
-      (isRecord(err) && typeof err.message === "string" && err.message) || "Network error";
-    throw new ApiError(msg);
+    throw new ApiError(err instanceof Error ? err.message : "Network error");
   } finally {
     clearTimeout(timer);
   }

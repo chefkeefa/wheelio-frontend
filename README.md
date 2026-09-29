@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Wheelio frontend
 
-## Getting Started
+Next.js 15 frontend connected to the Wheelio NestJS API.
 
-First, run the development server:
+## Run locally
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Requirements: Node.js 20 LTS (or newer compatible LTS), npm, the Wheelio NestJS backend running on port 8085, and access to the existing MySQL database through that backend.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Copy `.env.example` to `.env.local`.
+2. Install packages with `npm ci`.
+3. Run `npm run dev`.
+4. Open http://localhost:3000.
 
-You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file. All application source files are located in the `src` directory.
+Set `NEXT_PUBLIC_API_BASE` in `.env.local` to the backend API base, including `/api` (local default: `http://localhost:8085/api`). The value is embedded into the frontend at build time, so set the production API URL before `npm run build`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Start the backend separately from the `wheelio-backend` project. Configure its `.env` with the existing MySQL credentials, `FRONTEND_BASE_URL`, allowed frontend origin, Google OAuth callback, phone provider and Paysera settings. Apply database migrations with `npm run migration:run` in the backend project before starting it (`npm run start:dev`).
 
-## Learn More
+## Production build
 
-To learn more about Next.js, take a look at the following resources:
+Run `npm ci`, `npm run typecheck`, `npm run build`, then `npm run start`. The frontend listens on port 3000 by default. For Hostinger Business, use a Node.js application with Node 20+, upload/deploy this project, set `NEXT_PUBLIC_API_BASE` to your public NestJS URL ending in `/api`, run `npm ci && npm run build`, and configure the startup command as `npm run start` (port from the hosting panel). The backend must be hosted as a separate Node.js service, and CORS must allow the frontend origin with credentials. Set the public API URL before building.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Notes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Login and Google sign-in use `/api/auth/login` and `/api/auth/google`; the NestJS backend manages the access and refresh cookies.
+- Car photos are served from the backend; `NEXT_PUBLIC_API_BASE` must point at the correct public backend origin.
+- Local phone verification can expose a development code only when the backend is in development mode. Production should use a configured SMS provider.
+- Paysera checkout requires valid backend project credentials and a public callback URL.

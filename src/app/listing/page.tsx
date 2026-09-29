@@ -1,72 +1,49 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { anybody } from "@/lib/fonts";
-import { getListingById } from "@/lib/listings";
-import Button from "@/components/Button";
-import { formatPrice } from "@/lib/format";
+import { Suspense, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useLanguage } from "@/context/LanguageContext";
 
-export default function ListingPage() {
-  const sp = useSearchParams();
-  const id = sp.get("id") || "";
+function LegacyListingPageInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { language } = useLanguage();
 
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<Awaited<ReturnType<typeof getListingById>> | null>(null);
+  const id = String(searchParams.get("id") ?? "").trim();
+
+  const tr = (en: string, lt: string, ru: string) =>
+    language === "LT" ? lt : language === "RU" ? ru : en;
 
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      setLoading(true);
-      try {
-        const d = await getListingById(id);
-        if (!alive) return;
-        setData(d);
-      } finally {
-        if (alive) setLoading(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [id]);
+    if (/^\d+$/.test(id)) {
+      router.replace(`/listing/${encodeURIComponent(id)}`);
+    }
+  }, [id, router]);
 
-  if (!id) return <div className="container mx-auto px-4 py-6">No listing id provided.</div>;
-  if (loading) return <div className="container mx-auto px-4 py-6">Loading...</div>;
-  if (!data) return <div className="container mx-auto px-4 py-6">Listing not found.</div>;
-
-  const priceText = formatPrice(data.price);
+  if (/^\d+$/.test(id)) {
+    return (
+      <main className="container mx-auto min-h-[55vh] px-4 py-10 text-foreground">
+        {tr("Opening listing...", "Atidaromas skelbimas...", "Открываем объявление...")}
+      </main>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <h1 className={`${anybody.className} mb-2 text-3xl font-extrabold`}>{data.title}</h1>
-      <div className={`${anybody.className} mb-4 text-lg font-bold`}>{priceText}</div>
-
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-        {data.images && data.images.length > 0 ? (
-          data.images.map((src, i) => (
-            <div className="relative h-64 w-full overflow-hidden rounded-lg bg-[hsl(var(--muted))]" key={i}>
-              <img src={src} alt={`photo ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" />
-            </div>
-          ))
-        ) : (
-          <div className="relative h-64 w-full overflow-hidden rounded-lg bg-[hsl(var(--muted))]">
-            <img
-              src={data.thumbnail || "https://placehold.co/800x600/png"}
-              alt={data.title}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          </div>
-        )}
+    <main className="container mx-auto min-h-[55vh] px-4 py-10 text-foreground">
+      <div className="mx-auto max-w-xl rounded-2xl bg-card p-8 ring-1 ring-border">
+        <h1 className="text-2xl font-bold">
+          {tr("Invalid listing link", "Neteisinga skelbimo nuoroda", "Неверная ссылка на объявление")}
+        </h1>
+        <p className="mt-3 text-muted-foreground">
+          {tr(
+            "Open the listing again from the home page.",
+            "Atidarykite skelbimą dar kartą iš pagrindinio puslapio.",
+            "Откройте объявление заново с главной страницы."
+          )}
+        </p>
       </div>
-
-      {data.description && <p className="mb-6 max-w-3xl text-[15px] leading-relaxed">{data.description}</p>}
-
-      <div className="flex gap-3">
-        <Button>Buy</Button>
-        <Button variant="outline">Add to favorites</Button>
-      </div>
-    </div>
+    </main>
   );
 }
+
+export default function LegacyListingPage() { return <Suspense fallback={<main className="min-h-[55vh]" />}><LegacyListingPageInner /></Suspense>; }

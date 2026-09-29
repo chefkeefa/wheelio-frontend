@@ -1,0 +1,315 @@
+"use client";
+
+import { FormEvent, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useLanguage } from "@/context/LanguageContext";
+import {
+  getLiveSupportMessages,
+  liveSupportStreamUrl,
+  sendLiveSupportMessage,
+  startLiveSupport,
+  type LiveSupportMessage,
+} from "@/lib/pirkApi";
+
+type SavedChat = { id: number; token?: string };
+
+function ChatIcon() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+      <path d="M8 10h.01M12 10h.01M16 10h.01" />
+    </svg>
+  );
+}
+
+export default function SupportWidget() {
+  const pathname = usePathname();
+  const { language } = useLanguage();
+  const tr = (en: string, lt: string, ru: string) =>
+    language === "LT" ? lt : language === "RU" ? ru : en;
+
+  const hidden =
+    pathname.startsWith("/admin/support") ||
+    pathname.startsWith("/debug") ||
+    pathname.startsWith("/test");
+
+  const [open, setOpen] = useState(false);
+  const [chat, setChat] = useState<SavedChat | null>(null);
+  const [messages, setMessages] = useState<LiveSupportMessage[]>([]);
+  const [draft, setDraft] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [unread, setUnread] = useState(0);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const openRef = useRef(open);
+  const startAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    openRef.current = open;
+    if (open) {
+      setUnread(0);
+    } else {
+      startAttemptedRef.current = false;
+    }
+  }, [open]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("pirkauto-live-support");
+      if (saved) setChat(JSON.parse(saved));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (!open || chat || startAttemptedRef.current) return;
+
+    startAttemptedRef.current = true;
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+
+    startLiveSupport({})
+      .then((created) => {
+        if (cancelled) return;
+        const saved = {
+          id: created.id,
+          token: created.accessToken || undefined,
+        };
+        localStorage.setItem("pirkauto-live-support", JSON.stringify(saved));
+        setChat(saved);
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setError(
+            e instanceof Error
+              ? e.message
+              : tr(
+                  "Support is temporarily unavailable.",
+                  "Pagalba laikinai nepasiekiama.",
+                  "Поддержка временно недоступна."
+                )
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, chat]);
+
+  useEffect(() => {
+    if (!chat) return;
+
+    let source: EventSource | null = null;
+    let cancelled = false;
+
+    getLiveSupportMessages(chat.id, chat.token)
+      .then((history) => {
+        if (!cancelled) {
+          setMessages(history.filter((item) => item.sender !== "SYSTEM"));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          localStorage.removeItem("pirkauto-live-support");
+          setChat(null);
+          setMessages([]);
+        }
+      });
+
+    source = new EventSource(liveSupportStreamUrl(chat.id, chat.token), {
+      withCredentials: true,
+    });
+
+    const onMessage = (event: MessageEvent) => {
+      try {
+        const incoming = JSON.parse(event.data) as LiveSupportMessage;
+        if (incoming.sender === "SYSTEM") return;
+
+        setMessages((current) =>
+          current.some((item) => item.id === incoming.id)
+            ? current
+            : [...current, incoming]
+        );
+
+        if (incoming.sender === "AGENT" && !openRef.current) {
+          setUnread((value) => value + 1);
+        }
+      } catch {}
+    };
+
+    source.addEventListener("message", onMessage as EventListener);
+
+    return () => {
+      cancelled = true;
+      source?.removeEventListener("message", onMessage as EventListener);
+      source?.close();
+    };
+  }, [chat]);
+
+  useEffect(() => {
+    if (open) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, open]);
+
+  async function send(e: FormEvent) {
+    e.preventDefault();
+    if (!chat || !draft.trim()) return;
+
+    const text = draft.trim();
+    setDraft("");
+    setError("");
+
+    try {
+      const sent = await sendLiveSupportMessage(chat.id, text, chat.token);
+      setMessages((current) =>
+        current.some((item) => item.id === sent.id)
+          ? current
+          : [...current, sent]
+      );
+    } catch (e) {
+      setDraft(text);
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  if (hidden) return null;
+
+  return (
+    <div className="fixed bottom-5 right-5 z-[90] flex flex-col items-end sm:bottom-6 sm:right-6">
+      <div
+        className={`mb-3 w-[calc(100vw-2rem)] max-w-[370px] origin-bottom-right overflow-hidden rounded-3xl border border-border bg-card text-foreground shadow-2xl transition-all duration-300 ${
+          open
+            ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
+            : "pointer-events-none translate-y-3 scale-95 opacity-0"
+        }`}
+        aria-hidden={!open}
+      >
+        <div className="flex items-center justify-between bg-[#d9a339] px-5 py-4 text-black">
+          <div>
+            <div className="flex items-center gap-2 font-extrabold">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white/70" />
+              {tr("PirkAuto support", "PirkAuto pagalba", "Поддержка PirkAuto")}
+            </div>
+            <div className="mt-0.5 text-xs font-medium opacity-80">
+              {tr("Online chat", "Pokalbis internetu", "Онлайн-чат")}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="grid h-9 w-9 place-items-center rounded-full bg-black/10 text-xl font-bold hover:bg-black/15"
+            aria-label={tr("Close chat", "Uždaryti pokalbį", "Закрыть чат")}
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="h-[350px] space-y-3 overflow-y-auto bg-background/70 p-4">
+          <div className="flex justify-start">
+            <div className="max-w-[88%] rounded-2xl rounded-bl-md bg-muted px-4 py-3 text-sm leading-relaxed text-foreground">
+              <div className="mb-1 text-[11px] font-bold text-accent">
+                {tr("Support", "Pagalba", "Поддержка")}
+              </div>
+              {tr(
+                "Hello! How can we help you?",
+                "Sveiki! Kaip galime jums padėti?",
+                "Здравствуйте! Чем можем вам помочь?"
+              )}
+            </div>
+          </div>
+
+          {messages.map((message) => {
+            const own = message.sender === "USER";
+            return (
+              <div
+                key={message.id}
+                className={`flex ${own ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[88%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                    own
+                      ? "rounded-br-md bg-[#d9a339] text-black"
+                      : "rounded-bl-md bg-muted text-foreground"
+                  }`}
+                >
+                  <div className="mb-1 text-[11px] font-bold opacity-70">
+                    {own
+                      ? tr("You", "Jūs", "Вы")
+                      : tr("Support", "Pagalba", "Поддержка")}
+                  </div>
+                  <div className="whitespace-pre-wrap">{message.message}</div>
+                </div>
+              </div>
+            );
+          })}
+
+          {loading && (
+            <div className="text-center text-xs text-muted-foreground">
+              {tr("Connecting…", "Jungiama…", "Подключаемся…")}
+            </div>
+          )}
+
+          <div ref={bottomRef} />
+        </div>
+
+        <form onSubmit={send} className="border-t border-border bg-card p-3">
+          <div className="flex gap-2">
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              maxLength={5000}
+              disabled={!chat || loading}
+              placeholder={tr(
+                "Write a message…",
+                "Rašykite žinutę…",
+                "Напишите сообщение…"
+              )}
+              className="h-11 min-w-0 flex-1 rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-accent disabled:opacity-60"
+            />
+            <button
+              type="submit"
+              disabled={!chat || loading || !draft.trim()}
+              className="h-11 rounded-xl bg-[#d9a339] px-4 font-bold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              →
+            </button>
+          </div>
+
+          {error && <div className="mt-2 text-xs text-red-500">{error}</div>}
+
+          <Link
+            href="/help"
+            onClick={() => setOpen(false)}
+            className="mt-2 block text-center text-xs font-semibold text-muted-foreground hover:text-accent"
+          >
+            {tr(
+              "Open Help center",
+              "Atidaryti pagalbos centrą",
+              "Открыть центр помощи"
+            )}
+          </Link>
+        </form>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="relative grid h-14 w-14 place-items-center rounded-full bg-[#d9a339] text-black shadow-xl ring-1 ring-black/10 transition duration-200 hover:scale-105 sm:h-16 sm:w-16"
+        aria-label={tr("Open support", "Atidaryti pagalbą", "Открыть поддержку")}
+      >
+        {open ? <span className="text-3xl leading-none">×</span> : <ChatIcon />}
+        {unread > 0 && !open && (
+          <span className="absolute -right-1 -top-1 grid h-6 min-w-6 place-items-center rounded-full bg-red-500 px-1 text-xs font-bold text-white ring-2 ring-background">
+            {unread > 9 ? "9+" : unread}
+          </span>
+        )}
+      </button>
+    </div>
+  );
+}

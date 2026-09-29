@@ -9,6 +9,9 @@ interface Props {
   step?: number;
   onRangeChange: (min: number, max: number) => void;
   className?: string;
+  label?: string;
+  minLabel?: string;
+  maxLabel?: string;
 }
 
 type Dragging = "min" | "max" | null;
@@ -19,6 +22,9 @@ export default function PriceRangeSlider({
   step = 100,
   onRangeChange,
   className = "",
+  label = "Price range",
+  minLabel = "Min",
+  maxLabel = "Max",
 }: Props) {
   const [min, setMin] = useState(minPrice);
   const [max, setMax] = useState(maxPrice);
@@ -102,8 +108,8 @@ export default function PriceRangeSlider({
   return (
     <div className={`w-full select-none ${className}`}>
       {/* label: немного крупнее */}
-      <label className={`${anybody.className} mb-2 block text-[15px] md:text-base font-bold text-[hsl(var(--muted-foreground))]`}>
-        Price range
+      <label className={`${anybody.className} mb-2 block text-[15px] md:text-base font-bold text-foreground`}>
+        {label}
       </label>
 
       <div
@@ -162,14 +168,14 @@ export default function PriceRangeSlider({
         />
       </div>
 
-      <div className={`${anybody.className} mt-3 flex items-center justify-between text-sm text-[hsl(var(--muted-foreground))]`}>
+      <div className={`${anybody.className} mt-3 flex items-center justify-between text-sm text-foreground`}>
         <span>
-          Min:{" "}
-          <strong className="font-bold text-[hsl(var(--foreground))]">{min.toLocaleString()} €</strong>
+          {minLabel}:{" "}
+          <strong className="font-bold text-foreground">{min.toLocaleString()} €</strong>
         </span>
         <span>
-          Max:{" "}
-          <strong className="font-bold text-[hsl(var(--foreground))]">{max.toLocaleString()} €</strong>
+          {maxLabel}:{" "}
+          <strong className="font-bold text-foreground">{max.toLocaleString()} €</strong>
         </span>
       </div>
     </div>

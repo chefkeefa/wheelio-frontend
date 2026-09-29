@@ -2,64 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===== Дизайн-токены (используются Tailwind цветами) ===== */
 :root {
-  /* Фон/текст — ВАЖНО: --bg управляет bg-background */
-  --bg: 0 0% 81%;            /* #CECECE */
-  --fg: 0 0% 6%;             /* #0F0F0F */
-
-  /* Остальные токены */
+  --bg: 0 0% 81%;
+  --fg: 0 0% 6%;
   --card: 0 0% 100%;
-  --border: 240 6% 94%;
+  --border: 240 6% 90%;
   --muted: 220 14% 96%;
-  --muted-fg: 215 16% 47%;
-
-  --primary: 0 0% 7%;        /* #111111 */
+  --muted-fg: 215 16% 42%;
+  --primary: 0 0% 7%;
   --primary-fg: 0 0% 100%;
   --ring: 0 0% 0%;
-
-  --accent: 42 66% 54%;      /* #d9a339 */
+  --accent: 42 66% 54%;
   --accent-fg: 0 0% 0%;
+
+  /* Compatibility aliases for older components that reference these names directly. */
+  --foreground: var(--fg);
+  --muted-foreground: var(--muted-fg);
 }
 
-/* Тёмная тема (на будущее) */
 .dark {
   --bg: 0 0% 6%;
-  --fg: 0 0% 100%;
-  --card: 0 0% 7%;
-  --border: 240 6% 20%;
-  --muted: 240 6% 12%;
-  --muted-fg: 240 5% 65%;
+  --fg: 0 0% 96%;
+  --card: 0 0% 11%;
+  --border: 240 6% 22%;
+  --muted: 240 6% 14%;
+  --muted-fg: 240 5% 68%;
+  --primary: 0 0% 94%;
+  --primary-fg: 0 0% 7%;
+  --ring: 0 0% 100%;
   --accent: 42 66% 54%;
   --accent-fg: 0 0% 0%;
 }
 
-/* Базовые применения токенов */
-html, body {
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }
+
+html,
+body {
   background: hsl(var(--bg));
   color: hsl(var(--fg));
 }
 
-/* Контейнер (поддержка класса container из tailwind.config) */
+body {
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
 .container {
   @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }
 
-/* Типографика под Inter (font-sans = var(--font-sans)) */
 @layer base {
   h1 { @apply text-3xl md:text-4xl font-semibold tracking-tight; }
   h2 { @apply text-2xl md:text-3xl font-semibold tracking-tight; }
   h3 { @apply text-xl font-semibold; }
   h4 { @apply text-lg font-semibold; }
-  p  { @apply leading-7; }
-  small { @apply text-sm text-[hsl(var(--muted-fg))]; }
+  p { @apply leading-7; }
+  small { @apply text-sm text-muted-foreground; }
   a { @apply underline-offset-4; }
 }
 
-/* Примеры кнопок (если используешь) */
 .btn {
   @apply inline-flex items-center justify-center rounded-2xl px-4 py-2 bg-black text-white hover:opacity-90 active:opacity-80;
 }
 .btn-outline {
-  @apply inline-flex items-center justify-center rounded-2xl px-4 py-2 border border-[hsl(var(--border))] text-black hover:bg-[hsl(var(--muted))];
+  @apply inline-flex items-center justify-center rounded-2xl px-4 py-2 border border-border text-foreground hover:bg-muted;
 }

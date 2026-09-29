@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
-import React from "react";
+"use client";
+
 import Link from "next/link";
 import { anybody } from "@/lib/fonts";
 
@@ -9,9 +10,19 @@ export interface CarCardProps {
   id: string;
   title: string;
   price: number;
-  imageUrl: string;
+  imageUrl?: string;
   size?: Size;
 }
+
+const FALLBACK_IMAGE =
+  "data:image/svg+xml;charset=UTF-8," +
+  encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+      <rect width="1200" height="800" fill="#eeeeef"/>
+      <text x="600" y="390" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="700" fill="#b0b0b3">Wheelio</text>
+      <text x="600" y="455" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#b0b0b3">No photo</text>
+    </svg>
+  `);
 
 function formatPrice(value: number) {
   try {
@@ -33,33 +44,38 @@ export default function CarCard({
   size = "large",
 }: CarCardProps) {
   const isSmall = size === "small";
+  const safeId = String(id ?? "").trim();
 
   return (
     <Link
-      href={`/listing?id=${encodeURIComponent(id)}`}
-      className={[
-        "group block overflow-hidden rounded-2xl",
-        "ring-1 ring-[hsl(var(--border))] bg-white",
-        "transition-all duration-300 hover:shadow-xl hover:-translate-y-[2px]",
-      ].join(" ")}
+      href={safeId ? `/listing/${encodeURIComponent(safeId)}` : "#"}
+      aria-disabled={!safeId}
+      className="group block overflow-hidden rounded-2xl bg-card text-foreground ring-1 ring-border transition-all duration-300 hover:-translate-y-[2px] hover:shadow-xl"
     >
-      {/* media */}
-      <div className={["relative w-full", isSmall ? "h-40" : "h-56", "bg-[hsl(var(--muted))]"].join(" ")}>
+      <div className={`relative w-full ${isSmall ? "h-40" : "h-56"} bg-muted`}>
         <img
-          src={imageUrl || "/placeholder-car.jpg"}
-          alt={title}
+          src={imageUrl || FALLBACK_IMAGE}
+          alt={title || "Car"}
           className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = FALLBACK_IMAGE;
+          }}
         />
         <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/5" />
       </div>
 
-      {/* content */}
-      <div className="p-4">
-        <h3 className={`${anybody.className} line-clamp-2 text-[15px] font-bold text-[hsl(var(--foreground))]`}>
-          {title}
+      <div className="min-h-[92px] bg-card p-4 text-foreground">
+        <h3
+          className={`${anybody.className} line-clamp-2 text-[15px] font-bold text-foreground`}
+        >
+          {title || "Wheelio"}
         </h3>
-        <div className={`${anybody.className} mt-2 text-base font-bold text-[hsl(var(--accent))]`}>
+
+        <div
+          className={`${anybody.className} mt-2 text-base font-bold text-accent`}
+        >
           {formatPrice(price)}
         </div>
       </div>

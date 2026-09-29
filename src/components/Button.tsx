@@ -41,10 +41,10 @@ export default function Button({
   const variants: Record<Variant, string> = {
     // как договорились: серый → при hover оранжевый
     primary: "bg-[#5f5f5f] font-semibold text-white hover:bg-[#d9a339]",
-    ghost: "bg-transparent font-semibold text-black hover:text-[hsl(var(--accent))]",
+    ghost: "bg-transparent font-semibold text-foreground hover:text-accent",
     link: "bg-transparent font-medium text-[hsl(var(--accent))] hover:underline p-0",
     outline:
-      "bg-transparent border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]",
+      "bg-transparent border border-[hsl(var(--border))] text-foreground hover:bg-muted",
   };
   const sizes: Record<Size, string> = {
     sm: "h-8 px-3 text-sm",

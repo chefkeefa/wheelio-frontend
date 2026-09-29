@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { getPublicListings, type Listing as ApiListing } from "@/lib/listings";
 
 type Listing = {
   id: string;
@@ -12,8 +13,6 @@ type Listing = {
   mileage: number;
   thumbnail?: string;
 };
-
-const API = "https://pirkauto-backend.onrender.com/api/public/listings";
 
 function SearchInner() {
   const [items, setItems] = useState<Listing[]>([]);
@@ -28,11 +27,8 @@ function SearchInner() {
   const createdId = useMemo(() => params.get("created"), [params]);
 
   useEffect(() => {
-    fetch(API)
-      .then((r) => r.json())
-      .then((data: Listing[]) =>
-        setItems([...data].sort((a, b) => Number(b.id) - Number(a.id)))
-      )
+    getPublicListings({ limit: 100 })
+      .then((data: ApiListing[]) => setItems(data))
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
   }, []);
@@ -118,7 +114,7 @@ function SearchInner() {
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.map((item) => (
-              <Link key={item.id} href={`/listing/?id=${item.id}`} className="block">
+              <Link key={item.id} href={`/listing/${item.id}`} className="block">
                 <article className="card overflow-hidden hover:shadow-lg transition-shadow">
                   {/* Картинка */}
                   <div className="relative aspect-video bg-[hsl(var(--muted))]">

@@ -1,73 +1,263 @@
-// src/app/listing/[id]/page.tsx
+/* eslint-disable @next/next/no-img-element */
+"use client";
+
 import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { anybody } from "@/lib/fonts";
+import { getListingById, type ListingDetail } from "@/lib/listings";
+import { useLanguage } from "@/context/LanguageContext";
 
-// Мок-данные (совпадают с /search)
-const mock = [
-  { id: "1", title: "BMW 3-Series 2016", price: 9800, mileage: 185_000, fuel: "Petrol", transmission: "Manual", power: "110 kW" },
-  { id: "2", title: "VW Golf 2018",      price: 8700, mileage: 150_000, fuel: "Diesel", transmission: "Automatic", power: "90 kW" },
-  { id: "3", title: "Audi A4 2015",      price: 9200, mileage: 210_000, fuel: "Petrol", transmission: "Automatic", power: "125 kW" },
-];
+const FALLBACK_IMAGE =
+  "data:image/svg+xml;charset=UTF-8," +
+  encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+      <rect width="1200" height="800" fill="#eeeeef"/>
+      <text x="600" y="390" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="700" fill="#b0b0b3">PirkAuto</text>
+      <text x="600" y="455" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#b0b0b3">No photo</text>
+    </svg>
+  `);
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function ListingPage(props: any) {
-  const id = props?.params?.id as string | undefined;
-  const car = mock.find((item) => item.id === id);
+function formatPrice(value: number) {
+  return new Intl.NumberFormat("lt-LT", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 
-  if (!car) {
+function formatMileage(value: number) {
+  return new Intl.NumberFormat("lt-LT").format(value);
+}
+
+export default function ListingDetailsPage() {
+  const params = useParams<{ id: string | string[] }>();
+  const rawId = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  const id = String(rawId ?? "").trim();
+
+  const { language } = useLanguage();
+
+  const tr = (en: string, lt: string, ru: string) =>
+    language === "LT" ? lt : language === "RU" ? ru : en;
+
+  const [data, setData] = useState<ListingDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+
+    const load = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const result = await getListingById(id);
+
+        if (!alive) return;
+
+        setData(result);
+      } catch (err) {
+        if (!alive) return;
+
+        console.error("Listing load failed:", err);
+        setData(null);
+        setError(
+          tr(
+            "Could not load the listing. Check that the backend is running on port 8085.",
+            "Nepavyko įkelti skelbimo. Patikrinkite, ar backend veikia 8085 prievade.",
+            "Не удалось загрузить объявление. Проверьте, что backend запущен на порту 8085."
+          )
+        );
+      } finally {
+        if (alive) setLoading(false);
+      }
+    };
+
+    load();
+
+    return () => {
+      alive = false;
+    };
+  }, [id, language]);
+
+  const images = useMemo(() => {
+    if (!data) return [];
+
+    const result = [
+      ...(data.images ?? []),
+      ...(data.thumbnail ? [data.thumbnail] : []),
+    ].filter(Boolean);
+
+    return result.filter(
+      (src, index, all) => all.indexOf(src) === index
+    );
+  }, [data]);
+
+  if (loading) {
     return (
-      <section className="space-y-4">
-        <h1 className="text-2xl font-bold">Skelbimas nerastas</h1>
-        <p className="text-gray-600">Šis skelbimas nebegalioja arba neegzistuoja.</p>
-        <Link href="/search" className="text-blue-600 hover:underline">← Grįžti į paiešką</Link>
-      </section>
+      <main className="container mx-auto min-h-[55vh] px-4 py-10 text-foreground">
+        {tr("Loading...", "Kraunama...", "Загрузка...")}
+      </main>
+    );
+  }
+
+  if (!data) {
+    return (
+      <main className="container mx-auto min-h-[55vh] px-4 py-10 text-foreground">
+        <div className="mx-auto max-w-xl rounded-2xl bg-card p-8 ring-1 ring-border">
+          <h1 className={`${anybody.className} text-2xl font-extrabold`}>
+            {tr(
+              "Listing not found",
+              "Skelbimas nerastas",
+              "Объявление не найдено"
+            )}
+          </h1>
+
+          <p className="mt-3 text-muted-foreground">
+            {error ||
+              tr(
+                "The link is invalid, or this listing is no longer public.",
+                "Nuoroda neteisinga arba šis skelbimas nebėra viešas.",
+                "Ссылка неверна или это объявление больше не опубликовано."
+              )}
+          </p>
+
+          <Link
+            href="/"
+            className="mt-6 inline-flex rounded-lg bg-accent px-5 py-3 font-semibold text-black"
+          >
+            {tr(
+              "Back to listings",
+              "Grįžti į skelbimus",
+              "Вернуться к объявлениям"
+            )}
+          </Link>
+        </div>
+      </main>
     );
   }
 
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      {/* Галерея (заглушка) */}
-      <div className="lg:col-span-7 space-y-4">
-        <div className="aspect-video w-full rounded-lg bg-gray-200" />
-        <div className="grid grid-cols-5 gap-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="aspect-video rounded bg-gray-100" />
-          ))}
-        </div>
+    <main className="container mx-auto px-4 py-8 text-foreground">
+      <Link
+        href="/"
+        className="mb-5 inline-block text-sm font-medium text-muted-foreground hover:text-foreground"
+      >
+        ← {tr("Back to listings", "Grįžti į skelbimus", "Назад к объявлениям")}
+      </Link>
+
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-12">
+        <section className="lg:col-span-7">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {(images.length ? images : [FALLBACK_IMAGE]).map(
+              (src, index) => (
+                <div
+                  key={`${src}-${index}`}
+                  className={`relative overflow-hidden rounded-2xl bg-muted ring-1 ring-border ${
+                    index === 0 ? "sm:col-span-2 h-[420px]" : "h-52"
+                  }`}
+                >
+                  <img
+                    src={src}
+                    alt={`${data.title} ${index + 1}`}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = FALLBACK_IMAGE;
+                    }}
+                  />
+                </div>
+              )
+            )}
+          </div>
+        </section>
+
+        <aside className="space-y-5 lg:col-span-5">
+          <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
+            <h1
+              className={`${anybody.className} text-3xl font-extrabold text-foreground`}
+            >
+              {data.title}
+            </h1>
+
+            <div
+              className={`${anybody.className} mt-3 text-3xl font-extrabold text-accent`}
+            >
+              {formatPrice(data.price)}
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
+              {data.mark && (
+                <Info
+                  label={tr("Make", "Markė", "Марка")}
+                  value={data.mark}
+                />
+              )}
+              {data.model && (
+                <Info
+                  label={tr("Model", "Modelis", "Модель")}
+                  value={data.model}
+                />
+              )}
+              {data.year && (
+                <Info
+                  label={tr("Year", "Metai", "Год")}
+                  value={String(data.year)}
+                />
+              )}
+              <Info
+                label={tr("Mileage", "Rida", "Пробег")}
+                value={`${formatMileage(data.mileage)} km`}
+              />
+            </div>
+          </div>
+
+          {data.description && (
+            <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
+              <h2 className="mb-3 text-lg font-bold">
+                {tr("Description", "Aprašymas", "Описание")}
+              </h2>
+              <p className="whitespace-pre-line text-[15px] leading-relaxed text-muted-foreground">
+                {data.description}
+              </p>
+            </div>
+          )}
+
+          <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
+            <button className="w-full rounded-lg bg-accent px-5 py-3 font-bold text-black">
+              {tr(
+                "Contact seller",
+                "Susisiekti su pardavėju",
+                "Связаться с продавцом"
+              )}
+            </button>
+
+            <button className="mt-3 w-full rounded-lg border border-border bg-background px-5 py-3 font-semibold text-foreground">
+              {tr(
+                "Add to favorites",
+                "Pridėti į mėgstamus",
+                "Добавить в избранное"
+              )}
+            </button>
+          </div>
+        </aside>
       </div>
-
-      {/* Информация справа */}
-      <aside className="lg:col-span-5 space-y-4">
-        <div className="rounded-lg border bg-white p-5 space-y-2">
-          <h1 className="text-2xl font-bold">{car.title}</h1>
-          <div className="text-2xl">{car.price.toLocaleString()} €</div>
-          <div className="text-gray-600">Rida: {car.mileage.toLocaleString()} km</div>
-        </div>
-
-        <div className="rounded-lg border bg-white p-5">
-          <h2 className="font-semibold mb-3">Pagrindinė informacija</h2>
-          <ul className="text-sm text-gray-700 space-y-1">
-            <li><span className="text-gray-500">Kuras:</span> {car.fuel}</li>
-            <li><span className="text-gray-500">Pavarų dėžė:</span> {car.transmission}</li>
-            <li><span className="text-gray-500">Galia:</span> {car.power}</li>
-          </ul>
-        </div>
-
-        <div className="rounded-lg border bg-white p-5">
-          <h2 className="font-semibold mb-3">Pardavėjas</h2>
-          <div className="text-sm text-gray-700">Privatus pardavėjas</div>
-          <div className="text-sm text-gray-700">Klaipėda, LT</div>
-          <button className="mt-3 w-full rounded-lg bg-black text-white py-2">Siųsti žinutę</button>
-        </div>
-
-        <Link href="/search" className="block text-center text-blue-600 hover:underline">
-          ← Grįžti į paiešką
-        </Link>
-      </aside>
-    </section>
+    </main>
   );
 }
 
-// Для статического экспорта страниц объявлений
-export function generateStaticParams() {
-  return mock.map(({ id }) => ({ id }));
+function Info({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-xl bg-muted p-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="mt-1 font-semibold text-foreground">{value}</div>
+    </div>
+  );
 }
