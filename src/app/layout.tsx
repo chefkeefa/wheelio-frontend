@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { SITE_URL } from "@/lib/config";
 import SupportWidget from "@/components/SupportWidget";
 
 const inter = Inter({
@@ -13,11 +14,13 @@ const inter = Inter({
   display: "swap",
 });
 
+// No site-wide canonical: a canonical of "/" on every page told search engines that all pages
+// duplicate the home page. Pages that need one set it themselves (see listing/[id]/layout.tsx).
 export const metadata: Metadata = {
-  title: "Wheelio | Car listings",
+  title: { default: "Wheelio | Car listings", template: "%s | Wheelio" },
   description: "Find and list cars on Wheelio.",
-  metadataBase: new URL("https://wheelio.lt"),
-  alternates: { canonical: "/" },
+  metadataBase: new URL(SITE_URL),
+  openGraph: { siteName: "Wheelio", type: "website" },
 };
 
 export const viewport: Viewport = {

@@ -745,7 +745,7 @@ export default function SellPage() {
         }));
         setVinStatus({
           type: "warning",
-          text: `VIN decoded as ${decodedMake} ${decodedModel}, model year ${decodedYear}, but this make was not matched exactly in the PirkAuto catalog. Nothing else was guessed.`,
+          text: `VIN decoded as ${decodedMake} ${decodedModel}, model year ${decodedYear}, but this make was not matched exactly in the Wheelio catalog. Nothing else was guessed.`,
         });
         return;
       }

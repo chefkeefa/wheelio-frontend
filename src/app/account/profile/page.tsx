@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/http";
-import { me, updateProfile, type AuthUser } from "@/lib/pirkApi";
+import { changeEmail, changePassword, me, updateProfile, type AuthUser } from "@/lib/pirkApi";
 
 export default function ProfilePage() {
   const { language } = useLanguage();
@@ -72,6 +72,8 @@ export default function ProfilePage() {
                 {!user.phoneVerified && <Link href="/verify-phone?return=/account/profile" className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-black">{tr("Verify", "Patvirtinti", "Подтвердить")}</Link>}
               </div>
             </section>
+            <CredentialsSection user={user} tr={tr} onEmailChanged={(email) => setUser({ ...user, email })} />
+            <Link href="/account/favorites" className="rounded-2xl border border-border bg-card p-6 transition hover:border-accent"><div className="text-xl font-bold">{tr("Favorites", "Mėgstami", "Избранное")}</div><p className="mt-2 text-muted-foreground">{tr("Cars you saved.", "Išsaugoti automobiliai.", "Сохранённые автомобили.")}</p></Link>
             <Link href="/account/listings" className="rounded-2xl border border-border bg-card p-6 transition hover:border-accent"><div className="text-xl font-bold">{tr("My listings", "Mano skelbimai", "Мои объявления")}</div><p className="mt-2 text-muted-foreground">{tr("View and manage the cars you are selling.", "Peržiūrėkite ir valdykite parduodamus automobilius.", "Просматривайте и управляйте продаваемыми автомобилями.")}</p></Link>
             <Link href="/help" className="rounded-2xl border border-border bg-card p-6 transition hover:border-accent"><div className="text-xl font-bold">{tr("Help & support", "Pagalba", "Помощь и поддержка")}</div><p className="mt-2 text-muted-foreground">{tr("Open live support or send a support request.", "Atidarykite tiesioginę pagalbą arba siųskite užklausą.", "Откройте онлайн-поддержку или отправьте обращение.")}</p></Link>
           </div>
@@ -83,4 +85,85 @@ export default function ProfilePage() {
 
 function Info({ label, value }: { label: string; value: string }) {
   return <div className="mt-4 border-b border-border pb-3"><div className="text-xs font-semibold text-muted-foreground">{label}</div><div className="mt-1 font-semibold">{value}</div></div>;
+}
+
+function CredentialsSection({
+  user,
+  tr,
+  onEmailChanged,
+}: {
+  user: AuthUser;
+  tr: (en: string, lt: string, ru: string) => string;
+  onEmailChanged: (email: string) => void;
+}) {
+  // Google accounts have no password; older backends do not send authProvider (treated as password accounts).
+  const hasPassword = (user.authProvider || "PASSWORD").toUpperCase() !== "GOOGLE";
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [emailPassword, setEmailPassword] = useState("");
+  const [busy, setBusy] = useState<"password" | "email" | null>(null);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const submitPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setMessage(""); setError("");
+    if (newPassword !== repeatPassword) {
+      setError(tr("New passwords do not match.", "Nauji slaptažodžiai nesutampa.", "Новые пароли не совпадают."));
+      return;
+    }
+    setBusy("password");
+    try {
+      await changePassword(oldPassword, newPassword);
+      setOldPassword(""); setNewPassword(""); setRepeatPassword("");
+      setMessage(tr("Password changed. Other devices were signed out.", "Slaptažodis pakeistas. Kiti įrenginiai atjungti.", "Пароль изменён. Другие устройства вышли из аккаунта."));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tr("Could not change the password.", "Nepavyko pakeisti slaptažodžio.", "Не удалось изменить пароль."));
+    } finally { setBusy(null); }
+  };
+
+  const submitEmail = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setMessage(""); setError("");
+    setBusy("email");
+    try {
+      const next = email.trim().toLowerCase();
+      await changeEmail(next, hasPassword ? emailPassword : undefined);
+      onEmailChanged(next);
+      setEmail(""); setEmailPassword("");
+      setMessage(tr("E-mail changed.", "El. paštas pakeistas.", "E-mail изменён."));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tr("Could not change the e-mail.", "Nepavyko pakeisti el. pašto.", "Не удалось изменить e-mail."));
+    } finally { setBusy(null); }
+  };
+
+  const input = "mt-1 h-11 w-full rounded-lg border border-border bg-background px-3";
+  return (
+    <section className="rounded-2xl border border-border bg-card p-6 md:col-span-2">
+      <h2 className="text-xl font-bold">{tr("Login details", "Prisijungimo duomenys", "Данные для входа")}</h2>
+      <div className="mt-4 grid gap-6 md:grid-cols-2">
+        {hasPassword ? (
+          <form onSubmit={submitPassword} className="space-y-3">
+            <div className="font-semibold">{tr("Change password", "Keisti slaptažodį", "Сменить пароль")}</div>
+            <label className="block text-sm font-semibold">{tr("Current password", "Dabartinis slaptažodis", "Текущий пароль")}<input type="password" required autoComplete="current-password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} className={input} /></label>
+            <label className="block text-sm font-semibold">{tr("New password", "Naujas slaptažodis", "Новый пароль")}<input type="password" required minLength={8} autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={input} /></label>
+            <label className="block text-sm font-semibold">{tr("Repeat new password", "Pakartokite naują slaptažodį", "Повторите новый пароль")}<input type="password" required minLength={8} autoComplete="new-password" value={repeatPassword} onChange={(e) => setRepeatPassword(e.target.value)} className={input} /></label>
+            <button disabled={busy === "password"} className="rounded-lg bg-accent px-4 py-2 font-bold text-black disabled:opacity-60">{busy === "password" ? "…" : tr("Change password", "Keisti slaptažodį", "Сменить пароль")}</button>
+          </form>
+        ) : (
+          <p className="text-sm text-muted-foreground">{tr("You sign in with Google, so there is no password to change.", "Jungiatės per Google, todėl slaptažodžio keisti nereikia.", "Вы входите через Google, поэтому пароль менять не нужно.")}</p>
+        )}
+        <form onSubmit={submitEmail} className="space-y-3">
+          <div className="font-semibold">{tr("Change e-mail", "Keisti el. paštą", "Сменить e-mail")}</div>
+          <label className="block text-sm font-semibold">{tr("New e-mail", "Naujas el. paštas", "Новый e-mail")}<input type="email" required maxLength={190} autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={input} /></label>
+          {hasPassword && <label className="block text-sm font-semibold">{tr("Current password", "Dabartinis slaptažodis", "Текущий пароль")}<input type="password" required autoComplete="current-password" value={emailPassword} onChange={(e) => setEmailPassword(e.target.value)} className={input} /></label>}
+          <button disabled={busy === "email"} className="rounded-lg bg-accent px-4 py-2 font-bold text-black disabled:opacity-60">{busy === "email" ? "…" : tr("Change e-mail", "Keisti el. paštą", "Сменить e-mail")}</button>
+        </form>
+      </div>
+      {message && <p className="mt-4 text-sm text-emerald-700">{message}</p>}
+      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+    </section>
+  );
 }

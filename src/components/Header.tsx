@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
-import { logout, me, type AuthUser } from "@/lib/pirkApi";
+import { isAdminUser, isSupportUser, logout, me, type AuthUser } from "@/lib/pirkApi";
 
 function MoonIcon() {
   return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" /></svg>;
@@ -60,7 +60,8 @@ export default function Header() {
   ];
 
   useEffect(() => {
-    const storedTheme = localStorage.getItem("pirkauto-theme");
+    // "pirkauto-theme" is the key used before the rename to Wheelio.
+    const storedTheme = localStorage.getItem("wheelio-theme") ?? localStorage.getItem("pirkauto-theme");
     const dark = storedTheme === "dark" || (!storedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches);
     setDarkMode(dark);
     document.documentElement.classList.toggle("dark", dark);
@@ -95,7 +96,8 @@ export default function Header() {
     const next = !darkMode;
     setDarkMode(next);
     document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("pirkauto-theme", next ? "dark" : "light");
+    localStorage.setItem("wheelio-theme", next ? "dark" : "light");
+    localStorage.removeItem("pirkauto-theme");
   };
 
   const doLogout = async () => {
@@ -108,7 +110,10 @@ export default function Header() {
 
   const accountItems = [
     { href: "/account/listings", label: tr("My listings", "Mano skelbimai", "Мои объявления"), icon: <CarIcon /> },
+    { href: "/account/favorites", label: tr("Favorites", "Mėgstami", "Избранное"), icon: <CarIcon /> },
     { href: "/account/profile", label: tr("Profile & settings", "Profilis ir nustatymai", "Профиль и настройки"), icon: <SettingsIcon /> },
+    ...(isAdminUser(user) ? [{ href: "/admin", label: tr("Administration", "Administravimas", "Администрирование"), icon: <SettingsIcon /> }] : []),
+    ...(!isAdminUser(user) && isSupportUser(user) ? [{ href: "/admin/support", label: tr("Support desk", "Pagalbos centras", "Поддержка"), icon: <HelpIcon /> }] : []),
     ...(!user?.phoneVerified ? [{ href: "/verify-phone", label: tr("Verify phone", "Patvirtinti telefoną", "Подтвердить телефон"), icon: <UserIcon /> }] : []),
     { href: "/help", label: tr("Help", "Pagalba", "Помощь"), icon: <HelpIcon /> },
   ];

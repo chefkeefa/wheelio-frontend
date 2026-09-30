@@ -7,13 +7,14 @@ import { useEffect, useMemo, useState } from "react";
 import { anybody } from "@/lib/fonts";
 import { getListingById, type ListingDetail } from "@/lib/listings";
 import { useLanguage } from "@/context/LanguageContext";
+import ListingActions from "@/components/ListingActions";
 
 const FALLBACK_IMAGE =
   "data:image/svg+xml;charset=UTF-8," +
   encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
       <rect width="1200" height="800" fill="#eeeeef"/>
-      <text x="600" y="390" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="700" fill="#b0b0b3">PirkAuto</text>
+      <text x="600" y="390" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="700" fill="#b0b0b3">Wheelio</text>
       <text x="600" y="455" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#b0b0b3">No photo</text>
     </svg>
   `);
@@ -61,9 +62,9 @@ export default function ListingDetailsPage() {
         setData(null);
         setError(
           tr(
-            "Could not load the listing. Check that the backend is running on port 8085.",
-            "Nepavyko įkelti skelbimo. Patikrinkite, ar backend veikia 8085 prievade.",
-            "Не удалось загрузить объявление. Проверьте, что backend запущен на порту 8085."
+            "Could not load the listing. Please try again later.",
+            "Nepavyko įkelti skelbimo. Bandykite vėliau.",
+            "Не удалось загрузить объявление. Попробуйте позже."
           )
         );
       } finally {
@@ -221,23 +222,7 @@ export default function ListingDetailsPage() {
             </div>
           )}
 
-          <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
-            <button className="w-full rounded-lg bg-accent px-5 py-3 font-bold text-black">
-              {tr(
-                "Contact seller",
-                "Susisiekti su pardavėju",
-                "Связаться с продавцом"
-              )}
-            </button>
-
-            <button className="mt-3 w-full rounded-lg border border-border bg-background px-5 py-3 font-semibold text-foreground">
-              {tr(
-                "Add to favorites",
-                "Pridėti į mėgstamus",
-                "Добавить в избранное"
-              )}
-            </button>
-          </div>
+          <ListingActions listingId={data.id} />
         </aside>
       </div>
     </main>

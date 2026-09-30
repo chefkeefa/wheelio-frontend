@@ -11,8 +11,8 @@ export default function AboutPage() {
       title: "About us",
       who: "Who we are",
       intro: "is a modern marketplace for buying and selling cars, built to make the search and purchase process simple, convenient, and transparent.",
-      decision: "We know buying a car is a big decision. That’s why PirkAuto focuses on clarity and speed at every step for both buyers and sellers.",
-      why: "Why choose PirkAuto",
+      decision: "We know buying a car is a big decision. That’s why Wheelio focuses on clarity and speed at every step for both buyers and sellers.",
+      why: "Why choose Wheelio",
       verifiedTitle: "Verified listings",
       verifiedText: "to reduce risk and save time.",
       filtersTitle: "Powerful filters",
@@ -31,8 +31,8 @@ export default function AboutPage() {
       title: "Apie mus",
       who: "Kas mes esame",
       intro: "– šiuolaikiška automobilių pirkimo ir pardavimo platforma, sukurta tam, kad paieška ir pirkimo procesas būtų paprasti, patogūs ir skaidrūs.",
-      decision: "Žinome, kad automobilio pirkimas yra svarbus sprendimas. Todėl PirkAuto siekia aiškumo ir greičio kiekviename žingsnyje tiek pirkėjams, tiek pardavėjams.",
-      why: "Kodėl verta rinktis PirkAuto",
+      decision: "Žinome, kad automobilio pirkimas yra svarbus sprendimas. Todėl Wheelio siekia aiškumo ir greičio kiekviename žingsnyje tiek pirkėjams, tiek pardavėjams.",
+      why: "Kodėl verta rinktis Wheelio",
       verifiedTitle: "Patikrinti skelbimai",
       verifiedText: "padeda sumažinti riziką ir sutaupyti laiko.",
       filtersTitle: "Patogūs filtrai",
@@ -51,8 +51,8 @@ export default function AboutPage() {
       title: "О нас",
       who: "Кто мы",
       intro: "— современная площадка для покупки и продажи автомобилей, созданная для того, чтобы поиск и покупка были простыми, удобными и прозрачными.",
-      decision: "Мы понимаем, что покупка автомобиля — важное решение. Поэтому PirkAuto делает каждый этап максимально понятным и быстрым как для покупателей, так и для продавцов.",
-      why: "Почему выбирают PirkAuto",
+      decision: "Мы понимаем, что покупка автомобиля — важное решение. Поэтому Wheelio делает каждый этап максимально понятным и быстрым как для покупателей, так и для продавцов.",
+      why: "Почему выбирают Wheelio",
       verifiedTitle: "Проверенные объявления",
       verifiedText: "помогают снизить риски и сэкономить время.",
       filtersTitle: "Удобные фильтры",
@@ -82,7 +82,7 @@ export default function AboutPage() {
           </h2>
 
           <p className="text-foreground text-[20px] leading-8 text-center mb-6">
-            <strong>PirkAuto</strong> {copy.intro}
+            <strong>Wheelio</strong> {copy.intro}
           </p>
 
           <div className="text-foreground text-[20px] leading-8 space-y-6 text-center">

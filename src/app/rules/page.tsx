@@ -14,11 +14,11 @@ export default function RulesPage() {
     EN: {
       title: "Rules",
       subtitle:
-        "These rules help keep PirkAuto safe, transparent and convenient for buyers and sellers.",
+        "These rules help keep Wheelio safe, transparent and convenient for buyers and sellers.",
       updated: "Last updated: 29 September 2026",
       introTitle: "General principles",
       intro:
-        "By using PirkAuto, creating an account, publishing a listing or contacting another user, you agree to follow these rules. PirkAuto may remove content, restrict features or suspend accounts that violate them.",
+        "By using Wheelio, creating an account, publishing a listing or contacting another user, you agree to follow these rules. Wheelio may remove content, restrict features or suspend accounts that violate them.",
       sections: [
         {
           title: "1. Accounts and identity",
@@ -46,7 +46,7 @@ export default function RulesPage() {
             "Upload photos of the actual vehicle whenever possible.",
             "Do not use misleading photos, stolen images, unrelated stock images or images that intentionally conceal the vehicle's condition.",
             "Do not upload illegal, offensive or privacy-invasive content.",
-            "PirkAuto may automatically analyze uploaded photos to classify vehicle views such as front, rear, side, interior, dashboard or VIN plate.",
+            "Wheelio may automatically analyze uploaded photos to classify vehicle views such as front, rear, side, interior, dashboard or VIN plate.",
             "Automatic image classification may be incorrect, so the seller remains responsible for checking and correcting the selected photo category.",
           ],
         },
@@ -68,7 +68,7 @@ export default function RulesPage() {
             "Spam, harassment, threats, discrimination, scams and attempts to obtain passwords or verification codes are prohibited.",
             "Do not send malicious links, malware or deceptive payment requests.",
             "Never send a verification code received by SMS or phone call to another person.",
-            "PirkAuto may restrict messaging or accounts where abuse or fraud is suspected.",
+            "Wheelio may restrict messaging or accounts where abuse or fraud is suspected.",
           ],
         },
         {
@@ -86,9 +86,9 @@ export default function RulesPage() {
           items: [
             "Fraud, impersonation, phishing and identity theft are prohibited.",
             "Manipulating reviews, listings, prices, payment flows or platform functionality is prohibited.",
-            "Attempting to bypass security, access another user's data, scrape protected data or interfere with PirkAuto infrastructure is prohibited.",
-            "Using PirkAuto for unlawful transactions, money laundering or other illegal purposes is prohibited.",
-            "Automated bulk activity may be restricted unless explicitly authorized by PirkAuto.",
+            "Attempting to bypass security, access another user's data, scrape protected data or interfere with Wheelio infrastructure is prohibited.",
+            "Using Wheelio for unlawful transactions, money laundering or other illegal purposes is prohibited.",
+            "Automated bulk activity may be restricted unless explicitly authorized by Wheelio.",
           ],
         },
         {
@@ -97,57 +97,57 @@ export default function RulesPage() {
             "Users can contact support through the Help page or the live support widget.",
             "When reporting a problem, provide enough information for the support team to investigate it.",
             "Do not knowingly submit false reports or abuse the support system.",
-            "PirkAuto may retain support conversations where necessary to resolve disputes, prevent abuse or improve service quality.",
+            "Wheelio may retain support conversations where necessary to resolve disputes, prevent abuse or improve service quality.",
           ],
         },
         {
           title: "9. Automated tools and external services",
           items: [
-            "PirkAuto may use third-party services for VIN decoding, image analysis, payments, login, SMS and phone verification.",
+            "Wheelio may use third-party services for VIN decoding, image analysis, payments, login, SMS and phone verification.",
             "Data returned by external services may be incomplete or inaccurate and should not be treated as an official vehicle inspection.",
             "The seller remains responsible for checking automatically filled vehicle information before publishing.",
-            "Availability of third-party services may temporarily affect selected PirkAuto features.",
+            "Availability of third-party services may temporarily affect selected Wheelio features.",
           ],
         },
         {
           title: "10. Moderation and enforcement",
           items: [
-            "PirkAuto may edit visibility, reject, pause or remove listings that violate these rules or appear fraudulent.",
+            "Wheelio may edit visibility, reject, pause or remove listings that violate these rules or appear fraudulent.",
             "Accounts may be warned, temporarily restricted or suspended depending on the seriousness or repetition of a violation.",
-            "Where legally required, PirkAuto may cooperate with competent authorities.",
+            "Where legally required, Wheelio may cooperate with competent authorities.",
             "Users may contact support if they believe a moderation decision was made in error.",
           ],
         },
         {
           title: "11. Responsibility",
           items: [
-            "PirkAuto provides a platform that connects buyers and sellers and is not automatically a party to the vehicle sale contract.",
+            "Wheelio provides a platform that connects buyers and sellers and is not automatically a party to the vehicle sale contract.",
             "Buyers and sellers are responsible for their own negotiations, inspections, agreements, taxes and legal obligations.",
-            "PirkAuto does not guarantee the condition, ownership, legality or accuracy of every vehicle listing.",
+            "Wheelio does not guarantee the condition, ownership, legality or accuracy of every vehicle listing.",
             "Nothing in these rules limits rights that users have under mandatory consumer or other applicable law.",
           ],
         },
         {
           title: "12. Changes to the rules",
           items: [
-            "These rules may be updated when PirkAuto features, legal requirements or safety practices change.",
+            "These rules may be updated when Wheelio features, legal requirements or safety practices change.",
             "The current version will be published on this page.",
             "Continued use of the platform after an update means the user is expected to follow the current rules.",
           ],
         },
       ] as RuleSection[],
       footer:
-        "If you are unsure whether a listing or action is allowed, contact PirkAuto support before proceeding.",
+        "If you are unsure whether a listing or action is allowed, contact Wheelio support before proceeding.",
     },
 
     LT: {
       title: "Taisyklės",
       subtitle:
-        "Šios taisyklės padeda išlaikyti PirkAuto saugią, skaidrią ir patogią pirkėjams bei pardavėjams.",
+        "Šios taisyklės padeda išlaikyti Wheelio saugią, skaidrią ir patogią pirkėjams bei pardavėjams.",
       updated: "Paskutinį kartą atnaujinta: 2026 m. rugsėjo 29 d.",
       introTitle: "Bendrieji principai",
       intro:
-        "Naudodamiesi PirkAuto, kurdami paskyrą, skelbdami skelbimą ar susisiekdami su kitu naudotoju sutinkate laikytis šių taisyklių. PirkAuto gali pašalinti turinį, apriboti funkcijas arba sustabdyti paskyras, kurios pažeidžia taisykles.",
+        "Naudodamiesi Wheelio, kurdami paskyrą, skelbdami skelbimą ar susisiekdami su kitu naudotoju sutinkate laikytis šių taisyklių. Wheelio gali pašalinti turinį, apriboti funkcijas arba sustabdyti paskyras, kurios pažeidžia taisykles.",
       sections: [
         {
           title: "1. Paskyros ir tapatybė",
@@ -175,7 +175,7 @@ export default function RulesPage() {
             "Kai įmanoma, kelkite tikro parduodamo automobilio nuotraukas.",
             "Negalima naudoti klaidinančių, pavogtų, nesusijusių nuotraukų ar vaizdų, kurie sąmoningai slepia automobilio būklę.",
             "Draudžiamas neteisėtas, įžeidžiantis ar kitų asmenų privatumą pažeidžiantis turinys.",
-            "PirkAuto gali automatiškai analizuoti nuotraukas ir nustatyti vaizdo tipą: priekį, galą, šoną, saloną, prietaisų skydelį ar VIN lentelę.",
+            "Wheelio gali automatiškai analizuoti nuotraukas ir nustatyti vaizdo tipą: priekį, galą, šoną, saloną, prietaisų skydelį ar VIN lentelę.",
             "Automatinis nuotraukų atpažinimas gali suklysti, todėl pardavėjas privalo patikrinti ir, jei reikia, pataisyti kategoriją.",
           ],
         },
@@ -197,7 +197,7 @@ export default function RulesPage() {
             "Draudžiami šlamštas, priekabiavimas, grasinimai, diskriminacija, sukčiavimas ir bandymai išgauti slaptažodžius ar patvirtinimo kodus.",
             "Negalima siųsti kenkėjiškų nuorodų, programų ar klaidinančių mokėjimo prašymų.",
             "Niekada neperduokite kitam asmeniui SMS ar skambučiu gauto patvirtinimo kodo.",
-            "PirkAuto gali apriboti bendravimo funkcijas ar paskyrą, jei įtariamas piktnaudžiavimas arba sukčiavimas.",
+            "Wheelio gali apriboti bendravimo funkcijas ar paskyrą, jei įtariamas piktnaudžiavimas arba sukčiavimas.",
           ],
         },
         {
@@ -215,9 +215,9 @@ export default function RulesPage() {
           items: [
             "Draudžiami sukčiavimas, apsimetimas kitu asmeniu, duomenų viliojimas ir tapatybės vagystė.",
             "Draudžiama manipuliuoti skelbimais, kainomis, mokėjimais ar platformos veikimu.",
-            "Draudžiama bandyti apeiti saugumo sistemas, pasiekti kitų naudotojų duomenis, rinkti apsaugotus duomenis automatizuotai ar trikdyti PirkAuto infrastruktūrą.",
-            "Draudžiama naudoti PirkAuto neteisėtiems sandoriams, pinigų plovimui ar kitai neteisėtai veiklai.",
-            "Masinė automatizuota veikla gali būti ribojama, jei PirkAuto jos aiškiai nepatvirtino.",
+            "Draudžiama bandyti apeiti saugumo sistemas, pasiekti kitų naudotojų duomenis, rinkti apsaugotus duomenis automatizuotai ar trikdyti Wheelio infrastruktūrą.",
+            "Draudžiama naudoti Wheelio neteisėtiems sandoriams, pinigų plovimui ar kitai neteisėtai veiklai.",
+            "Masinė automatizuota veikla gali būti ribojama, jei Wheelio jos aiškiai nepatvirtino.",
           ],
         },
         {
@@ -226,57 +226,57 @@ export default function RulesPage() {
             "Naudotojai gali kreiptis per Pagalbos puslapį arba tiesioginio pokalbio langą.",
             "Pranešdami apie problemą pateikite pakankamai informacijos, kad pagalbos komanda galėtų ją ištirti.",
             "Draudžiama sąmoningai teikti melagingus pranešimus ar piktnaudžiauti pagalbos sistema.",
-            "PirkAuto gali saugoti pagalbos pokalbius, kai tai būtina ginčams spręsti, piktnaudžiavimui užkirsti ar paslaugų kokybei gerinti.",
+            "Wheelio gali saugoti pagalbos pokalbius, kai tai būtina ginčams spręsti, piktnaudžiavimui užkirsti ar paslaugų kokybei gerinti.",
           ],
         },
         {
           title: "9. Automatiniai įrankiai ir išorinės paslaugos",
           items: [
-            "PirkAuto gali naudoti trečiųjų šalių paslaugas VIN dekodavimui, vaizdų analizei, mokėjimams, prisijungimui, SMS ir telefono patvirtinimui.",
+            "Wheelio gali naudoti trečiųjų šalių paslaugas VIN dekodavimui, vaizdų analizei, mokėjimams, prisijungimui, SMS ir telefono patvirtinimui.",
             "Išorinių paslaugų pateikti duomenys gali būti neišsamūs ar netikslūs ir nėra oficiali automobilio techninė apžiūra.",
             "Prieš paskelbdamas skelbimą pardavėjas privalo patikrinti automatiškai užpildytą automobilio informaciją.",
-            "Trečiųjų šalių paslaugų sutrikimai gali laikinai paveikti kai kurias PirkAuto funkcijas.",
+            "Trečiųjų šalių paslaugų sutrikimai gali laikinai paveikti kai kurias Wheelio funkcijas.",
           ],
         },
         {
           title: "10. Moderavimas ir taisyklių vykdymas",
           items: [
-            "PirkAuto gali apriboti matomumą, atmesti, sustabdyti arba pašalinti taisykles pažeidžiančius ar įtartinus skelbimus.",
+            "Wheelio gali apriboti matomumą, atmesti, sustabdyti arba pašalinti taisykles pažeidžiančius ar įtartinus skelbimus.",
             "Priklausomai nuo pažeidimo rimtumo ir pasikartojimo paskyrai gali būti skirtas įspėjimas, laikinas apribojimas arba blokavimas.",
-            "Kai to reikalauja teisės aktai, PirkAuto gali bendradarbiauti su kompetentingomis institucijomis.",
+            "Kai to reikalauja teisės aktai, Wheelio gali bendradarbiauti su kompetentingomis institucijomis.",
             "Jei naudotojas mano, kad moderavimo sprendimas priimtas klaidingai, jis gali kreiptis į pagalbą.",
           ],
         },
         {
           title: "11. Atsakomybė",
           items: [
-            "PirkAuto suteikia platformą pirkėjams ir pardavėjams susisiekti ir savaime nėra automobilio pirkimo–pardavimo sutarties šalis.",
+            "Wheelio suteikia platformą pirkėjams ir pardavėjams susisiekti ir savaime nėra automobilio pirkimo–pardavimo sutarties šalis.",
             "Pirkėjai ir pardavėjai patys atsako už derybas, automobilio patikrą, sutartis, mokesčius ir kitus teisinius įsipareigojimus.",
-            "PirkAuto negarantuoja kiekvieno skelbimo automobilio būklės, nuosavybės, teisėtumo ar visų pateiktų duomenų tikslumo.",
+            "Wheelio negarantuoja kiekvieno skelbimo automobilio būklės, nuosavybės, teisėtumo ar visų pateiktų duomenų tikslumo.",
             "Šios taisyklės neriboja privalomų naudotojų teisių, kurias suteikia vartotojų apsaugos ar kiti taikomi teisės aktai.",
           ],
         },
         {
           title: "12. Taisyklių pakeitimai",
           items: [
-            "Taisyklės gali būti atnaujinamos keičiantis PirkAuto funkcijoms, teisės aktams ar saugumo praktikai.",
+            "Taisyklės gali būti atnaujinamos keičiantis Wheelio funkcijoms, teisės aktams ar saugumo praktikai.",
             "Aktuali taisyklių versija skelbiama šiame puslapyje.",
             "Toliau naudodamasis platforma po taisyklių atnaujinimo naudotojas turi laikytis galiojančios taisyklių versijos.",
           ],
         },
       ] as RuleSection[],
       footer:
-        "Jei abejojate, ar konkretus skelbimas ar veiksmas yra leidžiamas, prieš tęsdami kreipkitės į PirkAuto pagalbą.",
+        "Jei abejojate, ar konkretus skelbimas ar veiksmas yra leidžiamas, prieš tęsdami kreipkitės į Wheelio pagalbą.",
     },
 
     RU: {
       title: "Правила",
       subtitle:
-        "Эти правила помогают сделать PirkAuto безопасной, прозрачной и удобной площадкой для покупателей и продавцов.",
+        "Эти правила помогают сделать Wheelio безопасной, прозрачной и удобной площадкой для покупателей и продавцов.",
       updated: "Последнее обновление: 29 сентября 2026 г.",
       introTitle: "Общие принципы",
       intro:
-        "Используя PirkAuto, создавая аккаунт, публикуя объявление или связываясь с другим пользователем, вы соглашаетесь соблюдать эти правила. PirkAuto может удалить контент, ограничить функции или приостановить аккаунты, нарушающие правила.",
+        "Используя Wheelio, создавая аккаунт, публикуя объявление или связываясь с другим пользователем, вы соглашаетесь соблюдать эти правила. Wheelio может удалить контент, ограничить функции или приостановить аккаунты, нарушающие правила.",
       sections: [
         {
           title: "1. Аккаунты и личные данные",
@@ -304,7 +304,7 @@ export default function RulesPage() {
             "По возможности загружайте фотографии именно продаваемого автомобиля.",
             "Нельзя использовать вводящие в заблуждение, украденные, нерелевантные стоковые фотографии или изображения, скрывающие реальное состояние автомобиля.",
             "Запрещён незаконный, оскорбительный или нарушающий чужую приватность контент.",
-            "PirkAuto может автоматически анализировать фотографии и определять ракурс: перед, зад, бок, салон, приборная панель или VIN-табличка.",
+            "Wheelio может автоматически анализировать фотографии и определять ракурс: перед, зад, бок, салон, приборная панель или VIN-табличка.",
             "Автоматическая классификация может ошибаться, поэтому продавец обязан проверить и при необходимости исправить категорию фотографии.",
           ],
         },
@@ -326,7 +326,7 @@ export default function RulesPage() {
             "Запрещены спам, преследование, угрозы, дискриминация, мошенничество и попытки получить чужие пароли или коды подтверждения.",
             "Нельзя отправлять вредоносные ссылки, программы или обманные запросы на оплату.",
             "Никогда не передавайте другому человеку код подтверждения, полученный по SMS или звонку.",
-            "PirkAuto может ограничить сообщения или аккаунт при подозрении на злоупотребление или мошенничество.",
+            "Wheelio может ограничить сообщения или аккаунт при подозрении на злоупотребление или мошенничество.",
           ],
         },
         {
@@ -344,9 +344,9 @@ export default function RulesPage() {
           items: [
             "Запрещены мошенничество, выдача себя за другого человека, фишинг и кража личности.",
             "Запрещены манипуляции объявлениями, ценами, оплатой или работой платформы.",
-            "Запрещены попытки обхода защиты, получения доступа к чужим данным, массового сбора защищённой информации или вмешательства в инфраструктуру PirkAuto.",
-            "Запрещено использовать PirkAuto для незаконных сделок, отмывания денег и другой противоправной деятельности.",
-            "Массовая автоматизированная активность может быть ограничена без отдельного разрешения PirkAuto.",
+            "Запрещены попытки обхода защиты, получения доступа к чужим данным, массового сбора защищённой информации или вмешательства в инфраструктуру Wheelio.",
+            "Запрещено использовать Wheelio для незаконных сделок, отмывания денег и другой противоправной деятельности.",
+            "Массовая автоматизированная активность может быть ограничена без отдельного разрешения Wheelio.",
           ],
         },
         {
@@ -355,47 +355,47 @@ export default function RulesPage() {
             "Связаться с поддержкой можно через страницу «Помощь» или онлайн-чат.",
             "При обращении указывайте достаточно информации, чтобы команда могла разобраться в проблеме.",
             "Запрещено намеренно подавать ложные жалобы или злоупотреблять службой поддержки.",
-            "PirkAuto может хранить переписку с поддержкой, если это необходимо для разрешения споров, предотвращения злоупотреблений или улучшения качества сервиса.",
+            "Wheelio может хранить переписку с поддержкой, если это необходимо для разрешения споров, предотвращения злоупотреблений или улучшения качества сервиса.",
           ],
         },
         {
           title: "9. Автоматические инструменты и внешние сервисы",
           items: [
-            "PirkAuto может использовать сторонние сервисы для VIN-декодирования, анализа изображений, платежей, входа, SMS и телефонного подтверждения.",
+            "Wheelio может использовать сторонние сервисы для VIN-декодирования, анализа изображений, платежей, входа, SMS и телефонного подтверждения.",
             "Данные внешних сервисов могут быть неполными или неточными и не являются официальной технической экспертизой автомобиля.",
             "Перед публикацией продавец обязан проверить автоматически заполненные данные автомобиля.",
-            "Недоступность сторонних сервисов может временно влиять на отдельные функции PirkAuto.",
+            "Недоступность сторонних сервисов может временно влиять на отдельные функции Wheelio.",
           ],
         },
         {
           title: "10. Модерация и меры",
           items: [
-            "PirkAuto может ограничить видимость, отклонить, приостановить или удалить объявления, нарушающие правила или вызывающие подозрения.",
+            "Wheelio может ограничить видимость, отклонить, приостановить или удалить объявления, нарушающие правила или вызывающие подозрения.",
             "В зависимости от серьёзности и повторяемости нарушения аккаунт может получить предупреждение, временное ограничение или блокировку.",
-            "Когда это требуется законом, PirkAuto может сотрудничать с компетентными органами.",
+            "Когда это требуется законом, Wheelio может сотрудничать с компетентными органами.",
             "Если пользователь считает решение модерации ошибочным, он может обратиться в поддержку.",
           ],
         },
         {
           title: "11. Ответственность",
           items: [
-            "PirkAuto предоставляет площадку для связи покупателей и продавцов и автоматически не становится стороной договора купли-продажи автомобиля.",
+            "Wheelio предоставляет площадку для связи покупателей и продавцов и автоматически не становится стороной договора купли-продажи автомобиля.",
             "Покупатели и продавцы самостоятельно отвечают за переговоры, осмотр автомобиля, договоры, налоги и другие юридические обязательства.",
-            "PirkAuto не гарантирует состояние, право собственности, законность или точность всех данных каждого автомобиля.",
+            "Wheelio не гарантирует состояние, право собственности, законность или точность всех данных каждого автомобиля.",
             "Эти правила не ограничивают обязательные права пользователей, предусмотренные законодательством о защите потребителей и иными применимыми нормами.",
           ],
         },
         {
           title: "12. Изменение правил",
           items: [
-            "Правила могут обновляться при изменении функций PirkAuto, законодательства или практик безопасности.",
+            "Правила могут обновляться при изменении функций Wheelio, законодательства или практик безопасности.",
             "Актуальная версия публикуется на этой странице.",
             "При дальнейшем использовании платформы после обновления пользователь должен соблюдать действующую версию правил.",
           ],
         },
       ] as RuleSection[],
       footer:
-        "Если вы не уверены, разрешено ли конкретное объявление или действие, обратитесь в поддержку PirkAuto до его совершения.",
+        "Если вы не уверены, разрешено ли конкретное объявление или действие, обратитесь в поддержку Wheelio до его совершения.",
     },
   }[language];
 

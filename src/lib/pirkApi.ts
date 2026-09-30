@@ -8,7 +8,19 @@ export type AuthUser = {
   city: string;
   phone: string;
   phoneVerified: boolean;
+  /** Returned by newer backends: "PASSWORD" or "GOOGLE". */
+  authProvider?: string;
+  /** Returned by newer backends; used to show the admin panel. */
+  roles?: string[];
 };
+
+export function isAdminUser(user: AuthUser | null | undefined) {
+  return Boolean(user?.roles?.some((r) => ["ADMIN", "ROLE_ADMIN"].includes(String(r).toUpperCase())));
+}
+
+export function isSupportUser(user: AuthUser | null | undefined) {
+  return Boolean(user?.roles?.some((r) => ["ADMIN", "ROLE_ADMIN", "SUPPORT", "MODERATOR"].includes(String(r).toUpperCase())));
+}
 
 export type LoginResponse = AuthUser & { accessToken: string };
 
@@ -30,6 +42,100 @@ export async function logout() {
 }
 
 export type PhoneVerificationConfig = { available: boolean; channels: VerificationChannel[]; voiceAvailable: boolean };
+
+export async function changePassword(oldPassword: string, newPassword: string) {
+  return fetchJson<{ success: boolean }>("/users/change/password", {
+    method: "POST",
+    body: JSON.stringify({ oldPassword, newPassword }),
+  });
+}
+
+export async function changeEmail(email: string, password?: string) {
+  return fetchJson<{ success: boolean }>("/users/change/email", {
+    method: "POST",
+    body: JSON.stringify(password ? { email, password } : { email }),
+  });
+}
+
+// ---- Buyers: seller contact, favorites, complaints ----
+export type SellerContact = { name: string | null; phone: string | null };
+
+export function getSellerContact(listingId: string | number) {
+  return fetchJson<SellerContact>(`/public/listings/${encodeURIComponent(String(listingId))}/contact`);
+}
+
+export function addFavorite(listingId: string | number) {
+  return fetchJson<{ success: boolean }>(`/favorites/${encodeURIComponent(String(listingId))}`, { method: "POST" });
+}
+
+export function removeFavorite(listingId: string | number) {
+  return fetchJson<{ success: boolean }>(`/favorites/${encodeURIComponent(String(listingId))}`, { method: "DELETE" });
+}
+
+export function reportListing(listingId: string | number, description: string) {
+  return fetchJson<{ id: number; status: string }>("/complaints/create", {
+    method: "POST",
+    body: JSON.stringify({ type: "LISTING", target: Number(listingId), description }),
+  });
+}
+
+// ---- Admin ----
+export type Paged<T> = { content: T[]; number: number; size: number; totalElements: number; totalPages: number };
+export type AdminStats = { users: number; listings: number; payments: number; openTickets: number };
+export type AdminUser = {
+  id: number;
+  email: string;
+  name: string;
+  surname: string;
+  city: string | null;
+  phone: string | null;
+  phoneVerified: number | boolean;
+  disabled: number | boolean;
+  registrationDate: string | null;
+};
+export type AdminListing = {
+  id: number;
+  user: { id: number; name: string; surname: string } | null;
+  car: { mark?: { name: string } | null; model?: { name: string } | null } | null;
+  status: string;
+  price: number;
+  description: string | null;
+  createdAt: string | null;
+};
+export type AdminComplaint = {
+  id: number;
+  type: "USER" | "LISTING" | string;
+  status: "WAITING" | "DENIED" | "ACCEPTED" | string;
+  description: string;
+  userId: number;
+  userEmail: string | null;
+  userTargetId: number | null;
+  listingTargetId: number | null;
+  createdAt: string | null;
+};
+export const ADMIN_LISTING_STATUSES = ["ACTIVE", "PENDING_PAYMENT", "PENDING_REVIEW", "REJECTED", "SOLD", "CLOSED"] as const;
+
+export function getAdminStats() {
+  return fetchJson<AdminStats>("/admin/stats");
+}
+export function listAdminUsers(page = 0, size = 50) {
+  return fetchJson<Paged<AdminUser>>(`/admin/users?page=${page}&size=${size}`);
+}
+export function setUserDisabled(id: number, disabled: boolean) {
+  return fetchJson<{ success: boolean }>(`/users/${id}/edit`, { method: "POST", body: JSON.stringify({ disabled: disabled ? 1 : 0 }) });
+}
+export function listAdminListings(page = 0, size = 50) {
+  return fetchJson<Paged<AdminListing>>(`/admin/listings?page=${page}&size=${size}`);
+}
+export function setAdminListingStatus(id: number, status: string) {
+  return fetchJson<{ success: boolean }>(`/admin/listings/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
+}
+export function listAdminComplaints(page = 0, size = 50) {
+  return fetchJson<Paged<AdminComplaint>>(`/admin/complaints?page=${page}&size=${size}`);
+}
+export function setComplaintStatus(id: number, status: "WAITING" | "DENIED" | "ACCEPTED") {
+  return fetchJson<{ success: boolean }>(`/complaints/${id}/edit/status`, { method: "POST", body: JSON.stringify({ status }) });
+}
 
 /** Channels the backend really delivers (voice only when a voice provider is configured). */
 export async function getPhoneVerificationConfig() {
