@@ -14,9 +14,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "PirkAuto",
-  description: "Automobilių paieška ir pardavimas",
-  metadataBase: new URL("https://dev.pirkauto.lt"),
+  title: "Wheelio | Car listings",
+  description: "Find and list cars on Wheelio.",
+  metadataBase: new URL("https://wheelio.lt"),
   alternates: { canonical: "/" },
 };
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
@@ -116,8 +117,14 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-black/5 bg-white/95 backdrop-blur-md dark:bg-[#111111]/95">
       <div className="mx-auto flex h-[68px] w-full max-w-[1600px] items-center justify-between px-4 sm:h-[86px] sm:px-6 lg:px-10">
         <Link href="/" className="flex shrink-0 items-center">
-          <span className="text-[22px] font-black tracking-[-1px] text-black dark:text-white sm:text-[25px]">Wheel</span>
-          <span className="text-[22px] font-black tracking-[-1px] text-[#e0ad2d] sm:text-[25px]">io</span>
+          <Image
+            src="/images/wheeliologo.svg"
+            alt="Wheelio"
+            width={168}
+            height={35}
+            priority
+            className="h-auto w-[148px] sm:w-[168px]"
+          />
         </Link>
 
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-9 md:flex">
