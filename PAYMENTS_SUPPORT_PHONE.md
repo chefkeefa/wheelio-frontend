@@ -1,4 +1,4 @@
-# PirkAuto frontend: payments, support and phone verification
+# Wheelio frontend: payments, support and phone verification
 
 This build is wired to the matching backend package.
 

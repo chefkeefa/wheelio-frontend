@@ -1,4 +1,4 @@
-name: Deploy to dev.pirkauto.lt
+name: Deploy to dev.wheelio.lt
 
 on:
   push:

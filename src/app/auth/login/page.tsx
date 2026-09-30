@@ -4,7 +4,7 @@ import { FormEvent, Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
-import { googleLoginUrl, login } from "@/lib/pirkApi";
+import { googleLoginUrl, login } from "@/lib/wheelioApi";
 
 function LoginInner() {
   const { language } = useLanguage();

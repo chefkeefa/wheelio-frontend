@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
-import { logout, me, type AuthUser } from "@/lib/pirkApi";
+import { logout, me, type AuthUser } from "@/lib/wheelioApi";
 
 function MoonIcon() {
   return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" /></svg>;
@@ -59,7 +59,7 @@ export default function Header() {
   ];
 
   useEffect(() => {
-    const storedTheme = localStorage.getItem("pirkauto-theme");
+    const storedTheme = localStorage.getItem("wheelio-theme");
     const dark = storedTheme === "dark" || (!storedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches);
     setDarkMode(dark);
     document.documentElement.classList.toggle("dark", dark);
@@ -94,7 +94,7 @@ export default function Header() {
     const next = !darkMode;
     setDarkMode(next);
     document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("pirkauto-theme", next ? "dark" : "light");
+    localStorage.setItem("wheelio-theme", next ? "dark" : "light");
   };
 
   const doLogout = async () => {
@@ -136,6 +136,9 @@ export default function Header() {
           <button type="button" onClick={toggleTheme} className="flex h-10 w-10 items-center justify-center rounded-full text-black transition hover:bg-black/5 dark:text-white dark:hover:bg-white/10" aria-label="Toggle theme">{darkMode ? <SunIcon /> : <MoonIcon />}</button>
           <button type="button" onClick={toggleLanguage} className="flex h-10 items-center gap-1.5 rounded-full px-2 text-black transition hover:bg-black/5 dark:text-white dark:hover:bg-white/10" aria-label="Change language" title="EN → LT → RU"><GlobeIcon /><span className="min-w-[20px] text-xs font-bold">{language}</span></button>
           <button type="button" className="flex h-10 w-10 items-center justify-center rounded-full text-black transition hover:bg-black/5 dark:text-white dark:hover:bg-white/10" aria-label={tr("Recently viewed", "Neseniai peržiūrėta", "Недавно просмотренные")}><ClockIcon /></button>
+          <Link href="/sell" className="hidden h-11 items-center rounded-full bg-[#f4b92f] px-5 text-sm font-bold text-black transition hover:bg-[#ffc943] lg:flex">
+            + {tr("Place an ad", "Įdėti skelbimą", "Разместить объявление")}
+          </Link>
 
           {user ? (
             <div className="relative" ref={accountRef}>

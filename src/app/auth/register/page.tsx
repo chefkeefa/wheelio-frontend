@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
-import { googleLoginUrl, registerUser, requestPhoneCode, verifyPhoneCode, type VerificationChannel } from "@/lib/pirkApi";
+import { googleLoginUrl, registerUser, requestPhoneCode, verifyPhoneCode, type VerificationChannel } from "@/lib/wheelioApi";
 
 export default function RegisterPage() {
   const { language } = useLanguage();

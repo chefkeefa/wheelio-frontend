@@ -10,7 +10,7 @@ import {
   sendLiveSupportMessage,
   startLiveSupport,
   type LiveSupportMessage,
-} from "@/lib/pirkApi";
+} from "@/lib/wheelioApi";
 
 type SavedChat = { id: number; token?: string };
 
@@ -56,7 +56,7 @@ export default function SupportWidget() {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("pirkauto-live-support");
+      const saved = localStorage.getItem("wheelio-live-support");
       if (saved) setChat(JSON.parse(saved));
     } catch {}
   }, []);
@@ -76,7 +76,7 @@ export default function SupportWidget() {
           id: created.id,
           token: created.accessToken || undefined,
         };
-        localStorage.setItem("pirkauto-live-support", JSON.stringify(saved));
+        localStorage.setItem("wheelio-live-support", JSON.stringify(saved));
         setChat(saved);
       })
       .catch((e) => {
@@ -115,7 +115,7 @@ export default function SupportWidget() {
       })
       .catch(() => {
         if (!cancelled) {
-          localStorage.removeItem("pirkauto-live-support");
+          localStorage.removeItem("wheelio-live-support");
           setChat(null);
           setMessages([]);
         }
@@ -194,7 +194,7 @@ export default function SupportWidget() {
           <div>
             <div className="flex items-center gap-2 font-extrabold">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white/70" />
-              {tr("PirkAuto support", "PirkAuto pagalba", "Поддержка PirkAuto")}
+              {tr("Wheelio support", "Wheelio pagalba", "Поддержка Wheelio")}
             </div>
             <div className="mt-0.5 text-xs font-medium opacity-80">
               {tr("Online chat", "Pokalbis internetu", "Онлайн-чат")}

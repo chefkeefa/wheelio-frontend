@@ -7,11 +7,11 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/http";
 import { getMyListings, updateListingStatus, type Listing, type ListingStatus } from "@/lib/listings";
-import { startCheckout } from "@/lib/pirkApi";
+import { startCheckout } from "@/lib/wheelioApi";
 
 const FALLBACK_IMAGE =
   "data:image/svg+xml;charset=UTF-8," +
-  encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560"><rect width="100%" height="100%" fill="#ededee"/><text x="50%" y="48%" text-anchor="middle" font-family="Arial" font-size="42" font-weight="700" fill="#aaa">PirkAuto</text><text x="50%" y="58%" text-anchor="middle" font-family="Arial" font-size="20" fill="#aaa">No photo</text></svg>`);
+  encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560"><rect width="100%" height="100%" fill="#ededee"/><text x="50%" y="48%" text-anchor="middle" font-family="Arial" font-size="42" font-weight="700" fill="#aaa">Wheelio</text><text x="50%" y="58%" text-anchor="middle" font-family="Arial" font-size="20" fill="#aaa">No photo</text></svg>`);
 
 export default function MyListingsPage() {
   const { language } = useLanguage();
@@ -81,7 +81,7 @@ export default function MyListingsPage() {
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-4xl font-extrabold md:text-5xl">{tr("My listings", "Mano skelbimai", "Мои объявления")}</h1>
-            <p className="mt-2 text-muted-foreground">{tr("Manage the cars you are selling on PirkAuto.", "Valdykite PirkAuto parduodamus automobilius.", "Управляйте автомобилями, которые вы продаёте на PirkAuto.")}</p>
+            <p className="mt-2 text-muted-foreground">{tr("Manage the cars you are selling on Wheelio.", "Valdykite Wheelio parduodamus automobilius.", "Управляйте автомобилями, которые вы продаёте на Wheelio.")}</p>
           </div>
           <Link href="/sell" className="rounded-xl bg-accent px-5 py-3 font-bold text-black transition hover:brightness-95">+ {tr("Sell a car", "Parduoti automobilį", "Продать автомобиль")}</Link>
         </div>

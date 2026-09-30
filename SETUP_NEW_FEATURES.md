@@ -1,4 +1,4 @@
-# PirkAuto — photo AI, live support, Google login
+# Wheelio — photo AI, live support, Google login
 
 This bundle extends the previous paid-publication / phone-verification build.
 
@@ -119,14 +119,14 @@ TWILIO_FROM_NUMBER=...
 Backend:
 
 ```powershell
-cd pirkauto-backend
+cd wheelio-backend
 .\mvnw.cmd clean spring-boot:run
 ```
 
 Frontend:
 
 ```powershell
-cd pirkauto-frontend
+cd wheelio-frontend
 npm install
 npm run dev
 ```

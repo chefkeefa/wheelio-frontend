@@ -9,7 +9,7 @@ import {
   setSupportConversationClosed,
   type LiveSupportConversation,
   type LiveSupportMessage,
-} from "@/lib/pirkApi";
+} from "@/lib/wheelioApi";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function SupportAgentPage() {
