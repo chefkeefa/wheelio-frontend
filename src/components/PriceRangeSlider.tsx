@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { anybody } from "@/lib/fonts";
 
 interface Props {
   minPrice: number;
@@ -12,6 +11,8 @@ interface Props {
   label?: string;
   minLabel?: string;
   maxLabel?: string;
+  /** "dark" for the home page search panel, which stays dark in both themes. */
+  variant?: "default" | "dark";
 }
 
 type Dragging = "min" | "max" | null;
@@ -25,7 +26,9 @@ export default function PriceRangeSlider({
   label = "Price range",
   minLabel = "Min",
   maxLabel = "Max",
+  variant = "default",
 }: Props) {
+  const dark = variant === "dark";
   const [min, setMin] = useState(minPrice);
   const [max, setMax] = useState(maxPrice);
   const [dragging, setDragging] = useState<Dragging>(null);
@@ -109,23 +112,25 @@ export default function PriceRangeSlider({
   return (
     <div className={`w-full select-none ${className}`}>
       {/* label: немного крупнее */}
-      <label className={`${anybody.className} mb-2 block text-[15px] md:text-base font-bold text-foreground`}>
-        {label}
-      </label>
+      {label && (
+        <label className={`mb-2 block text-[15px] md:text-base font-bold text-foreground`}>
+          {label}
+        </label>
+      )}
 
       <div
         ref={trackRef}
-        className={["relative h-12", dragging ? "cursor-grabbing" : "cursor-pointer"].join(" ")}
+        className={["relative", dark ? "h-8" : "h-12", dragging ? "cursor-grabbing" : "cursor-pointer"].join(" ")}
         onPointerDown={onTrackPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       >
         {/* трек — #D9D9D9 */}
-        <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-[#D9D9D9]" />
+        <div className={`absolute left-0 right-0 top-1/2 -translate-y-1/2 rounded-full ${dark ? "h-1.5 bg-white/15" : "h-2 bg-[#D9D9D9]"}`} />
         {/* выделение диапазона */}
         <div
-          className="absolute top-1/2 h-2 -translate-y-1/2 rounded-full bg-[hsl(var(--accent))]"
+          className={`absolute top-1/2 -translate-y-1/2 rounded-full bg-[hsl(var(--accent))] ${dark ? "h-1.5" : "h-2"}`}
           style={{ left: `${leftPct}%`, right: `${rightPct}%` }}
         />
 
@@ -169,14 +174,14 @@ export default function PriceRangeSlider({
         />
       </div>
 
-      <div className={`${anybody.className} mt-3 flex items-center justify-between text-sm text-foreground`}>
+      <div className={`flex items-center justify-between text-sm ${dark ? "mt-1 text-white/60" : "mt-3 text-foreground"}`}>
         <span>
           {minLabel}:{" "}
-          <strong className="font-bold text-foreground">{min.toLocaleString()} €</strong>
+          <strong className={`font-bold ${dark ? "text-white" : "text-foreground"}`}>{min.toLocaleString("lt-LT")} €</strong>
         </span>
         <span>
           {maxLabel}:{" "}
-          <strong className="font-bold text-foreground">{max.toLocaleString()} €</strong>
+          <strong className={`font-bold ${dark ? "text-white" : "text-foreground"}`}>{max.toLocaleString("lt-LT")} €</strong>
         </span>
       </div>
     </div>

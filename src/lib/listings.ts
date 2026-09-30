@@ -13,6 +13,12 @@ export type Listing = {
   mark?: string;
   model?: string;
   year?: number;
+  /** Engine volume in litres. */
+  volume?: number;
+  /** Power in kW. */
+  power?: number;
+  transmission?: string;
+  fuel?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -71,6 +77,10 @@ function normalizeListing(x: RawListing, fallbackId?: number): Listing {
     mark: typeof x?.mark === "string" ? x.mark : undefined,
     model: typeof x?.model === "string" ? x.model : undefined,
     year: Number.isFinite(Number(x?.year)) ? Number(x?.year) : undefined,
+    volume: Number(x?.volume) > 0 ? Number(x?.volume) : undefined,
+    power: Number(x?.power) > 0 ? Number(x?.power) : undefined,
+    transmission: typeof x?.transmission === "string" && x.transmission ? x.transmission : undefined,
+    fuel: typeof x?.fuel === "string" && x.fuel ? x.fuel : undefined,
     createdAt: typeof x?.createdAt === "string" ? x.createdAt : undefined,
     updatedAt: typeof x?.updatedAt === "string" ? x.updatedAt : undefined,
   };

@@ -19,6 +19,7 @@ export type AssetIconName =
   | "close"
   | "download"
   | "edit"
+  | "engine"
   | "euro"
   | "external-link"
   | "eye"
