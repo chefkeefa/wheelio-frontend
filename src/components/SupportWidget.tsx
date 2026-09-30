@@ -181,12 +181,12 @@ export default function SupportWidget() {
   if (hidden) return null;
 
   return (
-    <div className="fixed bottom-5 right-5 z-[90] flex flex-col items-end sm:bottom-6 sm:right-6">
+    <div className="pointer-events-none fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-[90] flex flex-col items-end sm:bottom-6 sm:right-6">
       <div
-        className={`mb-3 w-[calc(100vw-2rem)] max-w-[370px] origin-bottom-right overflow-hidden rounded-3xl border border-border bg-card text-foreground shadow-2xl transition-all duration-300 ${
+        className={`pointer-events-none mb-3 max-h-[calc(100dvh-6rem)] w-[calc(100vw-2rem)] max-w-[370px] origin-bottom-right overflow-hidden rounded-3xl border border-border bg-card text-foreground shadow-2xl transition-all duration-300 ${
           open
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
-            : "pointer-events-none translate-y-3 scale-95 opacity-0"
+            : "translate-y-3 scale-95 opacity-0"
         }`}
         aria-hidden={!open}
       >
@@ -210,7 +210,7 @@ export default function SupportWidget() {
           </button>
         </div>
 
-        <div className="h-[350px] space-y-3 overflow-y-auto bg-background/70 p-4">
+        <div className="h-[min(350px,40dvh)] min-h-40 space-y-3 overflow-y-auto bg-background/70 p-4">
           <div className="flex justify-start">
             <div className="max-w-[88%] rounded-2xl rounded-bl-md bg-muted px-4 py-3 text-sm leading-relaxed text-foreground">
               <div className="mb-1 text-[11px] font-bold text-accent">
@@ -300,7 +300,7 @@ export default function SupportWidget() {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="relative grid h-14 w-14 place-items-center rounded-full bg-[#d9a339] text-black shadow-xl ring-1 ring-black/10 transition duration-200 hover:scale-105 sm:h-16 sm:w-16"
+        className="pointer-events-auto relative grid h-14 w-14 touch-manipulation place-items-center rounded-full bg-[#d9a339] text-black shadow-xl ring-1 ring-black/10 transition duration-200 hover:scale-105 sm:h-16 sm:w-16"
         aria-label={tr("Open support", "Atidaryti pagalbą", "Открыть поддержку")}
       >
         {open ? <span className="text-3xl leading-none">×</span> : <ChatIcon />}

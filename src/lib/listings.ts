@@ -109,6 +109,13 @@ export async function getPublicListings(
   return normalizeList(arr);
 }
 
+export async function getPublicListingCount(query: Pick<ListingsQuery, "mark" | "model"> = {}): Promise<number> {
+  const url = buildUrl(`${PUBLIC}/count`, query);
+  const data = await fetchJson<{ count?: unknown }>(url, { method: "GET", absolute: true });
+  const count = Number(data?.count);
+  return Number.isSafeInteger(count) && count >= 0 ? count : 0;
+}
+
 export async function getListingById(
   id: string
 ): Promise<ListingDetail | null> {

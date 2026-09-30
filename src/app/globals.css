@@ -41,6 +41,8 @@ html,
 body {
   background: hsl(var(--bg));
   color: hsl(var(--fg));
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 body {
@@ -66,4 +68,27 @@ body {
 }
 .btn-outline {
   @apply inline-flex items-center justify-center rounded-2xl px-4 py-2 border border-border text-foreground hover:bg-muted;
+}
+
+button,
+a[href],
+select,
+input,
+textarea,
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 767px) {
+  button {
+    min-height: 44px;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    min-height: 44px;
+    font-size: 16px;
+  }
 }

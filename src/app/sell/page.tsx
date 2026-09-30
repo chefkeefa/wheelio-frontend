@@ -1104,7 +1104,7 @@ export default function SellPage() {
               <button
                 key={label}
                 className={cx(
-                  "rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                "min-h-11 touch-manipulation rounded-xl px-3 py-2 text-sm font-medium transition-colors",
                   active && "bg-[hsl(var(--accent))] text-white",
                   !active && "bg-[hsl(var(--muted))] hover:bg-[hsl(var(--muted))/0.8]",
                 )}
@@ -1286,11 +1286,11 @@ export default function SellPage() {
             </div>
           </div>
 
-          <div className="mt-6 flex justify-between">
-            <Button variant="ghost" onClick={() => setStep(2)}>
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <Button className="w-full sm:w-auto" variant="ghost" onClick={() => setStep(2)}>
               {tr("Skip", "Praleisti", "Пропустить")}
             </Button>
-            <Button onClick={() => setStep(2)}>{tr("Next", "Toliau", "Далее")}</Button>
+            <Button className="w-full sm:w-auto" onClick={() => setStep(2)}>{tr("Next", "Toliau", "Далее")}</Button>
           </div>
         </Card>
       )}
@@ -1395,11 +1395,11 @@ export default function SellPage() {
             </div>
           </div>
 
-          <div className="mt-6 flex justify-between">
-            <Button variant="ghost" onClick={() => setStep(3)}>
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <Button className="w-full sm:w-auto" variant="ghost" onClick={() => setStep(3)}>
               {tr("Skip", "Praleisti", "Пропустить")}
             </Button>
-            <Button onClick={() => setStep(3)}>{tr("Next", "Toliau", "Далее")}</Button>
+            <Button className="w-full sm:w-auto" onClick={() => setStep(3)}>{tr("Next", "Toliau", "Далее")}</Button>
           </div>
         </Card>
       )}
@@ -1495,11 +1495,11 @@ export default function SellPage() {
             />
           </div>
 
-          <div className="mt-6 flex justify-between">
-            <Button variant="ghost" onClick={() => setStep(4)}>
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <Button className="w-full sm:w-auto" variant="ghost" onClick={() => setStep(4)}>
               {tr("Skip", "Praleisti", "Пропустить")}
             </Button>
-            <Button onClick={() => setStep(4)}>{tr("Next", "Toliau", "Далее")}</Button>
+            <Button className="w-full sm:w-auto" onClick={() => setStep(4)}>{tr("Next", "Toliau", "Далее")}</Button>
           </div>
         </Card>
       )}
@@ -1564,11 +1564,11 @@ export default function SellPage() {
             </div>
           )}
 
-          <div className="mt-6 flex justify-between">
-            <Button variant="ghost" onClick={() => setStep(5)}>
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <Button className="w-full sm:w-auto" variant="ghost" onClick={() => setStep(5)}>
               {tr("Skip", "Praleisti", "Пропустить")}
             </Button>
-            <Button onClick={() => setStep(5)}>{tr("Next", "Toliau", "Далее")}</Button>
+            <Button className="w-full sm:w-auto" onClick={() => setStep(5)}>{tr("Next", "Toliau", "Далее")}</Button>
           </div>
         </Card>
       )}
@@ -1655,11 +1655,11 @@ export default function SellPage() {
             </div>
           </div>
 
-          <div className="mt-6 flex justify-between">
-            <Button variant="ghost" onClick={() => setStep(6)}>
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <Button className="w-full sm:w-auto" variant="ghost" onClick={() => setStep(6)}>
               {tr("Skip", "Praleisti", "Пропустить")}
             </Button>
-            <Button onClick={() => setStep(6)}>{tr("Next", "Toliau", "Далее")}</Button>
+            <Button className="w-full sm:w-auto" onClick={() => setStep(6)}>{tr("Next", "Toliau", "Далее")}</Button>
           </div>
         </Card>
       )}
@@ -1775,13 +1775,13 @@ export default function SellPage() {
             {publishedListingId && <div className="mt-3 rounded-lg bg-green-500/10 p-3 text-sm font-semibold text-green-700">{tr("Your listing is published for free!", "Skelbimas paskelbtas nemokamai!", "Объявление опубликовано бесплатно!")} <a className="underline" href={`/listing/${publishedListingId}`}>{tr("Open listing", "Atidaryti skelbimą", "Открыть объявление")}</a></div>}
           </div>
 
-          <div className="mt-6 flex items-center justify-between">
-            <Button variant="ghost" onClick={() => { clearDraft(); setDraft(INITIAL); setPhotos([]); }}>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Button className="w-full sm:w-auto" variant="ghost" onClick={() => { clearDraft(); setDraft(INITIAL); setPhotos([]); }}>
               {tr("Clear draft", "Išvalyti juodraštį", "Очистить черновик")}
             </Button>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(1)}>{tr("Edit", "Redaguoti", "Редактировать")}</Button>
-              <Button onClick={publishedListingId ? () => { window.location.href = "/account/listings"; } : publish} loading={publishing} disabled={publishing}>
+            <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:gap-3">
+              <Button className="w-full sm:w-auto" variant="outline" onClick={() => setStep(1)}>{tr("Edit", "Redaguoti", "Редактировать")}</Button>
+              <Button className="w-full sm:w-auto" onClick={publishedListingId ? () => { window.location.href = "/account/listings"; } : publish} loading={publishing} disabled={publishing}>
                 {publishedListingId ? tr("My listings", "Mano skelbimai", "Мои объявления") : promoValid ? tr("Publish for free", "Paskelbti nemokamai", "Опубликовать бесплатно") : tr("Pay & publish", "Mokėti ir paskelbti", "Оплатить и опубликовать")}
               </Button>
             </div>

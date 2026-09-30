@@ -29,7 +29,7 @@ export default function FilterDropdown({ label, value, options, onChange, classN
           onChange={(event) => onChange(event.target.value)}
           className={[
             anybody.className,
-            "w-full appearance-none rounded-xl border border-border bg-[#D9D9D9] px-4 py-2.5 pr-10 text-[15px] outline-none transition-colors focus:border-accent",
+            "min-h-11 w-full touch-manipulation appearance-none rounded-xl border border-border bg-[#D9D9D9] px-4 py-2.5 pr-10 text-base outline-none transition-colors focus:border-accent",
             isAny ? "font-normal text-[#7b7b7b]" : "font-bold text-black",
           ].join(" ")}
         >

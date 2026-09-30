@@ -37,7 +37,7 @@ export default function Button({
   ...rest
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-lg transition-colors duration-300 select-none";
+    "inline-flex touch-manipulation cursor-pointer items-center justify-center gap-2 rounded-lg transition-colors duration-200 select-none active:scale-[0.98]";
   const variants: Record<Variant, string> = {
     // как договорились: серый → при hover оранжевый
     primary: "bg-[#5f5f5f] font-semibold text-white hover:bg-[#d9a339]",
@@ -47,9 +47,9 @@ export default function Button({
       "bg-transparent border border-[hsl(var(--border))] text-foreground hover:bg-muted",
   };
   const sizes: Record<Size, string> = {
-    sm: "h-8 px-3 text-sm",
-    md: "h-10 px-4 text-base",
-    lg: "h-12 px-6 text-lg font-extrabold",
+    sm: "min-h-11 px-3 text-sm sm:min-h-8 sm:px-3",
+    md: "min-h-11 px-4 text-base sm:min-h-10",
+    lg: "min-h-12 px-6 text-lg font-extrabold",
   };
   const state = loading || disabled ? "opacity-60 cursor-not-allowed pointer-events-none" : "";
   const direction = iconPosition === "right" ? "flex-row-reverse" : "flex-row";

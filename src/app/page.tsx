@@ -10,7 +10,7 @@ import Button from "@/components/Button";
 import SkeletonCard from "@/components/SkeletonCard";
 import EmptyState from "@/components/EmptyState";
 import { FilterIcon, ResetIcon } from "@/components/icons";
-import { getPublicListings } from "@/lib/listings";
+import { getPublicListingCount, getPublicListings } from "@/lib/listings";
 import type { Listing, ListingsQuery } from "@/lib/listings";
 import { useLanguage } from "@/context/LanguageContext";
 import { BACKEND_ORIGIN } from "@/lib/config";
@@ -93,6 +93,11 @@ export default function HomePage() {
   const [markOptions, setMarkOptions] = useState<string[]>([]);
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [markIdByName, setMarkIdByName] = useState<Record<string, string>>({});
+  const [mobilePicker, setMobilePicker] = useState<"mark" | "model" | null>(null);
+  const [mobileSearch, setMobileSearch] = useState("");
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [matchingCount, setMatchingCount] = useState(0);
+  const [countLoading, setCountLoading] = useState(true);
 
   const registrationOptions = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -120,6 +125,17 @@ export default function HomePage() {
 
   const visibleMileageValue =
     selectedMileage === ANY ? anyLabel : selectedMileage;
+
+  const filteredPickerOptions = useMemo(() => {
+    const options = mobilePicker === "model" ? modelOptions : markOptions;
+    const needle = mobileSearch.trim().toLocaleLowerCase();
+    return needle ? options.filter((name) => name.toLocaleLowerCase().includes(needle)) : options;
+  }, [markOptions, modelOptions, mobilePicker, mobileSearch]);
+
+  const mobileMakeLabel = tr("Make", "Markė", "Марка");
+  const mobileModelLabel = tr("Model", "Modelis", "Модель");
+  const mobileShowListingsLabel = tr("View listings", "Žiūrėti skelbimus", "Смотреть объявления");
+  const mobileCountLabel = new Intl.NumberFormat(language === "RU" ? "ru-RU" : language === "LT" ? "lt-LT" : "en-US").format(matchingCount);
 
   useEffect(() => {
     let cancelled = false;
@@ -178,6 +194,7 @@ export default function HomePage() {
 
     if (selectedMark === ANY) {
       setModelOptions([]);
+      setModelsLoading(false);
       return;
     }
 
@@ -185,10 +202,13 @@ export default function HomePage() {
 
     if (!markId) {
       setModelOptions([]);
+      setModelsLoading(false);
       return;
     }
 
     let cancelled = false;
+    setModelOptions([]);
+    setModelsLoading(true);
 
     const loadModels = async () => {
       try {
@@ -212,11 +232,13 @@ export default function HomePage() {
           .filter((name): name is string => Boolean(name));
 
         setModelOptions(names);
+        setModelsLoading(false);
       } catch (error) {
         console.error("Error loading models:", error);
 
         if (!cancelled) {
           setModelOptions([]);
+          setModelsLoading(false);
         }
       }
     };
@@ -227,6 +249,42 @@ export default function HomePage() {
       cancelled = true;
     };
   }, [selectedMark, markIdByName]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      setCountLoading(true);
+      try {
+        const count = await getPublicListingCount({
+          mark: selectedMark !== ANY ? selectedMark : undefined,
+          model: selectedModel !== ANY ? selectedModel : undefined,
+        });
+        if (!cancelled) setMatchingCount(count);
+      } catch {
+        if (!cancelled) setMatchingCount(0);
+      } finally {
+        if (!cancelled) setCountLoading(false);
+      }
+    }, 180);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [selectedMark, selectedModel]);
+
+  useEffect(() => {
+    if (!mobilePicker) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobilePicker(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mobilePicker]);
 
   useEffect(() => {
     let cancelled = false;
@@ -305,6 +363,18 @@ export default function HomePage() {
     }
   };
 
+  const showMobileListings = async () => {
+    if (mobilePicker === "mark" && selectedMark !== ANY) {
+      setSelectedModel(ANY);
+      setMobileSearch("");
+      setMobilePicker("model");
+      return;
+    }
+    setMobilePicker(null);
+    await applyFilters();
+    window.setTimeout(() => document.getElementById("listings-results")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  };
+
   const loadMore = async () => {
     if (!hasMore || fetchingMore) return;
 
@@ -355,7 +425,7 @@ export default function HomePage() {
   return (
     <div className="space-y-12">
       <section className="relative">
-        <div className="relative h-[641px] overflow-hidden rounded-2xl">
+        <div className="relative h-[420px] overflow-hidden rounded-2xl sm:h-[500px] md:h-[641px]">
           <img
             src="/images/hero-car.jpg"
             alt="Hero Car"
@@ -364,11 +434,11 @@ export default function HomePage() {
           />
 
           <div className="absolute inset-0 bg-black/25" />
-          <div className="absolute inset-y-0 left-0 w-[52%] bg-gradient-to-r from-black via-black/85 to-transparent" />
+          <div className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-black/90 via-black/65 to-transparent sm:w-[70%] md:w-[52%]" />
 
           <div className="absolute left-6 top-6 md:left-12 md:top-10">
             <h1
-              className={`${anybody.className} text-[48px] font-extrabold leading-tight text-white`}
+              className={`${anybody.className} text-3xl font-extrabold leading-tight text-white sm:text-4xl md:text-[48px]`}
             >
               <span className="block">{t("heroLine1")}</span>
               <span className="block">{t("heroLine2")}</span>
@@ -379,9 +449,32 @@ export default function HomePage() {
       </section>
 
       <section className="container">
-        <div className="relative z-10 -mt-[120px] mb-6 sm:-mt-[160px] md:-mt-[200px] md:mb-8 lg:-mt-[220px] xl:-mt-[240px]">
-          <div className="rounded-[40px] bg-[hsl(var(--muted))] p-6 ring-1 ring-[hsl(var(--border))] md:p-8">
-            <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-4">
+        <div className="relative z-10 -mt-[88px] mb-6 sm:-mt-[140px] md:-mt-[200px] md:mb-8 lg:-mt-[220px] xl:-mt-[240px]">
+          <div className="mb-4 rounded-3xl bg-card p-4 shadow-xl ring-1 ring-border md:hidden">
+            <div className="mb-3">
+              <p className="text-lg font-extrabold text-foreground">{tr("Find your car", "Raskite automobilį", "Найдите свой автомобиль")}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{tr("Choose a make, then a model", "Pasirinkite markę, tada modelį", "Сначала выберите марку, затем модель")}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => { setMobileSearch(""); setMobilePicker("mark"); }} className="min-h-14 rounded-2xl border border-border bg-muted px-3 py-2 text-left active:scale-[0.99]">
+                <span className="block text-xs font-medium text-muted-foreground">{mobileMakeLabel}</span>
+                <span className="mt-1 block truncate text-sm font-bold text-foreground">{selectedMark === ANY ? tr("Choose make", "Pasirinkite markę", "Выберите марку") : selectedMark}</span>
+              </button>
+              <button type="button" disabled={selectedMark === ANY} onClick={() => { setMobileSearch(""); setMobilePicker("model"); }} className="min-h-14 rounded-2xl border border-border bg-muted px-3 py-2 text-left active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50">
+                <span className="block text-xs font-medium text-muted-foreground">{mobileModelLabel}</span>
+                <span className="mt-1 block truncate text-sm font-bold text-foreground">{selectedModel === ANY ? tr("Choose model", "Pasirinkite modelį", "Выберите модель") : selectedModel}</span>
+              </button>
+            </div>
+            <button type="button" onClick={showMobileListings} disabled={searching || countLoading} className="mt-3 flex min-h-12 w-full items-center justify-center rounded-2xl bg-[#d9a339] px-4 text-sm font-extrabold text-black transition active:scale-[0.99] disabled:opacity-60">
+              {searching ? tr("Searching…", "Ieškoma…", "Ищем…") : `${mobileShowListingsLabel} · ${countLoading ? "…" : mobileCountLabel}`}
+            </button>
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              {countLoading ? tr("Updating count", "Atnaujinamas skaičius", "Обновляем количество") : tr("matching listings", "atitinkantys skelbimai", "подходящих объявлений")}
+            </p>
+          </div>
+
+          <div className="hidden rounded-[28px] bg-[hsl(var(--muted))] p-4 ring-1 ring-[hsl(var(--border))] sm:rounded-[40px] sm:p-6 md:block md:p-8">
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-4">
               <FilterDropdown
                 label={t("mark")}
                 value={visibleMarkValue}
@@ -445,7 +538,7 @@ export default function HomePage() {
                   {t("searchOffers")}
                 </Button>
 
-                <div className="flex w-full justify-end gap-4">
+                <div className="flex w-full flex-wrap justify-between gap-2 sm:justify-end sm:gap-4">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -612,8 +705,55 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+
+          {mobilePicker && (
+            <div className="fixed inset-0 z-[80] bg-black/60 md:hidden" onMouseDown={(event) => { if (event.target === event.currentTarget) setMobilePicker(null); }}>
+              <section role="dialog" aria-modal="true" aria-labelledby="mobile-picker-title" className="absolute inset-x-0 bottom-0 flex max-h-[90dvh] flex-col rounded-t-[28px] bg-card shadow-2xl">
+                <div className="flex items-center justify-between border-b border-border px-5 pb-4 pt-3">
+                  <div className="mx-auto mr-3 h-1 w-10 rounded-full bg-muted-foreground/30" />
+                  <div className="flex-1 text-center">
+                    <h2 id="mobile-picker-title" className="text-lg font-extrabold text-foreground">{mobilePicker === "mark" ? mobileMakeLabel : mobileModelLabel}</h2>
+                    {mobilePicker === "model" && <p className="mt-0.5 text-xs text-muted-foreground">{selectedMark}</p>}
+                  </div>
+                  <button type="button" onClick={() => setMobilePicker(null)} aria-label={tr("Close", "Uždaryti", "Закрыть")} className="ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-xl text-foreground">×</button>
+                </div>
+                <div className="px-4 pt-4">
+                  <input value={mobileSearch} onChange={(event) => setMobileSearch(event.target.value)} placeholder={tr("Search", "Ieškoti", "Поиск")} className="h-12 w-full rounded-2xl border border-border bg-muted px-4 text-base text-foreground outline-none placeholder:text-muted-foreground focus:border-[#d9a339]" />
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-3 pt-2">
+                  {mobilePicker === "model" && (
+                    <button type="button" onClick={() => { setSelectedModel(ANY); setMobileSearch(""); }} className={`mb-1 flex min-h-12 w-full items-center justify-between rounded-xl px-3 text-left text-sm font-semibold ${selectedModel === ANY ? "bg-[#d9a339]/15 text-foreground" : "text-foreground"}`}>
+                      <span>{tr("All models", "Visi modeliai", "Все модели")}</span>{selectedModel === ANY && <span className="text-[#b27b00]">✓</span>}
+                    </button>
+                  )}
+                  {filteredPickerOptions.length ? filteredPickerOptions.map((name) => {
+                    const selected = mobilePicker === "mark" ? selectedMark === name : selectedModel === name;
+                    return <button key={name} type="button" onClick={() => {
+                      if (mobilePicker === "mark") {
+                        setSelectedMark(name);
+                        setSelectedModel(ANY);
+                        setMobileSearch("");
+                        setMobilePicker("model");
+                      } else {
+                        setSelectedModel(name);
+                        setMobileSearch("");
+                      }
+                    }} className={`flex min-h-12 w-full items-center justify-between border-b border-border/70 px-3 text-left text-sm font-semibold text-foreground ${selected ? "text-[#a56d00]" : ""}`}>
+                      <span>{name}</span>{selected && <span className="text-[#b27b00]">✓</span>}
+                    </button>;
+                  }) : <p className="px-3 py-8 text-center text-sm text-muted-foreground">{mobilePicker === "model" && modelsLoading ? tr("Loading models…", "Įkeliami modeliai…", "Загружаем модели…") : tr("Nothing found", "Nieko nerasta", "Ничего не найдено")}</p>}
+                </div>
+                <div className="border-t border-border bg-card px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+                  <button type="button" onClick={showMobileListings} disabled={searching || countLoading || (mobilePicker === "mark" && selectedMark === ANY)} className="flex min-h-12 w-full items-center justify-center rounded-2xl bg-[#d9a339] px-4 text-sm font-extrabold text-black disabled:opacity-50">
+                    {mobilePicker === "mark" ? tr("Choose a make to continue", "Pasirinkite markę", "Выберите марку") : `${mobileShowListingsLabel} · ${countLoading ? "…" : mobileCountLabel}`}
+                  </button>
+                </div>
+              </section>
+            </div>
+          )}
         </div>
 
+        <div id="listings-results" className="scroll-mt-4">
         {loading ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 9 }).map((_, index) => (
@@ -639,6 +779,7 @@ export default function HomePage() {
             ))}
           </div>
         )}
+        </div>
 
         <div className="mt-8 flex justify-center">
           {hasMore && (
