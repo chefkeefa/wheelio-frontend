@@ -1,0 +1,24 @@
+name: CI
+
+# Replaces the old FTP deploy to dev.pirkauto.lt: that domain is gone, the job expected a static
+# export (out/) that this app does not produce, and it wiped the server folder on every push.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_API_BASE: https://api.wheelio.lt/api

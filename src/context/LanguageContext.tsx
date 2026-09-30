@@ -110,7 +110,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>("EN");
 
   useEffect(() => {
-    const saved = localStorage.getItem("pirkauto-language");
+    const saved = (localStorage.getItem("wheelio-language") ?? localStorage.getItem("pirkauto-language"));
     if (saved === "EN" || saved === "LT" || saved === "RU") {
       setLanguageState(saved);
       document.documentElement.lang = htmlLang(saved);
@@ -119,7 +119,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLanguage = useCallback((nextLanguage: Language) => {
     setLanguageState(nextLanguage);
-    localStorage.setItem("pirkauto-language", nextLanguage);
+    localStorage.setItem("wheelio-language", nextLanguage);
     document.documentElement.lang = htmlLang(nextLanguage);
   }, []);
 

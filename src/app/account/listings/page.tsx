@@ -6,19 +6,20 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/http";
-import { getMyListings, updateListingStatus, type Listing, type ListingStatus } from "@/lib/listings";
-import { startCheckout } from "@/lib/pirkApi";
+import { closeListing, deleteListingImage, editListing, getMyListings, type ListingDetail, type ListingStatus } from "@/lib/listings";
+import { startCheckout, uploadListingImage } from "@/lib/pirkApi";
 
 const FALLBACK_IMAGE =
   "data:image/svg+xml;charset=UTF-8," +
-  encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560"><rect width="100%" height="100%" fill="#ededee"/><text x="50%" y="48%" text-anchor="middle" font-family="Arial" font-size="42" font-weight="700" fill="#aaa">PirkAuto</text><text x="50%" y="58%" text-anchor="middle" font-family="Arial" font-size="20" fill="#aaa">No photo</text></svg>`);
+  encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560"><rect width="100%" height="100%" fill="#ededee"/><text x="50%" y="48%" text-anchor="middle" font-family="Arial" font-size="42" font-weight="700" fill="#aaa">Wheelio</text><text x="50%" y="58%" text-anchor="middle" font-family="Arial" font-size="20" fill="#aaa">No photo</text></svg>`);
 
 export default function MyListingsPage() {
   const { language } = useLanguage();
   const router = useRouter();
   const tr = (en: string, lt: string, ru: string) => language === "LT" ? lt : language === "RU" ? ru : en;
 
-  const [items, setItems] = useState<Listing[]>([]);
+  const [items, setItems] = useState<ListingDetail[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -42,11 +43,16 @@ export default function MyListingsPage() {
 
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const changeStatus = async (id: string, status: ListingStatus) => {
+  const changeStatus = async (id: string, status: "SOLD" | "CLOSED") => {
+    const question =
+      status === "SOLD"
+        ? tr("Mark this listing as sold? It will no longer be shown to buyers.", "Pažymėti kaip parduotą? Skelbimas nebebus rodomas pirkėjams.", "Отметить как проданное? Объявление больше не будет показано покупателям.")
+        : tr("Take this listing down? It will no longer be shown to buyers.", "Išimti skelbimą? Jis nebebus rodomas pirkėjams.", "Снять объявление? Оно больше не будет показано покупателям.");
+    if (!window.confirm(question)) return;
     setBusyId(id);
     setError("");
     try {
-      await updateListingStatus(id, status);
+      await closeListing(id, status === "SOLD");
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : tr("Action failed", "Veiksmas nepavyko", "Не удалось выполнить действие"));
@@ -81,7 +87,7 @@ export default function MyListingsPage() {
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-4xl font-extrabold md:text-5xl">{tr("My listings", "Mano skelbimai", "Мои объявления")}</h1>
-            <p className="mt-2 text-muted-foreground">{tr("Manage the cars you are selling on PirkAuto.", "Valdykite PirkAuto parduodamus automobilius.", "Управляйте автомобилями, которые вы продаёте на PirkAuto.")}</p>
+            <p className="mt-2 text-muted-foreground">{tr("Manage the cars you are selling on Wheelio.", "Valdykite Wheelio parduodamus automobilius.", "Управляйте автомобилями, которые вы продаёте на Wheelio.")}</p>
           </div>
           <Link href="/sell" className="rounded-xl bg-accent px-5 py-3 font-bold text-black transition hover:brightness-95">+ {tr("Sell a car", "Parduoti automobilį", "Продать автомобиль")}</Link>
         </div>
@@ -113,8 +119,10 @@ export default function MyListingsPage() {
                     {item.status === "ACTIVE" && <Link href={`/listing/${item.id}`} className="rounded-lg border border-border px-4 py-2 text-sm font-bold hover:border-accent">{tr("Open", "Atidaryti", "Открыть")}</Link>}
                     {item.status === "PENDING_PAYMENT" && <button disabled={busyId === item.id} onClick={() => pay(item.id)} className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-black disabled:opacity-50">{tr("Pay & publish", "Apmokėti ir paskelbti", "Оплатить и опубликовать")}</button>}
                     {item.status === "ACTIVE" && <button disabled={busyId === item.id} onClick={() => changeStatus(item.id, "SOLD")} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{tr("Mark as sold", "Pažymėti kaip parduotą", "Отметить проданным")}</button>}
-                    {(item.status === "ACTIVE" || item.status === "SOLD") && <button disabled={busyId === item.id} onClick={() => changeStatus(item.id, "CLOSED")} className="rounded-lg border border-border px-4 py-2 text-sm font-bold text-muted-foreground hover:text-foreground disabled:opacity-50">{tr("Close", "Uždaryti", "Закрыть")}</button>}
+                    {(item.status === "ACTIVE" || item.status === "PENDING_PAYMENT") && <button disabled={busyId === item.id} onClick={() => changeStatus(item.id, "CLOSED")} className="rounded-lg border border-border px-4 py-2 text-sm font-bold text-muted-foreground hover:text-foreground disabled:opacity-50">{tr("Take down", "Išimti", "Снять")}</button>}
+                    {item.status !== "SOLD" && item.status !== "CLOSED" && <button onClick={() => setEditingId(editingId === item.id ? null : item.id)} className="rounded-lg border border-border px-4 py-2 text-sm font-bold hover:border-accent">{tr("Edit", "Redaguoti", "Редактировать")}</button>}
                   </div>
+                  {editingId === item.id && <EditListingPanel item={item} tr={tr} onDone={async () => { setEditingId(null); await load(); }} onReload={load} />}
                 </div>
               </article>
             ))}
@@ -149,4 +157,110 @@ function formatPrice(value: number) {
 }
 function formatMileage(value: number) {
   return new Intl.NumberFormat("lt-LT").format(value);
+}
+
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+
+function EditListingPanel({
+  item,
+  tr,
+  onDone,
+  onReload,
+}: {
+  item: ListingDetail;
+  tr: (en: string, lt: string, ru: string) => string;
+  onDone: () => Promise<void>;
+  onReload: () => Promise<void>;
+}) {
+  const [price, setPrice] = useState(String(item.price || ""));
+  const [description, setDescription] = useState(item.description || "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const images = item.images || [];
+
+  const save = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const value = Number(price);
+    if (!Number.isFinite(value) || value <= 0) {
+      setError(tr("Price must be greater than zero", "Kaina turi būti didesnė už nulį", "Цена должна быть больше нуля"));
+      return;
+    }
+    if (!description.trim()) {
+      setError(tr("Description is required", "Aprašymas privalomas", "Описание обязательно"));
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      await editListing(item.id, { price: value, description: description.trim() });
+      await onDone();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tr("Could not save", "Nepavyko išsaugoti", "Не удалось сохранить"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removePhoto = async (index: number) => {
+    if (!window.confirm(tr("Delete this photo?", "Ištrinti šią nuotrauką?", "Удалить это фото?"))) return;
+    setSaving(true);
+    setError("");
+    try {
+      await deleteListingImage(item.id, index);
+      await onReload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tr("Could not delete the photo", "Nepavyko ištrinti nuotraukos", "Не удалось удалить фото"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addPhotos = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setSaving(true);
+    setError("");
+    try {
+      for (const file of Array.from(files)) {
+        if (file.size > MAX_PHOTO_BYTES) throw new Error(tr("Each photo must be under 10 MB", "Kiekviena nuotrauka turi būti iki 10 MB", "Каждое фото должно быть меньше 10 МБ"));
+        await uploadListingImage(Number(item.id), file);
+      }
+      await onReload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tr("Could not upload the photo", "Nepavyko įkelti nuotraukos", "Не удалось загрузить фото"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={save} className="mt-5 space-y-3 border-t border-border pt-4">
+      <label className="block text-sm font-semibold">
+        {tr("Price, EUR", "Kaina, EUR", "Цена, EUR")}
+        <input type="number" min={1} step="1" value={price} onChange={(e) => setPrice(e.target.value)} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3" />
+      </label>
+      <label className="block text-sm font-semibold">
+        {tr("Description", "Aprašymas", "Описание")}
+        <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={10000} rows={5} className="mt-1 w-full rounded-lg border border-border bg-background p-3" />
+      </label>
+      <div>
+        <div className="text-sm font-semibold">{tr("Photos", "Nuotraukos", "Фото")}</div>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          {images.map((src, index) => (
+            <div key={src} className="relative h-20 overflow-hidden rounded-lg bg-muted">
+              <img src={src} alt="" className="h-full w-full object-cover" />
+              <button type="button" disabled={saving} onClick={() => removePhoto(index)} aria-label={tr("Delete photo", "Ištrinti nuotrauką", "Удалить фото")} className="absolute right-1 top-1 rounded-full bg-black/70 px-2 text-xs font-bold text-white">×</button>
+            </div>
+          ))}
+        </div>
+        <label className="mt-2 inline-block cursor-pointer text-sm font-semibold text-accent">
+          + {tr("Add photos", "Pridėti nuotraukų", "Добавить фото")}
+          <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" disabled={saving} onChange={(e) => { addPhotos(e.target.files); e.target.value = ""; }} />
+        </label>
+      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <button disabled={saving} className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-black disabled:opacity-60">
+        {saving ? "…" : tr("Save changes", "Išsaugoti", "Сохранить")}
+      </button>
+    </form>
+  );
 }

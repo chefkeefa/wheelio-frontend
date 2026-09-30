@@ -11,3 +11,6 @@ export function resolveApiAsset(value?: string | null): string | undefined {
   if (/^(https?:|data:|blob:)/i.test(value)) return value;
   return `${BACKEND_ORIGIN}${value.startsWith("/") ? value : `/${value}`}`;
 }
+
+// Public site address, used for canonical URLs, sitemap.xml and robots.txt.
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://wheelio.lt").replace(/\/+$/, "");

@@ -142,9 +142,11 @@ export async function getListingById(
   }
 }
 
-export async function getMyListings(page = 0, size = 24): Promise<PageResponse<Listing>> {
+export async function getMyListings(page = 0, size = 24): Promise<PageResponse<ListingDetail>> {
   const data = await fetchJson<Partial<PageResponse<unknown>>>(`${PRIVATE}/mine?page=${page}&size=${size}`);
-  const content = normalizeList(Array.isArray(data?.content) ? data.content : []);
+  const content = (Array.isArray(data?.content) ? data.content : []).map((x, i) =>
+    normalizeDetail({ id: i + 1, ...((x && typeof x === "object" ? x : {}) as RawListing) })
+  );
   return {
     content,
     totalElements: Number(data?.totalElements ?? content.length),
@@ -156,9 +158,26 @@ export async function getMyListings(page = 0, size = 24): Promise<PageResponse<L
   };
 }
 
-export async function updateListingStatus(id: string, status: ListingStatus) {
-  return fetchJson<void>(`${PRIVATE}/${encodeURIComponent(id)}/edit`, {
+/** Owner takes a listing down: sold = SOLD, otherwise CLOSED. (The edit route rejects status changes.) */
+export async function closeListing(id: string, sold: boolean) {
+  return fetchJson<{ success: boolean; status: ListingStatus }>(`${PRIVATE}/${encodeURIComponent(id)}/close`, {
     method: "POST",
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ sold }),
   });
+}
+
+export async function editListing(id: string, changes: { price?: number; description?: string }) {
+  return fetchJson<{ success: boolean }>(`${PRIVATE}/${encodeURIComponent(id)}/edit`, {
+    method: "POST",
+    body: JSON.stringify(changes),
+  });
+}
+
+/** Deletes the photo at `index` (position in the listing's image list). */
+export async function deleteListingImage(id: string, index: number) {
+  return fetchJson<{ success: boolean }>(`${PRIVATE}/${encodeURIComponent(id)}/images/${index}`, { method: "DELETE" });
+}
+
+export async function getFavorites(): Promise<Listing[]> {
+  return normalizeList(await fetchJson<unknown>("/favorites"));
 }
