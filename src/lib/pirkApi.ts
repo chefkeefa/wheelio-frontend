@@ -203,6 +203,30 @@ export type LiveSupportMessage = {
   createdAt: string;
 };
 
+export type SupportTicket = {
+  id: number;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  category: string;
+  subject: string;
+  message: string;
+  status: "OPEN" | "IN_PROGRESS" | "CLOSED";
+  created_at: string;
+};
+
+export function listSupportTickets(page = 0, size = 50) {
+  return fetchJson<{ content: SupportTicket[]; totalElements: number }>(
+    `/support/tickets?page=${page}&size=${size}`
+  );
+}
+
+export function setSupportTicketStatus(id: number, status: SupportTicket["status"]) {
+  return fetchJson<SupportTicket>(`/support/tickets/${id}/status?status=${status}`, {
+    method: "POST",
+  });
+}
+
 export function startLiveSupport(payload: { name?: string; email?: string; phone?: string }) {
   return fetchJson<LiveSupportConversation>("/support/live", {
     method: "POST",
