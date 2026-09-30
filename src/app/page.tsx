@@ -40,15 +40,7 @@ type CarModel = {
   name: string;
 };
 
-const FALLBACK_CAR_IMAGE =
-  "data:image/svg+xml;charset=UTF-8," +
-  encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
-      <rect width="1200" height="800" fill="#eeeeef"/>
-      <text x="600" y="390" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="700" fill="#b0b0b3">Wheelio</text>
-      <text x="600" y="455" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#b0b0b3">No photo</text>
-    </svg>
-  `);
+const FALLBACK_CAR_IMAGE = "/images/no-photo.svg";
 
 function resolveListingImage(value?: string | null) {
   if (!value) return FALLBACK_CAR_IMAGE;
@@ -181,9 +173,9 @@ export default function HomePage() {
       return;
     }
 
-    const markId = markIdByName[selectedMark];
+    const markKey = markIdByName[selectedMark] || selectedMark.trim();
 
-    if (!markId) {
+    if (!markKey) {
       setModelOptions([]);
       return;
     }
@@ -193,7 +185,7 @@ export default function HomePage() {
     const loadModels = async () => {
       try {
         const response = await fetch(
-          `${CAR_API}/${encodeURIComponent(markId)}`,
+          `${CAR_API}/${encodeURIComponent(markKey)}`,
           { cache: "no-store" }
         );
 
@@ -358,14 +350,14 @@ export default function HomePage() {
       <section className="relative overflow-hidden bg-[#0b0b0c] sm:rounded-b-[28px]">
         <div className="relative h-[430px] sm:h-[500px] lg:h-[560px]">
           <img
-            src="/images/hero-car.jpg"
+            src="/images/home-hero.jpg"
             alt="Yellow sports car on a road"
             className="absolute inset-0 h-full w-full object-cover object-[64%_center] sm:object-center"
             loading="eager"
           />
-          <div className="absolute inset-0 bg-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/55 to-transparent sm:from-black/85 sm:via-black/35" />
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/45 to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-black/20" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/90 via-black/55 to-transparent sm:from-black/85 sm:via-black/35" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/45 to-transparent" />
 
           <div className="container relative z-[1] flex h-full items-center">
             <div className="max-w-[620px] pb-20 sm:pb-24">
@@ -397,12 +389,14 @@ export default function HomePage() {
               value={visibleMarkValue}
               onChange={(value) => setSelectedMark(value === anyLabel ? ANY : value)}
               options={[anyLabel, ...markOptions]}
+              allowCustom
             />
             <FilterDropdown
               label={t("model")}
               value={visibleModelValue}
               onChange={(value) => setSelectedModel(value === anyLabel ? ANY : value)}
               options={[anyLabel, ...modelOptions]}
+              allowCustom
             />
             <FilterDropdown
               label={t("registration")}
@@ -451,8 +445,8 @@ export default function HomePage() {
             <div className="grid gap-4 border-t border-white/10 pt-5 lg:grid-cols-2">
               <div className="rounded-2xl bg-white/[0.035] p-4 sm:p-5">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <FilterDropdown label={t("mark")} value={visibleMarkValue} onChange={(value) => setSelectedMark(value === anyLabel ? ANY : value)} options={[anyLabel, ...markOptions]} />
-                  <FilterDropdown label={t("model")} value={visibleModelValue} onChange={(value) => setSelectedModel(value === anyLabel ? ANY : value)} options={[anyLabel, ...modelOptions]} />
+                  <FilterDropdown label={t("mark")} value={visibleMarkValue} onChange={(value) => setSelectedMark(value === anyLabel ? ANY : value)} options={[anyLabel, ...markOptions]} allowCustom />
+                  <FilterDropdown label={t("model")} value={visibleModelValue} onChange={(value) => setSelectedModel(value === anyLabel ? ANY : value)} options={[anyLabel, ...modelOptions]} allowCustom />
                   <FilterDropdown label={t("registration")} value={visibleRegistrationValue} onChange={(value) => setSelectedRegistration(value === anyLabel ? ANY : value)} options={registrationOptions} />
                   <div>
                     <label className="mb-2 block text-sm font-bold text-foreground">{tr("Sort", "Rūšiavimas", "Сортировка")}</label>

@@ -1,4 +1,4 @@
-import { buildUrl, fetchJson } from "@/lib/http";
+import { buildUrl, fetchJson, getCsrfToken } from "@/lib/http";
 
 export type AuthUser = {
   id: number;
@@ -134,6 +134,7 @@ export async function uploadListingImage(listingId: number, file: File, viewType
     method: "POST",
     body: form,
     credentials: "include",
+    headers: { "X-XSRF-TOKEN": await getCsrfToken() },
   });
   if (!response.ok) {
     const text = await response.text();
@@ -166,6 +167,7 @@ export async function classifyListingPhoto(file: File) {
     method: "POST",
     body: form,
     credentials: "include",
+    headers: { "X-XSRF-TOKEN": await getCsrfToken() },
   });
   if (!response.ok) {
     const text = await response.text();

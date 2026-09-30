@@ -9,9 +9,7 @@ import { ApiError } from "@/lib/http";
 import { getMyListings, updateListingStatus, type Listing, type ListingStatus } from "@/lib/listings";
 import { startCheckout } from "@/lib/wheelioApi";
 
-const FALLBACK_IMAGE =
-  "data:image/svg+xml;charset=UTF-8," +
-  encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560"><rect width="100%" height="100%" fill="#ededee"/><text x="50%" y="48%" text-anchor="middle" font-family="Arial" font-size="42" font-weight="700" fill="#aaa">Wheelio</text><text x="50%" y="58%" text-anchor="middle" font-family="Arial" font-size="20" fill="#aaa">No photo</text></svg>`);
+const FALLBACK_IMAGE = "/images/no-photo.svg";
 
 export default function MyListingsPage() {
   const { language } = useLanguage();

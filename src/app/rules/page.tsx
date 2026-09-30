@@ -400,7 +400,7 @@ export default function RulesPage() {
   }[language];
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-screen bg-background text-foreground page-photo page-photo-rules">
       <div className="container mx-auto max-w-5xl px-4 py-10 md:py-14">
         <div className="mb-8">
           <h1 className="text-5xl font-extrabold tracking-tight md:text-7xl">

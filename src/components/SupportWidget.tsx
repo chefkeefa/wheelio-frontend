@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
@@ -14,14 +15,7 @@ import {
 
 type SavedChat = { id: number; token?: string };
 
-function ChatIcon() {
-  return (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
-      <path d="M8 10h.01M12 10h.01M16 10h.01" />
-    </svg>
-  );
-}
+function ChatIcon(){ return <img src="/icons/chat.svg" alt="" className="h-[26px] w-[26px]" aria-hidden="true" />; }
 
 export default function SupportWidget() {
   const pathname = usePathname();

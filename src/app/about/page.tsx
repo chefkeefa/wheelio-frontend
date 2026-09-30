@@ -70,7 +70,7 @@ export default function AboutPage() {
   }[language];
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-screen bg-background text-foreground page-photo page-photo-about">
       <div className="flex flex-col items-center px-4 pt-8 pb-16">
         <h1 className="text-6xl md:text-8xl lg:text-[96px] font-bold text-foreground text-center mb-8 leading-none">
           {copy.title}
