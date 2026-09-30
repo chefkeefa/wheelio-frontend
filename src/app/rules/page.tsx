@@ -399,49 +399,70 @@ export default function RulesPage() {
     },
   }[language];
 
+  const shortTitle = (title: string) => title.replace(/^\d+\.\s*/, "");
+
   return (
-    <main className="min-h-screen bg-background text-foreground page-photo page-photo-rules">
-      <div className="container mx-auto max-w-5xl px-4 py-10 md:py-14">
-        <div className="mb-8">
-          <h1 className="text-5xl font-extrabold tracking-tight md:text-7xl">
-            {copy.title}
-          </h1>
-          <p className="mt-4 max-w-3xl text-lg leading-8 text-muted-foreground">
-            {copy.subtitle}
-          </p>
-          <p className="mt-3 text-sm text-muted-foreground">{copy.updated}</p>
+    <main className="min-h-screen bg-[#f7f7f5] text-[#111]">
+      <section className="relative min-h-[310px] overflow-hidden bg-[#111] text-white md:min-h-[360px]">
+        <img src="/images/rules-hero.jpg" alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/20" />
+        <div className="container relative z-10 flex min-h-[310px] items-center py-10 md:min-h-[360px] md:py-14">
+          <div className="max-w-[650px]">
+            <div className="mb-5 text-sm font-medium text-white/70">Wheelio&nbsp;&nbsp;/&nbsp;&nbsp;{copy.title}</div>
+            <h1 className="text-[42px] font-extrabold leading-[1.02] tracking-[-0.035em] sm:text-5xl md:text-6xl">{copy.title} <span className="text-[#f4b92f]">Wheelio</span></h1>
+            <p className="mt-5 max-w-[600px] text-base leading-7 text-white/85 md:text-lg">{copy.subtitle}</p>
+            <p className="mt-4 text-xs text-white/55">{copy.updated}</p>
+          </div>
         </div>
+      </section>
 
-        <section className="mb-6 rounded-2xl border border-accent/70 bg-card p-6 shadow-sm md:p-8">
-          <h2 className="text-2xl font-bold text-accent">{copy.introTitle}</h2>
-          <p className="mt-3 leading-7 text-foreground/90">{copy.intro}</p>
-        </section>
-
-        <div className="space-y-5">
-          {copy.sections.map((section) => (
-            <section
-              key={section.title}
-              className="rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8"
-            >
-              <h2 className="text-xl font-bold md:text-2xl">{section.title}</h2>
-
-              <ul className="mt-4 space-y-3">
-                {section.items.map((item) => (
-                  <li
-                    key={item}
-                    className="flex gap-3 leading-7 text-foreground/90"
-                  >
-                    <span className="mt-[10px] h-2 w-2 shrink-0 rounded-full bg-accent" />
-                    <span>{item}</span>
-                  </li>
+      <div className="container py-7 md:py-10">
+        <div className="grid gap-6 lg:grid-cols-[270px_minmax(0,1fr)]">
+          <aside className="lg:sticky lg:top-[110px] lg:self-start">
+            <div className="rounded-[22px] border border-black/[0.06] bg-white p-2 shadow-[0_10px_35px_rgba(0,0,0,.05)]">
+              <a href="#general" className="flex min-h-12 items-center justify-between rounded-2xl bg-[#fff5dd] px-4 text-sm font-bold text-[#151515]">
+                <span>{copy.introTitle}</span><span className="text-[#d99f19]">01</span>
+              </a>
+              <div className="mt-1 hidden lg:block">
+                {copy.sections.map((section, index) => (
+                  <a key={section.title} href={`#rule-${index + 1}`} className="flex min-h-11 items-center justify-between rounded-xl px-4 text-[13px] font-medium text-black/60 transition hover:bg-black/[0.035] hover:text-black">
+                    <span className="truncate pr-3">{shortTitle(section.title)}</span><span className="text-black/30">{String(index + 2).padStart(2, "0")}</span>
+                  </a>
                 ))}
-              </ul>
-            </section>
-          ))}
-        </div>
+              </div>
+            </div>
+          </aside>
 
-        <div className="mt-8 rounded-2xl border border-accent/50 bg-accent/10 p-5 text-sm leading-6">
-          {copy.footer}
+          <div className="space-y-4">
+            <section id="general" className="scroll-mt-28 overflow-hidden rounded-[24px] border border-black/[0.06] bg-white shadow-[0_10px_35px_rgba(0,0,0,.045)]">
+              <div className="grid md:grid-cols-[1fr_240px]">
+                <div className="p-6 sm:p-8">
+                  <div className="mb-4 flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-[#fff1cf] text-xs font-extrabold">01</span><h2 className="text-2xl font-extrabold tracking-[-0.02em]">{copy.introTitle}</h2></div>
+                  <p className="max-w-3xl text-[15px] leading-7 text-black/65">{copy.intro}</p>
+                </div>
+                <div className="hidden min-h-[190px] md:block"><img src="/images/rules-hero.jpg" alt="" className="h-full w-full object-cover object-[70%_center]" /></div>
+              </div>
+            </section>
+
+            {copy.sections.map((section, index) => (
+              <section id={`rule-${index + 1}`} key={section.title} className="scroll-mt-28 rounded-[24px] border border-black/[0.06] bg-white p-6 shadow-[0_10px_35px_rgba(0,0,0,.045)] sm:p-8">
+                <div className="mb-5 flex items-center gap-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#fff1cf] text-xs font-extrabold">{String(index + 2).padStart(2, "0")}</span>
+                  <h2 className="text-xl font-extrabold tracking-[-0.02em] sm:text-2xl">{shortTitle(section.title)}</h2>
+                </div>
+                <div className="grid gap-x-8 gap-y-3 md:grid-cols-2">
+                  {section.items.map((item) => (
+                    <div key={item} className="flex gap-3 rounded-2xl bg-[#fafaf8] p-4 text-[14px] leading-6 text-black/65">
+                      <span className="mt-[8px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#e3aa22]" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+
+            <div className="rounded-[22px] bg-[#111316] p-5 text-sm leading-6 text-white/75 sm:p-6">{copy.footer}</div>
+          </div>
         </div>
       </div>
     </main>
