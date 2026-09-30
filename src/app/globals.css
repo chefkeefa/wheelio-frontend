@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --bg: 0 0% 98%;
+  --bg: 0 0% 81%;
   --fg: 0 0% 6%;
   --card: 0 0% 100%;
   --border: 240 6% 90%;
@@ -66,30 +66,4 @@ body {
 }
 .btn-outline {
   @apply inline-flex items-center justify-center rounded-2xl px-4 py-2 border border-border text-foreground hover:bg-muted;
-}
-
-
-/* Mobile interaction hardening: keep taps responsive and controls above decorative layers. */
-button, a, input, select, textarea, [role="button"] { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-button, a { position: relative; }
-@media (max-width: 767px) {
-  button, a, input, select, textarea { min-height: 44px; }
-  body { overflow-x: hidden; }
-}
-
-/* Page photography is file-based; components contain no embedded image data. */
-.page-photo { position: relative; isolation: isolate; }
-.page-photo::before { content:""; position:absolute; inset:0; z-index:-2; background-position:center; background-size:cover; background-repeat:no-repeat; }
-.page-photo::after { content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(90deg,rgba(8,9,11,.90),rgba(8,9,11,.66)); }
-.page-photo-about::before { background-image:url('/images/about-hero.jpg'); }
-.page-photo-rules::before { background-image:url('/images/rules-hero.jpg'); }
-.page-photo-auth::before { background-image:url('/images/auth-hero.jpg'); }
-
-@media (max-width: 767px) {
-  html, body { max-width:100%; overflow-x:hidden; }
-  .container { width:100%; padding-left:16px; padding-right:16px; }
-  input, select, textarea, button { font-size:16px; }
-  .page-photo::before { background-position:62% center; }
-  .page-photo::after { background:rgba(8,9,11,.76); }
-  a, button, input, select, textarea, [role="button"] { min-height:44px; }
 }

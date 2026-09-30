@@ -1,4 +1,4 @@
-import { buildUrl, fetchJson, getCsrfToken } from "@/lib/http";
+import { buildUrl, fetchJson } from "@/lib/http";
 
 export type AuthUser = {
   id: number;
@@ -89,15 +89,25 @@ export async function sendSupportTicket(payload: {
 }
 
 export type PaymentConfig = { publicationPrice: number; currency: string; devMode: boolean };
-export type Checkout = { paymentId: number; listingId: number; amount: number; currency: string; paymentUrl?: string | null; devMode: boolean };
+export type Checkout = { paymentId: number | null; listingId: number; amount: number; currency: string; paymentUrl?: string | null; devMode: boolean; promoApplied?: boolean };
 export type PaymentInfo = { id: number; listingId: number; amount: number; currency: string; status: string; listingStatus: string };
 
 export function getPaymentConfig() {
   return fetchJson<PaymentConfig>("/pay/config");
 }
 
-export function startCheckout(listingId: number) {
-  return fetchJson<Checkout>(`/pay/listings/${listingId}/checkout`, { method: "POST" });
+export function validatePromoCode(promoCode: string) {
+  return fetchJson<{ valid: boolean }>("/pay/promo/validate", {
+    method: "POST",
+    body: JSON.stringify({ promoCode }),
+  });
+}
+
+export function startCheckout(listingId: number, promoCode?: string) {
+  return fetchJson<Checkout>(`/pay/listings/${listingId}/checkout`, {
+    method: "POST",
+    ...(promoCode ? { body: JSON.stringify({ promoCode }) } : {}),
+  });
 }
 
 export function getPayment(paymentId: number) {
@@ -134,7 +144,6 @@ export async function uploadListingImage(listingId: number, file: File, viewType
     method: "POST",
     body: form,
     credentials: "include",
-    headers: { "X-XSRF-TOKEN": await getCsrfToken() },
   });
   if (!response.ok) {
     const text = await response.text();
@@ -167,7 +176,6 @@ export async function classifyListingPhoto(file: File) {
     method: "POST",
     body: form,
     credentials: "include",
-    headers: { "X-XSRF-TOKEN": await getCsrfToken() },
   });
   if (!response.ok) {
     const text = await response.text();

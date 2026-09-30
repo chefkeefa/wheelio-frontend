@@ -30,18 +30,6 @@ export function buildUrl(
   return url.toString();
 }
 
-
-let csrfToken: string | null = null;
-export async function getCsrfToken(): Promise<string> {
-  if (csrfToken) return csrfToken;
-  const response = await fetch(buildUrl("/auth/csrf"), { credentials: "include", headers: { Accept: "application/json" } });
-  if (!response.ok) throw new ApiError("Unable to initialize secure request", response.status);
-  const data = await response.json() as { token?: string };
-  if (!data.token) throw new ApiError("CSRF token missing", 500);
-  csrfToken = data.token;
-  return csrfToken;
-}
-
 type FetchJsonInit = RequestInit & {
   timeoutMs?: number;
   absolute?: boolean; // если true — path уже абсолютный URL
@@ -60,10 +48,6 @@ export async function fetchJson<T = unknown>(
     const url = absolute ? path : buildUrl(path);
     const headers = new Headers(rest.headers || {});
     if (!headers.has("Accept")) headers.set("Accept", "application/json");
-    const method = String(rest.method || "GET").toUpperCase();
-    if (["POST", "PUT", "PATCH", "DELETE"].includes(method) && !new URL(url).pathname.endsWith("/auth/login")) {
-      headers.set("X-XSRF-TOKEN", await getCsrfToken());
-    }
     if (rest.body && !(rest.body instanceof FormData) && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }

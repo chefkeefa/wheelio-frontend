@@ -1,7 +1,7 @@
 export default function Head() {
   return (
     <>
-      <title>Listing | Wheelio</title>
+      <title>Listing | PirkAuto</title>
       <meta name="description" content="Vehicle listing" />
     </>
   );

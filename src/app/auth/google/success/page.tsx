@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { me } from "@/lib/wheelioApi";
+import { me } from "@/lib/pirkApi";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function GoogleSuccessPage() {

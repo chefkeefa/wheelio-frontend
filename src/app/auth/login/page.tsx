@@ -1,11 +1,10 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
-import { googleLoginUrl, login } from "@/lib/wheelioApi";
+import { googleLoginUrl, login } from "@/lib/pirkApi";
 
 function LoginInner() {
   const { language } = useLanguage();
@@ -33,7 +32,7 @@ function LoginInner() {
   };
 
   return (
-    <main className="flex min-h-[calc(100svh-86px)] items-center justify-center bg-background px-4 py-10 text-foreground page-photo page-photo-auth">
+    <main className="flex min-h-[72vh] items-center justify-center bg-background px-4 py-12 text-foreground">
       <div className="w-full max-w-xl rounded-2xl border-2 border-accent bg-card p-8">
         <h1 className="mb-6 text-center text-5xl font-bold">{tr("Login", "Prisijungti", "Войти")}</h1>
         <form onSubmit={submit} className="space-y-5">
@@ -44,7 +43,7 @@ function LoginInner() {
         </form>
         <div className="my-5 flex items-center gap-3"><div className="h-px flex-1 bg-border"/><span className="text-xs font-semibold text-muted-foreground">{tr("or","arba","или")}</span><div className="h-px flex-1 bg-border"/></div>
         <a href={googleLoginUrl()} className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-border bg-background font-bold transition hover:bg-muted">
-          <img src="/icons/google.svg" alt="" className="h-6 w-6" />
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-lg font-black text-[#4285F4]">G</span>
           {tr("Continue with Google","Tęsti su Google","Войти через Google")}
         </a>
         <div className="mt-5 flex justify-between gap-4 text-sm font-semibold">

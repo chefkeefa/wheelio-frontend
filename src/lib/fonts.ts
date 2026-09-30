@@ -1,11 +1,12 @@
+// src/lib/fonts.ts
+import { Anybody } from "next/font/google";
+
 /**
- * Shared typography class.
- *
- * We intentionally avoid `next/font/google` here. Some deployment builders
- * cannot resolve Google font metadata during `next build`, which makes the
- * whole deployment fail. Tailwind's `font-sans` keeps typography responsive
- * and uses the project's/system sans-serif stack without a network font fetch.
+ * Единый инстанс шрифта Anybody.
+ * Подключаем веса 700 (bold) и 800 (extrabold), display: swap.
  */
-export const anybody = {
-  className: "font-sans",
-} as const;
+export const anybody = Anybody({
+  subsets: ["latin", "latin-ext"],
+  weight: ["700", "800"],
+  display: "swap",
+});

@@ -11,11 +11,12 @@ import {
   createPendingListing,
   getPaymentConfig,
   startCheckout,
+  validatePromoCode,
   uploadListingImage,
   classifyListingPhoto,
   type PhotoViewType,
   type PaymentConfig,
-} from "@/lib/wheelioApi";
+} from "@/lib/pirkApi";
 import {
   ListingDraft,
   loadDraft,
@@ -52,6 +53,8 @@ type CarModel = {
   modelClass?: string | null;
   yearFrom?: number | null;
   yearTo?: number | null;
+  "year-from"?: number | null;
+  "year-to"?: number | null;
 };
 
 type GenerationInfo = {
@@ -59,6 +62,8 @@ type GenerationInfo = {
   name: string;
   yearStart?: number | null;
   yearStop?: number | null;
+  "year-start"?: number | null;
+  "year-stop"?: number | null;
   restyle?: boolean;
   configurations?: number | null;
 };
@@ -214,14 +219,18 @@ function normalizeDrive(value: string | undefined | null) {
 }
 
 function modelSupportsYear(model: CarModel, year: number) {
-  if (model.yearFrom && year < model.yearFrom) return false;
-  if (model.yearTo && year > model.yearTo) return false;
+  const yearFrom = toNumber(model.yearFrom ?? model["year-from"]);
+  const yearTo = toNumber(model.yearTo ?? model["year-to"]);
+  if (yearFrom && year < yearFrom) return false;
+  if (yearTo && year > yearTo) return false;
   return true;
 }
 
 function generationSupportsYear(generation: GenerationInfo, year: number) {
-  if (generation.yearStart && year < generation.yearStart) return false;
-  if (generation.yearStop && year > generation.yearStop) return false;
+  const yearStart = toNumber(generation.yearStart ?? generation["year-start"]);
+  const yearStop = toNumber(generation.yearStop ?? generation["year-stop"]);
+  if (yearStart && year < yearStart) return false;
+  if (yearStop && year > yearStop) return false;
   return true;
 }
 
@@ -497,6 +506,10 @@ export default function SellPage() {
   const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [promoValid, setPromoValid] = useState(false);
+  const [promoChecking, setPromoChecking] = useState(false);
+  const [publishedListingId, setPublishedListingId] = useState<number | null>(null);
 
   // загрузка черновика
   useEffect(() => {
@@ -733,7 +746,7 @@ export default function SellPage() {
         }));
         setVinStatus({
           type: "warning",
-          text: `VIN decoded as ${decodedMake} ${decodedModel}, model year ${decodedYear}, but this make was not matched exactly in the Wheelio catalog. Nothing else was guessed.`,
+          text: `VIN decoded as ${decodedMake} ${decodedModel}, model year ${decodedYear}, but this make was not matched exactly in the PirkAuto catalog. Nothing else was guessed.`,
         });
         return;
       }
@@ -978,6 +991,7 @@ export default function SellPage() {
   // Create a PENDING_PAYMENT listing, upload photos, then start checkout.
   const publish = async () => {
     setPublishError("");
+    setPublishedListingId(null);
 
     const mark = marks.find((item) => item.name === draft.mark);
     const model = models.find((item) => item.name === draft.model);
@@ -1004,6 +1018,17 @@ export default function SellPage() {
 
     setPublishing(true);
     try {
+      const normalizedPromo = promoCode.trim().toUpperCase();
+      if (normalizedPromo) {
+        const validation = await validatePromoCode(normalizedPromo);
+        if (!validation.valid) {
+          setPromoValid(false);
+          setPublishError(tr("This promo code is invalid or expired.", "Šis nuolaidos kodas neteisingas arba nebegalioja.", "Промокод неверный или больше не действует."));
+          return;
+        }
+        setPromoValid(true);
+      }
+
       const created = await createPendingListing({
         mark: mark.id,
         model: model.id,
@@ -1021,7 +1046,12 @@ export default function SellPage() {
         await uploadListingImage(created.id, photo, detected);
       }
 
-      const checkout = await startCheckout(created.id);
+      const checkout = await startCheckout(created.id, normalizedPromo || undefined);
+      if (checkout.promoApplied) {
+        clearDraft();
+        setPublishedListingId(checkout.listingId);
+        return;
+      }
       if (checkout.devMode) {
         window.location.href = `/payment/dev?paymentId=${checkout.paymentId}&listingId=${checkout.listingId}&amount=${checkout.amount}`;
         return;
@@ -1693,22 +1723,56 @@ export default function SellPage() {
                 <div className="font-bold">{tr("Listing publication", "Skelbimo publikavimas", "Размещение объявления")}</div>
                 <div className="text-sm text-muted-foreground">
                   {tr(
-                    "The listing becomes public only after confirmed payment.",
-                    "Skelbimas tampa viešas tik patvirtinus mokėjimą.",
-                    "Объявление станет публичным только после подтверждённой оплаты."
+                    promoValid ? "With this promo code, the listing is published for free." : "The listing becomes public only after confirmed payment.",
+                    promoValid ? "Su šiuo kodu skelbimas paskelbiamas nemokamai." : "Skelbimas tampa viešas tik patvirtinus mokėjimą.",
+                    promoValid ? "С этим промокодом объявление публикуется бесплатно." : "Объявление станет публичным только после подтверждённой оплаты."
                   )}
                 </div>
               </div>
               <div className="text-2xl font-extrabold text-[hsl(var(--accent))]">
-                {paymentConfig ? `${paymentConfig.publicationPrice.toFixed(2)} ${paymentConfig.currency}` : "4.99 EUR"}
+                {promoValid ? `0.00 ${paymentConfig?.currency || "EUR"}` : paymentConfig ? `${paymentConfig.publicationPrice.toFixed(2)} ${paymentConfig.currency}` : "4.99 EUR"}
               </div>
             </div>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
+              <label className="flex-1 text-sm font-medium">
+                {tr("Promo code", "Nuolaidos kodas", "Промокод")}
+                <input
+                  value={promoCode}
+                  onChange={(event) => { setPromoCode(event.target.value); setPromoValid(false); setPublishError(""); }}
+                  placeholder={tr("Enter promo code", "Įveskite kodą", "Введите промокод")}
+                  autoComplete="off"
+                  maxLength={64}
+                  className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-foreground"
+                />
+              </label>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!promoCode.trim() || promoChecking || publishing}
+                loading={promoChecking}
+                onClick={async () => {
+                  setPromoChecking(true); setPublishError("");
+                  try {
+                    const result = await validatePromoCode(promoCode.trim().toUpperCase());
+                    setPromoValid(result.valid);
+                    if (!result.valid) setPublishError(tr("This promo code is invalid or expired.", "Šis nuolaidos kodas neteisingas arba nebegalioja.", "Промокод неверный или больше не действует."));
+                  } catch (error) {
+                    setPromoValid(false);
+                    setPublishError(error instanceof Error ? error.message : String(error));
+                  } finally { setPromoChecking(false); }
+                }}
+              >
+                {tr("Apply", "Taikyti", "Применить")}
+              </Button>
+            </div>
+            {promoValid && <div className="mt-2 text-sm font-semibold text-green-600">{tr("Code applied — this listing is free.", "Kodas pritaikytas — skelbimas nemokamas.", "Промокод применён — публикация бесплатна.")}</div>}
             {paymentConfig?.devMode && (
               <div className="mt-2 text-xs font-bold text-amber-600">
                 DEV MODE — {tr("test payment is enabled", "įjungtas bandomasis mokėjimas", "включена тестовая оплата")}
               </div>
             )}
             {publishError && <div className="mt-3 rounded-lg bg-red-500/10 p-3 text-sm text-red-600">{publishError}</div>}
+            {publishedListingId && <div className="mt-3 rounded-lg bg-green-500/10 p-3 text-sm font-semibold text-green-700">{tr("Your listing is published for free!", "Skelbimas paskelbtas nemokamai!", "Объявление опубликовано бесплатно!")} <a className="underline" href={`/listing/${publishedListingId}`}>{tr("Open listing", "Atidaryti skelbimą", "Открыть объявление")}</a></div>}
           </div>
 
           <div className="mt-6 flex items-center justify-between">
@@ -1717,8 +1781,8 @@ export default function SellPage() {
             </Button>
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep(1)}>{tr("Edit", "Redaguoti", "Редактировать")}</Button>
-              <Button onClick={publish} loading={publishing} disabled={publishing}>
-                {tr("Pay & publish", "Mokėti ir paskelbti", "Оплатить и опубликовать")}
+              <Button onClick={publishedListingId ? () => { window.location.href = "/account/listings"; } : publish} loading={publishing} disabled={publishing}>
+                {publishedListingId ? tr("My listings", "Mano skelbimai", "Мои объявления") : promoValid ? tr("Publish for free", "Paskelbti nemokamai", "Опубликовать бесплатно") : tr("Pay & publish", "Mokėti ir paskelbti", "Оплатить и опубликовать")}
               </Button>
             </div>
           </div>

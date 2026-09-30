@@ -9,7 +9,7 @@ import {
   sendSupportTicket,
   startLiveSupport,
   type LiveSupportMessage,
-} from "@/lib/wheelioApi";
+} from "@/lib/pirkApi";
 
 type SavedChat = { id: number; token?: string };
 
@@ -68,7 +68,7 @@ function LiveChat({ tr }: { tr: (en: string, lt: string, ru: string) => string }
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("wheelio-live-support");
+      const saved = localStorage.getItem("pirkauto-live-support");
       if (saved) setChat(JSON.parse(saved));
     } catch {}
   }, []);
@@ -84,7 +84,7 @@ function LiveChat({ tr }: { tr: (en: string, lt: string, ru: string) => string }
       })
       .catch(() => {
         if (!cancelled) {
-          localStorage.removeItem("wheelio-live-support");
+          localStorage.removeItem("pirkauto-live-support");
           setChat(null);
         }
       });
@@ -125,7 +125,7 @@ function LiveChat({ tr }: { tr: (en: string, lt: string, ru: string) => string }
     try {
       const created = await startLiveSupport(identity);
       const saved = { id: created.id, token: created.accessToken || undefined };
-      localStorage.setItem("wheelio-live-support", JSON.stringify(saved));
+      localStorage.setItem("pirkauto-live-support", JSON.stringify(saved));
       setChat(saved);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -152,7 +152,7 @@ function LiveChat({ tr }: { tr: (en: string, lt: string, ru: string) => string }
   }
 
   function newChat() {
-    localStorage.removeItem("wheelio-live-support");
+    localStorage.removeItem("pirkauto-live-support");
     setChat(null);
     setMessages([]);
     setDraft("");

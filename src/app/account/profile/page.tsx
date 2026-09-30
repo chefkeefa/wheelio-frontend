@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/http";
-import { me, updateProfile, type AuthUser } from "@/lib/wheelioApi";
+import { me, updateProfile, type AuthUser } from "@/lib/pirkApi";
 
 export default function ProfilePage() {
   const { language } = useLanguage();

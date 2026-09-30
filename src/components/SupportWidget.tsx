@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
@@ -11,11 +10,18 @@ import {
   sendLiveSupportMessage,
   startLiveSupport,
   type LiveSupportMessage,
-} from "@/lib/wheelioApi";
+} from "@/lib/pirkApi";
 
 type SavedChat = { id: number; token?: string };
 
-function ChatIcon(){ return <img src="/icons/chat.svg" alt="" className="h-[26px] w-[26px]" aria-hidden="true" />; }
+function ChatIcon() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+      <path d="M8 10h.01M12 10h.01M16 10h.01" />
+    </svg>
+  );
+}
 
 export default function SupportWidget() {
   const pathname = usePathname();
@@ -50,7 +56,7 @@ export default function SupportWidget() {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("wheelio-live-support");
+      const saved = localStorage.getItem("pirkauto-live-support");
       if (saved) setChat(JSON.parse(saved));
     } catch {}
   }, []);
@@ -70,7 +76,7 @@ export default function SupportWidget() {
           id: created.id,
           token: created.accessToken || undefined,
         };
-        localStorage.setItem("wheelio-live-support", JSON.stringify(saved));
+        localStorage.setItem("pirkauto-live-support", JSON.stringify(saved));
         setChat(saved);
       })
       .catch((e) => {
@@ -109,7 +115,7 @@ export default function SupportWidget() {
       })
       .catch(() => {
         if (!cancelled) {
-          localStorage.removeItem("wheelio-live-support");
+          localStorage.removeItem("pirkauto-live-support");
           setChat(null);
           setMessages([]);
         }
@@ -188,7 +194,7 @@ export default function SupportWidget() {
           <div>
             <div className="flex items-center gap-2 font-extrabold">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white/70" />
-              {tr("Wheelio support", "Wheelio pagalba", "Поддержка Wheelio")}
+              {tr("PirkAuto support", "PirkAuto pagalba", "Поддержка PirkAuto")}
             </div>
             <div className="mt-0.5 text-xs font-medium opacity-80">
               {tr("Online chat", "Pokalbis internetu", "Онлайн-чат")}

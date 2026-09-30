@@ -1,26 +1,44 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
-import { logout, me, type AuthUser } from "@/lib/wheelioApi";
+import { logout, me, type AuthUser } from "@/lib/pirkApi";
 
-function AssetIcon({ name, size = 22 }: { name: string; size?: number }) {
-  return <img src={`/icons/${name}.svg`} alt="" width={size} height={size} className="shrink-0 dark:invert" aria-hidden="true" />;
+function MoonIcon() {
+  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" /></svg>;
 }
-const MoonIcon=()=> <AssetIcon name="moon"/>;
-const SunIcon=()=> <AssetIcon name="sun"/>;
-const GlobeIcon=()=> <AssetIcon name="globe" size={21}/>;
-const ClockIcon=()=> <AssetIcon name="clock" size={21}/>;
-const UserIcon=()=> <AssetIcon name="user" size={21}/>;
-const MenuIcon=({size=26}:{size?:number})=> <AssetIcon name="menu" size={size}/>;
-const CloseIcon=()=> <AssetIcon name="close" size={26}/>;
-const CarIcon=()=> <AssetIcon name="car" size={19}/>;
-const SettingsIcon=()=> <AssetIcon name="settings" size={19}/>;
-const HelpIcon=()=> <AssetIcon name="help" size={19}/>;
-const LogoutIcon=()=> <AssetIcon name="logout" size={19}/>;
+function SunIcon() {
+  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2" /><path d="m4.93 4.93 1.41 1.41m11.32 11.32 1.41 1.41" /><path d="m6.34 17.66-1.41 1.41m14.14-14.14-1.41 1.41" /></svg>;
+}
+function GlobeIcon() {
+  return <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 0 20" /><path d="M12 2a15.3 15.3 0 0 0 0 20" /></svg>;
+}
+function ClockIcon() {
+  return <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>;
+}
+function UserIcon() {
+  return <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" /></svg>;
+}
+function MenuIcon({ size = 26 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>;
+}
+function CloseIcon() {
+  return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>;
+}
+function CarIcon() {
+  return <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 17h14M6 17v2M18 17v2"/><path d="m4 13 2-5h12l2 5v4H4z"/><circle cx="7" cy="14" r="1"/><circle cx="17" cy="14" r="1"/></svg>;
+}
+function SettingsIcon() {
+  return <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.1A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.1A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.1A1.7 1.7 0 0 0 15.4 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.1.36.31.7.6 1 .28.28.63.5 1 .6h.1v4H21a1.7 1.7 0 0 0-1.6.4Z"/></svg>;
+}
+function HelpIcon() {
+  return <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 1 1 5.83 1c0 2-3 2-3 4"/><path d="M12 18h.01"/></svg>;
+}
+function LogoutIcon() {
+  return <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>;
+}
 
 export default function Header() {
   const pathname = usePathname();
@@ -41,7 +59,7 @@ export default function Header() {
   ];
 
   useEffect(() => {
-    const storedTheme = localStorage.getItem("wheelio-theme");
+    const storedTheme = localStorage.getItem("pirkauto-theme");
     const dark = storedTheme === "dark" || (!storedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches);
     setDarkMode(dark);
     document.documentElement.classList.toggle("dark", dark);
@@ -76,7 +94,7 @@ export default function Header() {
     const next = !darkMode;
     setDarkMode(next);
     document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("wheelio-theme", next ? "dark" : "light");
+    localStorage.setItem("pirkauto-theme", next ? "dark" : "light");
   };
 
   const doLogout = async () => {
@@ -98,7 +116,8 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-black/5 bg-white/95 backdrop-blur-md dark:bg-[#111111]/95">
       <div className="mx-auto flex h-[86px] w-full max-w-[1600px] items-center justify-between px-6 lg:px-10">
         <Link href="/" className="flex shrink-0 items-center">
-          <img src="/brand/logo.svg" alt="Wheelio" className="h-9 w-auto" />
+          <span className="text-[25px] font-black tracking-[-1px] text-black dark:text-white">Wheel</span>
+          <span className="text-[25px] font-black tracking-[-1px] text-[#e0ad2d]">io</span>
         </Link>
 
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-9 md:flex">
@@ -117,9 +136,6 @@ export default function Header() {
           <button type="button" onClick={toggleTheme} className="flex h-10 w-10 items-center justify-center rounded-full text-black transition hover:bg-black/5 dark:text-white dark:hover:bg-white/10" aria-label="Toggle theme">{darkMode ? <SunIcon /> : <MoonIcon />}</button>
           <button type="button" onClick={toggleLanguage} className="flex h-10 items-center gap-1.5 rounded-full px-2 text-black transition hover:bg-black/5 dark:text-white dark:hover:bg-white/10" aria-label="Change language" title="EN → LT → RU"><GlobeIcon /><span className="min-w-[20px] text-xs font-bold">{language}</span></button>
           <button type="button" className="flex h-10 w-10 items-center justify-center rounded-full text-black transition hover:bg-black/5 dark:text-white dark:hover:bg-white/10" aria-label={tr("Recently viewed", "Neseniai peržiūrėta", "Недавно просмотренные")}><ClockIcon /></button>
-          <Link href="/sell" className="hidden h-11 items-center rounded-full bg-[#f4b92f] px-5 text-sm font-bold text-black transition hover:bg-[#ffc943] lg:flex">
-            + {tr("Place an ad", "Įdėti skelbimą", "Разместить объявление")}
-          </Link>
 
           {user ? (
             <div className="relative" ref={accountRef}>

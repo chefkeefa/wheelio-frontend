@@ -8,7 +8,15 @@ import { anybody } from "@/lib/fonts";
 import { getListingById, type ListingDetail } from "@/lib/listings";
 import { useLanguage } from "@/context/LanguageContext";
 
-const FALLBACK_IMAGE = "/images/no-photo.svg";
+const FALLBACK_IMAGE =
+  "data:image/svg+xml;charset=UTF-8," +
+  encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+      <rect width="1200" height="800" fill="#eeeeef"/>
+      <text x="600" y="390" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="700" fill="#b0b0b3">PirkAuto</text>
+      <text x="600" y="455" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#b0b0b3">No photo</text>
+    </svg>
+  `);
 
 function formatPrice(value: number) {
   return new Intl.NumberFormat("lt-LT", {
