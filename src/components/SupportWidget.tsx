@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
+import { useLatest } from "@/lib/useLatest";
 import {
   getLiveSupportMessages,
   liveSupportStreamUrl,
@@ -25,9 +26,8 @@ function ChatIcon() {
 
 export default function SupportWidget() {
   const pathname = usePathname();
-  const { language } = useLanguage();
-  const tr = (en: string, lt: string, ru: string) =>
-    language === "LT" ? lt : language === "RU" ? ru : en;
+  const { tr } = useLanguage();
+  const trRef = useLatest(tr);
 
   const hidden =
     pathname.startsWith("/admin/support") ||
@@ -84,7 +84,7 @@ export default function SupportWidget() {
           setError(
             e instanceof Error
               ? e.message
-              : tr(
+              : trRef.current(
                   "Support is temporarily unavailable.",
                   "Pagalba laikinai nepasiekiama.",
                   "Поддержка временно недоступна."
@@ -99,7 +99,7 @@ export default function SupportWidget() {
     return () => {
       cancelled = true;
     };
-  }, [open, chat]);
+  }, [open, chat, trRef]);
 
   useEffect(() => {
     if (!chat) return;

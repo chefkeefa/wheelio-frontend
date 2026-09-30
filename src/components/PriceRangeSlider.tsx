@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { anybody } from "@/lib/fonts";
 
 interface Props {
@@ -79,8 +79,8 @@ export default function PriceRangeSlider({
   const onPointerMove = (e: React.PointerEvent) => {
     if (!dragging) return;
     const val = valueFromPointerX(e.clientX);
-    if (dragging === "min") setMin((prev) => Math.min(val, max - step));
-    else setMax((prev) => Math.max(val, min + step));
+    if (dragging === "min") setMin(Math.min(val, max - step));
+    else setMax(Math.max(val, min + step));
   };
   const endDrag = (e: React.PointerEvent) => {
     if ((e.currentTarget as HTMLElement).hasPointerCapture?.(e.pointerId)) {
@@ -102,8 +102,9 @@ export default function PriceRangeSlider({
     }
   };
 
-  const leftPct = useMemo(() => percent(min), [min, minPrice, maxPrice]);
-  const rightPct = useMemo(() => 100 - percent(max), [max, minPrice, maxPrice]);
+  // Cheap arithmetic; memoizing it only produced stale-dependency warnings.
+  const leftPct = percent(min);
+  const rightPct = 100 - percent(max);
 
   return (
     <div className={`w-full select-none ${className}`}>

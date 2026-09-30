@@ -7,6 +7,7 @@ import { anybody } from "@/lib/fonts";
 import { BACKEND_ORIGIN } from "@/lib/config";
 import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/http";
+import { useLatest } from "@/lib/useLatest";
 import {
   createPendingListing,
   getPaymentConfig,
@@ -474,10 +475,7 @@ function SellSelect(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
 
 // --------- СТРАНИЦА ---------
 export default function SellPage() {
-  const { language } = useLanguage();
-
-  const tr = (en: string, lt: string, ru: string) =>
-    language === "LT" ? lt : language === "RU" ? ru : en;
+  const { language, tr } = useLanguage();
 
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<ListingDraft>(INITIAL);
@@ -536,7 +534,8 @@ export default function SellPage() {
     };
   }, [draft]);
 
-  // Загружаем все марки из backend
+  // Загружаем все марки из backend (once; the error text uses the current language via a ref)
+  const trRef = useLatest(tr);
   useEffect(() => {
     let cancelled = false;
 
@@ -556,7 +555,7 @@ export default function SellPage() {
           setMarks([]);
           setVinStatus({
             type: "error",
-            text: error instanceof Error ? error.message : tr("Could not load car makes.", "Nepavyko įkelti automobilių markių.", "Не удалось загрузить марки автомобилей."),
+            text: error instanceof Error ? error.message : trRef.current("Could not load car makes.", "Nepavyko įkelti automobilių markių.", "Не удалось загрузить марки автомобилей."),
           });
         }
       } finally {
@@ -568,7 +567,7 @@ export default function SellPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [trRef]);
 
   // Загружаем модели выбранной марки
   useEffect(() => {
@@ -941,7 +940,7 @@ export default function SellPage() {
         ...current,
         [key]: { label: result.label, confidence: result.confidence, source: result.source, loading: false },
       }));
-    } catch (error) {
+    } catch {
       setPhotoMeta((current) => ({
         ...current,
         [key]: {
@@ -1099,7 +1098,6 @@ export default function SellPage() {
           ].map((label, i) => {
             const n = i + 1;
             const active = step === n;
-            const done = step > n;
             return (
               <button
                 key={label}

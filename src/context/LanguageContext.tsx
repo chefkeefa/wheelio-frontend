@@ -3,6 +3,7 @@
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -16,6 +17,8 @@ type LanguageContextValue = {
   setLanguage: (language: Language) => void;
   toggleLanguage: () => void;
   t: (key: string) => string;
+  /** Inline EN/LT/RU choice. Stable while the language does not change, so it is safe in hook dependencies. */
+  tr: (en: string, lt: string, ru: string) => string;
 };
 
 const translations: Record<Language, Record<string, string>> = {
@@ -114,17 +117,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const setLanguage = (nextLanguage: Language) => {
+  const setLanguage = useCallback((nextLanguage: Language) => {
     setLanguageState(nextLanguage);
     localStorage.setItem("pirkauto-language", nextLanguage);
     document.documentElement.lang = htmlLang(nextLanguage);
-  };
+  }, []);
 
-  const toggleLanguage = () => {
+  const toggleLanguage = useCallback(() => {
     if (language === "EN") return setLanguage("LT");
     if (language === "LT") return setLanguage("RU");
     setLanguage("EN");
-  };
+  }, [language, setLanguage]);
 
   const value = useMemo<LanguageContextValue>(
     () => ({
@@ -132,8 +135,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       setLanguage,
       toggleLanguage,
       t: (key: string) => translations[language][key] ?? translations.EN[key] ?? key,
+      tr: (en: string, lt: string, ru: string) => (language === "LT" ? lt : language === "RU" ? ru : en),
     }),
-    [language]
+    [language, setLanguage, toggleLanguage]
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

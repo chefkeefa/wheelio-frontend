@@ -1,4 +1,4 @@
-import { buildUrl, fetchJson } from "@/lib/http";
+import { apiFetch, buildUrl, fetchJson, toApiError } from "@/lib/http";
 
 export type AuthUser = {
   id: number;
@@ -29,22 +29,33 @@ export async function logout() {
   return fetchJson<void>("/auth/logout", { method: "POST" });
 }
 
+export type PhoneVerificationConfig = { available: boolean; channels: VerificationChannel[]; voiceAvailable: boolean };
+
+/** Channels the backend really delivers (voice only when a voice provider is configured). */
+export async function getPhoneVerificationConfig() {
+  return fetchJson<PhoneVerificationConfig>("/phone-verification/config");
+}
+
 export async function requestPhoneCode(phone: string, channel: VerificationChannel) {
-  return fetchJson<{ expiresInSeconds: number; resendAfterSeconds: number; devCode?: string | null }>(
-    "/phone-verification/request",
-    { method: "POST", body: JSON.stringify({ phone, channel }) }
-  );
+  return fetchJson<{
+    expiresInSeconds: number;
+    resendAfterSeconds: number;
+    /** Channel the backend actually used. Older backends omit it (SMS only). */
+    channel?: VerificationChannel;
+    phone?: string;
+    devCode?: string | null;
+  }>("/phone-verification/request", { method: "POST", body: JSON.stringify({ phone, channel }) });
 }
 
 export async function verifyPhoneCode(phone: string, code: string) {
-  return fetchJson<{ verified: boolean; verificationToken: string }>(
+  return fetchJson<{ verified: boolean; verificationToken: string; phone?: string }>(
     "/phone-verification/verify",
     { method: "POST", body: JSON.stringify({ phone, code }) }
   );
 }
 
 export async function attachVerifiedPhone(phone: string, verificationToken: string) {
-  return fetchJson<AuthUser>("/phone-verification/attach", {
+  return fetchJson<{ success: boolean; phone?: string; phoneVerified?: boolean }>("/phone-verification/attach", {
     method: "POST",
     body: JSON.stringify({ phone, verificationToken }),
   });
@@ -54,6 +65,27 @@ export async function updateProfile(payload: { name: string; surname: string; ci
   return fetchJson<{ success: boolean }>("/users/change/info", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export type PasswordResetConfig = { enabled: boolean };
+
+/** Password reset is available only when the backend has e-mail delivery configured. */
+export function getPasswordResetConfig() {
+  return fetchJson<PasswordResetConfig>("/auth/password-reset/config");
+}
+
+export function requestPasswordReset(email: string) {
+  return fetchJson<{ accepted: boolean; message: string }>("/auth/password-reset/request", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function confirmPasswordReset(token: string, password: string, passwordConfirm: string) {
+  return fetchJson<{ success: boolean }>("/auth/password-reset/confirm", {
+    method: "POST",
+    body: JSON.stringify({ token, password, passwordConfirm }),
   });
 }
 
@@ -140,15 +172,8 @@ export async function uploadListingImage(listingId: number, file: File, viewType
   const form = new FormData();
   form.append("file", file);
   if (viewType) form.append("viewType", viewType);
-  const response = await fetch(buildUrl(`/listings/${listingId}/images`), {
-    method: "POST",
-    body: form,
-    credentials: "include",
-  });
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `Image upload failed: ${response.status}`);
-  }
+  const response = await apiFetch(buildUrl(`/listings/${listingId}/images`), { method: "POST", body: form });
+  if (!response.ok) throw await toApiError(response);
   return response.json() as Promise<{ id: number; url: string; preview: string }>;
 }
 
@@ -172,15 +197,8 @@ export type PhotoClassification = {
 export async function classifyListingPhoto(file: File) {
   const form = new FormData();
   form.append("file", file);
-  const response = await fetch(buildUrl("/photo-classification"), {
-    method: "POST",
-    body: form,
-    credentials: "include",
-  });
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `Photo classification failed: ${response.status}`);
-  }
+  const response = await apiFetch(buildUrl("/photo-classification"), { method: "POST", body: form });
+  if (!response.ok) throw await toApiError(response);
   return response.json() as Promise<PhotoClassification>;
 }
 

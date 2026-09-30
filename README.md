@@ -25,3 +25,7 @@ Run `npm ci`, `npm run typecheck`, `npm run build`, then `npm run start`. The fr
 - Car photos are served from the backend; `NEXT_PUBLIC_API_BASE` must point at the correct public backend origin.
 - Local phone verification can expose a development code only when the backend is in development mode. Production should use a configured SMS provider.
 - Paysera checkout requires valid backend project credentials and a public callback URL.
+- State-changing requests send the `X-XSRF-TOKEN` header (token from `GET /api/auth/csrf`), as the backend requires for cookie-authenticated POST/PUT/PATCH/DELETE. See `src/lib/http.ts`.
+- Phone verification shows only the channels reported by `GET /api/phone-verification/config`; the "Call me" button appears only when the backend has a voice provider.
+- Password reset (`/auth/forgot-password`, `/auth/reset-password`) works only when the backend has SMTP configured; otherwise the page shows an explicit "unavailable" state and sends nothing.
+- Checks: `npm run typecheck`, `npm run lint`, `npm run build`. The build downloads Google Fonts (`next/font/google`), so it needs access to fonts.googleapis.com.

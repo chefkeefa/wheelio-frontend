@@ -35,10 +35,7 @@ export default function ListingDetailsPage() {
   const rawId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const id = String(rawId ?? "").trim();
 
-  const { language } = useLanguage();
-
-  const tr = (en: string, lt: string, ru: string) =>
-    language === "LT" ? lt : language === "RU" ? ru : en;
+  const { tr } = useLanguage();
 
   const [data, setData] = useState<ListingDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,7 +76,7 @@ export default function ListingDetailsPage() {
     return () => {
       alive = false;
     };
-  }, [id, language]);
+  }, [id, tr]);
 
   const images = useMemo(() => {
     if (!data) return [];

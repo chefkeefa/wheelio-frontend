@@ -7,24 +7,27 @@ import { useLanguage } from "@/context/LanguageContext";
 import { googleLoginUrl, login } from "@/lib/pirkApi";
 
 function LoginInner() {
-  const { language } = useLanguage();
-  const tr = (en: string, lt: string, ru: string) => language === "LT" ? lt : language === "RU" ? ru : en;
+  const { tr } = useLanguage();
   const router = useRouter();
   const search = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   useEffect(() => {
     if (search.get("oauthError")) setError(tr("Google sign-in failed. Please try again.", "Nepavyko prisijungti per Google. Bandykite dar kartą.", "Не удалось войти через Google. Попробуйте ещё раз."));
-  }, [search, language]);
+    if (search.get("reset") === "1") setNotice(tr("Password changed. Sign in with the new password.", "Slaptažodis pakeistas. Prisijunkite nauju slaptažodžiu.", "Пароль изменён. Войдите с новым паролем."));
+    else if (search.get("registered") === "1") setNotice(tr("Account created. You can sign in now.", "Paskyra sukurta. Dabar galite prisijungti.", "Аккаунт создан. Теперь можно войти."));
+  }, [search, tr]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault(); setError(""); setLoading(true);
     try {
       await login(email, password);
       const target = search.get("return") || "/";
-      router.replace(target.startsWith("/") ? target : "/");
+      // Relative paths only: "//host" would be an open redirect.
+      router.replace(target.startsWith("/") && !target.startsWith("//") && !target.startsWith("/\\") ? target : "/");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : tr("Login failed", "Prisijungti nepavyko", "Не удалось войти"));
@@ -38,6 +41,7 @@ function LoginInner() {
         <form onSubmit={submit} className="space-y-5">
           <label className="block"><span className="mb-2 block font-bold">E-mail</span><input type="email" required value={email} onChange={(e)=>setEmail(e.target.value)} className="h-12 w-full rounded-lg bg-[#cecece] px-4 text-black outline-none focus:ring-2 focus:ring-accent" /></label>
           <label className="block"><span className="mb-2 block font-bold">{tr("Password","Slaptažodis","Пароль")}</span><input type="password" required value={password} onChange={(e)=>setPassword(e.target.value)} className="h-12 w-full rounded-lg bg-[#cecece] px-4 text-black outline-none focus:ring-2 focus:ring-accent" /></label>
+          {notice && !error && <div className="rounded-lg bg-green-500/10 p-3 text-sm text-green-700">{notice}</div>}
           {error && <div className="rounded-lg bg-red-500/10 p-3 text-sm text-red-600">{error}</div>}
           <button disabled={loading} className="h-12 w-full rounded-lg bg-[#5f5f5f] font-bold text-white hover:bg-accent disabled:opacity-60">{loading ? "…" : tr("Login","Prisijungti","Войти")}</button>
         </form>
