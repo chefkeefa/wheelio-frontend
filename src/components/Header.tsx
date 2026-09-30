@@ -5,41 +5,8 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
+import AssetIcon from "@/components/ui/AssetIcon";
 import { isAdminUser, isSupportUser, logout, me, type AuthUser } from "@/lib/pirkApi";
-
-function MoonIcon() {
-  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" /></svg>;
-}
-function SunIcon() {
-  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2" /><path d="m4.93 4.93 1.41 1.41m11.32 11.32 1.41 1.41" /><path d="m6.34 17.66-1.41 1.41m14.14-14.14-1.41 1.41" /></svg>;
-}
-function GlobeIcon() {
-  return <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 0 20" /><path d="M12 2a15.3 15.3 0 0 0 0 20" /></svg>;
-}
-function ClockIcon() {
-  return <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>;
-}
-function UserIcon() {
-  return <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" /></svg>;
-}
-function MenuIcon({ size = 26 }: { size?: number }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>;
-}
-function CloseIcon() {
-  return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>;
-}
-function CarIcon() {
-  return <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 17h14M6 17v2M18 17v2"/><path d="m4 13 2-5h12l2 5v4H4z"/><circle cx="7" cy="14" r="1"/><circle cx="17" cy="14" r="1"/></svg>;
-}
-function SettingsIcon() {
-  return <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.1A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.1A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.1A1.7 1.7 0 0 0 15.4 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.1.36.31.7.6 1 .28.28.63.5 1 .6h.1v4H21a1.7 1.7 0 0 0-1.6.4Z"/></svg>;
-}
-function HelpIcon() {
-  return <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 1 1 5.83 1c0 2-3 2-3 4"/><path d="M12 18h.01"/></svg>;
-}
-function LogoutIcon() {
-  return <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>;
-}
 
 export default function Header() {
   const pathname = usePathname();
@@ -109,13 +76,13 @@ export default function Header() {
   };
 
   const accountItems = [
-    { href: "/account/listings", label: tr("My listings", "Mano skelbimai", "Мои объявления"), icon: <CarIcon /> },
-    { href: "/account/favorites", label: tr("Favorites", "Mėgstami", "Избранное"), icon: <CarIcon /> },
-    { href: "/account/profile", label: tr("Profile & settings", "Profilis ir nustatymai", "Профиль и настройки"), icon: <SettingsIcon /> },
-    ...(isAdminUser(user) ? [{ href: "/admin", label: tr("Administration", "Administravimas", "Администрирование"), icon: <SettingsIcon /> }] : []),
-    ...(!isAdminUser(user) && isSupportUser(user) ? [{ href: "/admin/support", label: tr("Support desk", "Pagalbos centras", "Поддержка"), icon: <HelpIcon /> }] : []),
-    ...(!user?.phoneVerified ? [{ href: "/verify-phone", label: tr("Verify phone", "Patvirtinti telefoną", "Подтвердить телефон"), icon: <UserIcon /> }] : []),
-    { href: "/help", label: tr("Help", "Pagalba", "Помощь"), icon: <HelpIcon /> },
+    { href: "/account/listings", label: tr("My listings", "Mano skelbimai", "Мои объявления"), icon: <AssetIcon name="car" size={19} /> },
+    { href: "/account/favorites", label: tr("Favorites", "Mėgstami", "Избранное"), icon: <AssetIcon name="heart" size={19} /> },
+    { href: "/account/profile", label: tr("Profile & settings", "Profilis ir nustatymai", "Профиль и настройки"), icon: <AssetIcon name="settings" size={19} /> },
+    ...(isAdminUser(user) ? [{ href: "/admin", label: tr("Administration", "Administravimas", "Администрирование"), icon: <AssetIcon name="shield" size={19} /> }] : []),
+    ...(!isAdminUser(user) && isSupportUser(user) ? [{ href: "/admin/support", label: tr("Support desk", "Pagalbos centras", "Поддержка"), icon: <AssetIcon name="support-chat" size={19} /> }] : []),
+    ...(!user?.phoneVerified ? [{ href: "/verify-phone", label: tr("Verify phone", "Patvirtinti telefoną", "Подтвердить телефон"), icon: <AssetIcon name="phone" size={19} /> }] : []),
+    { href: "/help", label: tr("Help", "Pagalba", "Помощь"), icon: <AssetIcon name="help" size={19} /> },
   ];
 
   return (
@@ -145,9 +112,9 @@ export default function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <button type="button" onClick={toggleTheme} className="flex h-10 w-10 items-center justify-center rounded-full text-black transition hover:bg-black/5 dark:text-white dark:hover:bg-white/10" aria-label="Toggle theme">{darkMode ? <SunIcon /> : <MoonIcon />}</button>
-          <button type="button" onClick={toggleLanguage} className="flex h-10 items-center gap-1.5 rounded-full px-2 text-black transition hover:bg-black/5 dark:text-white dark:hover:bg-white/10" aria-label="Change language" title="EN → LT → RU"><GlobeIcon /><span className="min-w-[20px] text-xs font-bold">{language}</span></button>
-          <button type="button" className="flex h-10 w-10 items-center justify-center rounded-full text-black transition hover:bg-black/5 dark:text-white dark:hover:bg-white/10" aria-label={tr("Recently viewed", "Neseniai peržiūrėta", "Недавно просмотренные")}><ClockIcon /></button>
+          <button type="button" onClick={toggleTheme} className="flex h-10 w-10 items-center justify-center rounded-full text-black transition hover:bg-black/5 dark:text-white dark:hover:bg-white/10" aria-label="Toggle theme">{darkMode ? <AssetIcon name="sun" size={22} /> : <AssetIcon name="moon" size={22} />}</button>
+          <button type="button" onClick={toggleLanguage} className="flex h-10 items-center gap-1.5 rounded-full px-2 text-black transition hover:bg-black/5 dark:text-white dark:hover:bg-white/10" aria-label="Change language" title="EN → LT → RU"><AssetIcon name="globe" size={21} /><span className="min-w-[20px] text-xs font-bold">{language}</span></button>
+          <button type="button" className="flex h-10 w-10 items-center justify-center rounded-full text-black transition hover:bg-black/5 dark:text-white dark:hover:bg-white/10" aria-label={tr("Recently viewed", "Neseniai peržiūrėta", "Недавно просмотренные")}><AssetIcon name="clock" size={21} /></button>
 
           {user ? (
             <div className="relative" ref={accountRef}>
@@ -159,7 +126,7 @@ export default function Header() {
                 aria-label={tr("Open account menu", "Atidaryti paskyros meniu", "Открыть меню аккаунта")}
               >
                 <span className="hidden max-w-[130px] truncate lg:block">{user.name || user.email}</span>
-                <MenuIcon size={23} />
+                <AssetIcon name="menu" size={23} />
               </button>
 
               {accountMenuOpen && (
@@ -175,18 +142,18 @@ export default function Header() {
                       </Link>
                     ))}
                     <button type="button" onClick={doLogout} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-red-500 transition hover:bg-red-500/10">
-                      <LogoutIcon /><span>{tr("Log out", "Atsijungti", "Выйти")}</span>
+                      <AssetIcon name="logout" size={19} /><span>{tr("Log out", "Atsijungti", "Выйти")}</span>
                     </button>
                   </div>
                 </div>
               )}
             </div>
           ) : (
-            <Link href="/auth/login" className="flex h-10 items-center gap-2 rounded-full px-2 text-[16px] font-medium text-black transition hover:text-[#d7a42a] dark:text-white"><UserIcon /><span>{t("login")}</span></Link>
+            <Link href="/auth/login" className="flex h-10 items-center gap-2 rounded-full px-2 text-[16px] font-medium text-black transition hover:text-[#d7a42a] dark:text-white"><AssetIcon name="user" size={21} /><span>{t("login")}</span></Link>
           )}
         </div>
 
-        <button type="button" onClick={() => setMobileMenuOpen((prev) => !prev)} className="flex h-11 w-11 items-center justify-center rounded-full text-black transition hover:bg-black/5 dark:text-white dark:hover:bg-white/10 md:hidden" aria-label="Open menu">{mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}</button>
+        <button type="button" onClick={() => setMobileMenuOpen((prev) => !prev)} className="flex h-11 w-11 items-center justify-center rounded-full text-black transition hover:bg-black/5 dark:text-white dark:hover:bg-white/10 md:hidden" aria-label="Open menu">{mobileMenuOpen ? <AssetIcon name="close" size={26} /> : <AssetIcon name="menu" size={26} />}</button>
       </div>
 
       {mobileMenuOpen && (
@@ -200,12 +167,12 @@ export default function Header() {
           </nav>
 
           <div className="mt-4 flex items-center gap-2 border-t border-black/5 pt-4">
-            <button type="button" onClick={toggleTheme} className="flex h-11 w-11 items-center justify-center rounded-full bg-black/5 text-black dark:bg-white/10 dark:text-white">{darkMode ? <SunIcon /> : <MoonIcon />}</button>
-            <button type="button" onClick={toggleLanguage} className="flex h-11 items-center gap-2 rounded-full bg-black/5 px-3 text-black dark:bg-white/10 dark:text-white"><GlobeIcon /><span className="text-sm font-bold">{language}</span></button>
+            <button type="button" onClick={toggleTheme} className="flex h-11 w-11 items-center justify-center rounded-full bg-black/5 text-black dark:bg-white/10 dark:text-white">{darkMode ? <AssetIcon name="sun" size={22} /> : <AssetIcon name="moon" size={22} />}</button>
+            <button type="button" onClick={toggleLanguage} className="flex h-11 items-center gap-2 rounded-full bg-black/5 px-3 text-black dark:bg-white/10 dark:text-white"><AssetIcon name="globe" size={21} /><span className="text-sm font-bold">{language}</span></button>
             {user ? (
-              <button type="button" onClick={doLogout} className="ml-auto flex h-11 items-center gap-2 rounded-full bg-red-500/10 px-4 font-semibold text-red-500"><LogoutIcon />{tr("Log out", "Atsijungti", "Выйти")}</button>
+              <button type="button" onClick={doLogout} className="ml-auto flex h-11 items-center gap-2 rounded-full bg-red-500/10 px-4 font-semibold text-red-500"><AssetIcon name="logout" size={19} />{tr("Log out", "Atsijungti", "Выйти")}</button>
             ) : (
-              <Link href="/auth/login" className="ml-auto flex h-11 items-center gap-2 rounded-full bg-[#e0ad2d] px-4 font-semibold text-black"><UserIcon />{t("login")}</Link>
+              <Link href="/auth/login" className="ml-auto flex h-11 items-center gap-2 rounded-full bg-[#e0ad2d] px-4 font-semibold text-black"><AssetIcon name="user" size={21} />{t("login")}</Link>
             )}
           </div>
         </div>

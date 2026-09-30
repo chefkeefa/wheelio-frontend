@@ -1,5 +1,6 @@
 import React from "react";
 import { anybody } from "@/lib/fonts";
+import AssetIcon from "@/components/ui/AssetIcon";
 
 interface Props {
   label: string;
@@ -40,15 +41,11 @@ export default function FilterDropdown({ label, value, options, onChange, classN
           ))}
         </select>
 
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
+        <AssetIcon
+          name="chevron-down"
+          size={18}
           className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-black/60"
-          aria-hidden="true"
-        >
-          <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        />
       </div>
     </label>
   );

@@ -14,6 +14,7 @@ import {
   type AuthUser,
   type SellerContact,
 } from "@/lib/pirkApi";
+import AssetIcon from "@/components/ui/AssetIcon";
 
 /** Contact seller, favorites and "report listing" for the public listing page. */
 export default function ListingActions({ listingId }: { listingId: string }) {
@@ -139,10 +140,11 @@ export default function ListingActions({ listingId }: { listingId: string }) {
       <button
         onClick={toggleFavorite}
         disabled={busy === "favorite"}
-        className="mt-3 w-full rounded-lg border border-border bg-background px-5 py-3 font-semibold text-foreground disabled:opacity-60"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-5 py-3 font-semibold text-foreground disabled:opacity-60"
       >
+        <AssetIcon name={favorite ? "heart-filled" : "heart"} size={18} className={favorite ? "text-red-500" : ""} />
         {favorite
-          ? tr("★ In favorites (remove)", "★ Mėgstamuose (pašalinti)", "★ В избранном (убрать)")
+          ? tr("In favorites (remove)", "Mėgstamuose (pašalinti)", "В избранном (убрать)")
           : tr("Add to favorites", "Pridėti į mėgstamus", "Добавить в избранное")}
       </button>
 

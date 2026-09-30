@@ -1,5 +1,5 @@
-/* eslint-disable @next/next/no-img-element */
 import React from "react";
+import AssetIcon from "@/components/ui/AssetIcon";
 
 type ButtonAs = "button" | "div" | "span" | "label";
 type Variant = "primary" | "ghost" | "link" | "outline";
@@ -9,7 +9,7 @@ type IconPosition = "left" | "right";
 interface ButtonProps extends React.HTMLAttributes<HTMLElement> {
   children: React.ReactNode;
   className?: string;
-  icon?: string | React.ReactNode; // URL или React-элемент
+  icon?: React.ReactNode;
   type?: "button" | "submit" | "reset"; // используется только если as="button"
   as?: ButtonAs;
   variant?: Variant;
@@ -55,22 +55,16 @@ export default function Button({
   const direction = iconPosition === "right" ? "flex-row-reverse" : "flex-row";
   const cls = `${base} ${variants[variant]} ${sizes[size]} ${direction} ${state} ${className}`;
 
-  const spinnerSize = size === "sm" ? "h-4 w-4" : size === "md" ? "h-5 w-5" : "h-6 w-6";
+  const spinnerSize = size === "sm" ? 16 : size === "md" ? 20 : 24;
 
-  const IconEl =
-    typeof icon === "string"
-      ? <img src={icon} alt="" className="h-4 w-4 translate-y-[1px]" />
-      : icon
-        ? <span className="inline-flex h-4 w-4 items-center justify-center translate-y-[1px]">{icon}</span>
-        : null;
+  const IconEl = icon ? (
+    <span className="inline-flex h-4 w-4 items-center justify-center translate-y-[1px]">{icon}</span>
+  ) : null;
 
   const content = (
     <>
       {loading ? (
-        <svg className={`animate-spin ${spinnerSize}`} viewBox="0 0 24 24" aria-hidden="true">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z" />
-        </svg>
+        <AssetIcon name="spinner" size={spinnerSize} className="animate-spin" />
       ) : (
         <>
           {IconEl}

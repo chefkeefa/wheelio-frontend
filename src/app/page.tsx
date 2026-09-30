@@ -9,11 +9,11 @@ import CarCard from "@/components/CarCard";
 import Button from "@/components/Button";
 import SkeletonCard from "@/components/SkeletonCard";
 import EmptyState from "@/components/EmptyState";
-import { FilterIcon, ResetIcon } from "@/components/icons";
 import { getPublicListingCount, getPublicListings } from "@/lib/listings";
 import type { Listing, ListingsQuery } from "@/lib/listings";
 import { useLanguage } from "@/context/LanguageContext";
 import { BACKEND_ORIGIN } from "@/lib/config";
+import AssetIcon from "@/components/ui/AssetIcon";
 
 const ANY = "__ANY__";
 
@@ -40,15 +40,7 @@ type CarModel = {
   name: string;
 };
 
-const FALLBACK_CAR_IMAGE =
-  "data:image/svg+xml;charset=UTF-8," +
-  encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
-      <rect width="1200" height="800" fill="#eeeeef"/>
-      <text x="600" y="390" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="700" fill="#b0b0b3">Wheelio</text>
-      <text x="600" y="455" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#b0b0b3">No photo</text>
-    </svg>
-  `);
+const FALLBACK_CAR_IMAGE = "/images/no-photo.svg";
 
 function resolveListingImage(value?: string | null) {
   if (!value) return FALLBACK_CAR_IMAGE;
@@ -427,9 +419,9 @@ export default function HomePage() {
       <section className="relative">
         <div className="relative h-[420px] overflow-hidden rounded-2xl sm:h-[500px] md:h-[641px]">
           <img
-            src="/images/hero-car.jpg"
-            alt="Hero Car"
-            className="absolute inset-0 h-full w-full object-cover"
+            src="/images/hero.jpg"
+            alt="Wheelio"
+            className="absolute inset-0 h-full w-full object-cover object-[72%_center]"
             loading="eager"
           />
 
@@ -542,7 +534,7 @@ export default function HomePage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    icon={<FilterIcon />}
+                    icon={<AssetIcon name="filter" size={16} />}
                     iconPosition="left"
                     onClick={() => setMoreFiltersOpen((value) => !value)}
                   >
@@ -555,7 +547,7 @@ export default function HomePage() {
                     variant="ghost"
                     size="sm"
                     onClick={handleReset}
-                    icon={<ResetIcon />}
+                    icon={<AssetIcon name="reset" size={16} />}
                     iconPosition="left"
                   >
                     {t("reset")}
@@ -715,7 +707,7 @@ export default function HomePage() {
                     <h2 id="mobile-picker-title" className="text-lg font-extrabold text-foreground">{mobilePicker === "mark" ? mobileMakeLabel : mobileModelLabel}</h2>
                     {mobilePicker === "model" && <p className="mt-0.5 text-xs text-muted-foreground">{selectedMark}</p>}
                   </div>
-                  <button type="button" onClick={() => setMobilePicker(null)} aria-label={tr("Close", "Uždaryti", "Закрыть")} className="ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-xl text-foreground">×</button>
+                  <button type="button" onClick={() => setMobilePicker(null)} aria-label={tr("Close", "Uždaryti", "Закрыть")} className="ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"><AssetIcon name="close" size={20} /></button>
                 </div>
                 <div className="px-4 pt-4">
                   <input value={mobileSearch} onChange={(event) => setMobileSearch(event.target.value)} placeholder={tr("Search", "Ieškoti", "Поиск")} className="h-12 w-full rounded-2xl border border-border bg-muted px-4 text-base text-foreground outline-none placeholder:text-muted-foreground focus:border-[#d9a339]" />
@@ -723,7 +715,7 @@ export default function HomePage() {
                 <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-3 pt-2">
                   {mobilePicker === "model" && (
                     <button type="button" onClick={() => { setSelectedModel(ANY); setMobileSearch(""); }} className={`mb-1 flex min-h-12 w-full items-center justify-between rounded-xl px-3 text-left text-sm font-semibold ${selectedModel === ANY ? "bg-[#d9a339]/15 text-foreground" : "text-foreground"}`}>
-                      <span>{tr("All models", "Visi modeliai", "Все модели")}</span>{selectedModel === ANY && <span className="text-[#b27b00]">✓</span>}
+                      <span>{tr("All models", "Visi modeliai", "Все модели")}</span>{selectedModel === ANY && <AssetIcon name="check" size={18} className="text-[#b27b00]" />}
                     </button>
                   )}
                   {filteredPickerOptions.length ? filteredPickerOptions.map((name) => {
@@ -739,7 +731,7 @@ export default function HomePage() {
                         setMobileSearch("");
                       }
                     }} className={`flex min-h-12 w-full items-center justify-between border-b border-border/70 px-3 text-left text-sm font-semibold text-foreground ${selected ? "text-[#a56d00]" : ""}`}>
-                      <span>{name}</span>{selected && <span className="text-[#b27b00]">✓</span>}
+                      <span>{name}</span>{selected && <AssetIcon name="check" size={18} className="text-[#b27b00]" />}
                     </button>;
                   }) : <p className="px-3 py-8 text-center text-sm text-muted-foreground">{mobilePicker === "model" && modelsLoading ? tr("Loading models…", "Įkeliami modeliai…", "Загружаем модели…") : tr("Nothing found", "Nieko nerasta", "Ничего не найдено")}</p>}
                 </div>

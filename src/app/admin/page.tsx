@@ -22,6 +22,7 @@ import {
   type AdminUser,
   type Paged,
 } from "@/lib/pirkApi";
+import AssetIcon from "@/components/ui/AssetIcon";
 
 type Tab = "listings" | "complaints" | "users";
 const PAGE_SIZE = 50;
@@ -192,7 +193,7 @@ export default function AdminPage() {
                     <td className="p-2">{u.id}</td>
                     <td className="p-2">{u.email}</td>
                     <td className="p-2">{`${u.name || ""} ${u.surname || ""}`.trim() || "—"}</td>
-                    <td className="p-2">{u.phone || "—"}{u.phone && (Number(u.phoneVerified) ? " ✓" : "")}</td>
+                    <td className="p-2">{u.phone || "—"}{u.phone && Number(u.phoneVerified) ? <AssetIcon name="check" size={14} className="ml-1 text-emerald-600" /> : null}</td>
                     <td className="p-2">
                       <button
                         disabled={busy}
@@ -217,9 +218,9 @@ export default function AdminPage() {
 
         {current && current.totalPages > 1 && (
           <div className="mt-4 flex items-center gap-3">
-            <button disabled={page === 0 || busy} onClick={() => setPage(page - 1)} className="rounded border border-border px-3 py-1 disabled:opacity-40">←</button>
+            <button disabled={page === 0 || busy} onClick={() => setPage(page - 1)} aria-label="Previous page" className="rounded border border-border px-3 py-1 disabled:opacity-40"><AssetIcon name="chevron-left" size={16} /></button>
             <span className="text-sm">{page + 1} / {current.totalPages}</span>
-            <button disabled={page + 1 >= current.totalPages || busy} onClick={() => setPage(page + 1)} className="rounded border border-border px-3 py-1 disabled:opacity-40">→</button>
+            <button disabled={page + 1 >= current.totalPages || busy} onClick={() => setPage(page + 1)} aria-label="Next page" className="rounded border border-border px-3 py-1 disabled:opacity-40"><AssetIcon name="chevron-right" size={16} /></button>
           </div>
         )}
       </div>

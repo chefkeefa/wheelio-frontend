@@ -25,6 +25,7 @@ import {
   clearDraft,
   ContactMethod,
 } from "@/lib/sellDraft";
+import AssetIcon from "@/components/ui/AssetIcon";
 
 // --------- ВСПОМОГАТЕЛЬНОЕ ---------
 const FEATURE_DEFS = [
@@ -1347,7 +1348,7 @@ export default function SellPage() {
                       <div key={key} className="overflow-hidden rounded-xl bg-card ring-1 ring-border">
                         <div className="relative h-32 bg-muted">
                           <img src={url} alt={f.name} className="absolute inset-0 h-full w-full object-cover" />
-                          <button type="button" onClick={() => removePhoto(f)} className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-1 text-xs text-white">×</button>
+                          <button type="button" onClick={() => removePhoto(f)} aria-label={tr("Delete photo", "Ištrinti nuotrauką", "Удалить фото")} className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-black/70 text-white"><AssetIcon name="close" size={14} /></button>
                           <div className="absolute bottom-2 left-2 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">
                             {meta.loading ? tr("Detecting…", "Atpažįstama…", "Распознаём…") : photoTypeLabel(meta.label)}
                           </div>
