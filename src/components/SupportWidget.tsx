@@ -12,17 +12,9 @@ import {
   startLiveSupport,
   type LiveSupportMessage,
 } from "@/lib/pirkApi";
+import AssetIcon from "@/components/ui/AssetIcon";
 
 type SavedChat = { id: number; token?: string };
-
-function ChatIcon() {
-  return (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
-      <path d="M8 10h.01M12 10h.01M16 10h.01" />
-    </svg>
-  );
-}
 
 export default function SupportWidget() {
   const pathname = usePathname();
@@ -200,10 +192,10 @@ export default function SupportWidget() {
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="grid h-9 w-9 place-items-center rounded-full bg-black/10 text-xl font-bold hover:bg-black/15"
+            className="grid h-9 w-9 place-items-center rounded-full bg-black/10 hover:bg-black/15"
             aria-label={tr("Close chat", "Uždaryti pokalbį", "Закрыть чат")}
           >
-            ×
+            <AssetIcon name="close" size={18} />
           </button>
         </div>
 
@@ -272,9 +264,10 @@ export default function SupportWidget() {
             <button
               type="submit"
               disabled={!chat || loading || !draft.trim()}
-              className="h-11 rounded-xl bg-[#d9a339] px-4 font-bold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label={tr("Send", "Siųsti", "Отправить")}
+              className="grid h-11 place-items-center rounded-xl bg-[#d9a339] px-4 text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              →
+              <AssetIcon name="send" size={20} />
             </button>
           </div>
 
@@ -300,7 +293,7 @@ export default function SupportWidget() {
         className="pointer-events-auto relative grid h-14 w-14 touch-manipulation place-items-center rounded-full bg-[#d9a339] text-black shadow-xl ring-1 ring-black/10 transition duration-200 hover:scale-105 sm:h-16 sm:w-16"
         aria-label={tr("Open support", "Atidaryti pagalbą", "Открыть поддержку")}
       >
-        {open ? <span className="text-3xl leading-none">×</span> : <ChatIcon />}
+        {open ? <AssetIcon name="close" size={28} /> : <AssetIcon name="support-chat" size={26} />}
         {unread > 0 && !open && (
           <span className="absolute -right-1 -top-1 grid h-6 min-w-6 place-items-center rounded-full bg-red-500 px-1 text-xs font-bold text-white ring-2 ring-background">
             {unread > 9 ? "9+" : unread}

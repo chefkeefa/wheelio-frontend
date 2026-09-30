@@ -8,10 +8,9 @@ import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/http";
 import { closeListing, deleteListingImage, editListing, getMyListings, type ListingDetail, type ListingStatus } from "@/lib/listings";
 import { startCheckout, uploadListingImage } from "@/lib/pirkApi";
+import AssetIcon from "@/components/ui/AssetIcon";
 
-const FALLBACK_IMAGE =
-  "data:image/svg+xml;charset=UTF-8," +
-  encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560"><rect width="100%" height="100%" fill="#ededee"/><text x="50%" y="48%" text-anchor="middle" font-family="Arial" font-size="42" font-weight="700" fill="#aaa">Wheelio</text><text x="50%" y="58%" text-anchor="middle" font-family="Arial" font-size="20" fill="#aaa">No photo</text></svg>`);
+const FALLBACK_IMAGE = "/images/no-photo.svg";
 
 export default function MyListingsPage() {
   const { language } = useLanguage();
@@ -248,7 +247,7 @@ function EditListingPanel({
           {images.map((src, index) => (
             <div key={src} className="relative h-20 overflow-hidden rounded-lg bg-muted">
               <img src={src} alt="" className="h-full w-full object-cover" />
-              <button type="button" disabled={saving} onClick={() => removePhoto(index)} aria-label={tr("Delete photo", "Ištrinti nuotrauką", "Удалить фото")} className="absolute right-1 top-1 rounded-full bg-black/70 px-2 text-xs font-bold text-white">×</button>
+              <button type="button" disabled={saving} onClick={() => removePhoto(index)} aria-label={tr("Delete photo", "Ištrinti nuotrauką", "Удалить фото")} className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-black/70 text-white"><AssetIcon name="close" size={14} /></button>
             </div>
           ))}
         </div>
