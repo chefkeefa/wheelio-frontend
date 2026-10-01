@@ -9,6 +9,9 @@ import { useLanguage } from "@/context/LanguageContext";
 import ListingActions from "@/components/ListingActions";
 import AssetIcon from "@/components/ui/AssetIcon";
 import ListingGallery from "@/components/ListingGallery";
+import LeasingCalculator from "@/components/LeasingCalculator";
+import { groupOptions } from "@/lib/carOptions";
+import { bodyLabel, driveLabel, engineLabel, gearboxLabel, specSections } from "@/lib/carSpecs";
 
 function formatPrice(value: number) {
   return new Intl.NumberFormat("lt-LT", {
@@ -83,6 +86,11 @@ export default function ListingDetailsPage() {
     );
   }, [data]);
 
+  const specs = data?.specs ?? null;
+  const optionGroups = useMemo(() => groupOptions(data?.options ?? []), [data]);
+  const optionCount = optionGroups.reduce((n, g) => n + g.options.length, 0);
+  const sections = specSections(specs, tr);
+
   if (loading) {
     return (
       <main className="container mx-auto min-h-[55vh] px-4 py-10 text-foreground">
@@ -127,6 +135,31 @@ export default function ListingDetailsPage() {
     );
   }
 
+  const volume = specs?.volumeLitres ?? data.volume;
+  const engineParts = [
+    engineLabel(specs?.engineType, tr) ?? (data.fuel ?? null),
+    volume ? `${volume.toFixed(1)} l` : null,
+    specs?.horsePower ? `${specs.horsePower} ${tr("hp", "AG", "л.с.")}` : null,
+  ].filter(Boolean);
+  const power = specs?.kwPower ?? data.power;
+  const summary = [
+    { label: tr("Year", "Metai", "Год выпуска"), value: data.year ? String(data.year) : null },
+    { label: tr("Mileage", "Rida", "Пробег"), value: `${formatMileage(data.mileage)} km` },
+    { label: tr("Engine", "Variklis", "Двигатель"), value: engineParts.join(", ") || null },
+    { label: tr("Power", "Galia", "Мощность"), value: power ? `${power} kW` : null },
+    { label: tr("Gearbox", "Pavarų dėžė", "Коробка"), value: gearboxLabel(specs?.gearbox ?? data.transmission, tr) },
+    { label: tr("Drive", "Varomieji ratai", "Привод"), value: driveLabel(specs?.drive, tr) },
+    { label: tr("Body type", "Kėbulo tipas", "Кузов"), value: bodyLabel(specs?.bodyType, tr) },
+    {
+      label: tr("Consumption", "Sąnaudos", "Расход"),
+      value: specs?.consumptionMixed ? `${specs.consumptionMixed} l/100 km` : null,
+    },
+    { label: tr("Make", "Markė", "Марка"), value: data.mark ?? null },
+    { label: tr("Model", "Modelis", "Модель"), value: data.model ?? null },
+    { label: tr("Version", "Modifikacija", "Модификация"), value: specs?.modification ?? null },
+    { label: tr("City", "Miestas", "Город"), value: data.city ?? null },
+  ].filter((row): row is { label: string; value: string } => Boolean(row.value));
+
   return (
     <main className="container mx-auto px-4 py-8 text-foreground">
       <Link
@@ -137,12 +170,12 @@ export default function ListingDetailsPage() {
         {tr("Back to listings", "Grįžti į skelbimus", "Назад к объявлениям")}
       </Link>
 
-      <div className="grid grid-cols-1 gap-7 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-12 lg:grid-rows-[auto_1fr]">
         <section className="lg:col-span-7">
           <ListingGallery images={images} title={data.title} />
         </section>
 
-        <aside className="space-y-5 lg:col-span-5">
+        <aside className="space-y-5 lg:col-span-5 lg:col-start-8 lg:row-span-2 lg:row-start-1">
           <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
             <h1
               className={`${anybody.className} text-3xl font-extrabold text-foreground`}
@@ -156,37 +189,19 @@ export default function ListingDetailsPage() {
               {formatPrice(data.price)}
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-              {data.mark && (
-                <Info
-                  label={tr("Make", "Markė", "Марка")}
-                  value={data.mark}
-                />
-              )}
-              {data.model && (
-                <Info
-                  label={tr("Model", "Modelis", "Модель")}
-                  value={data.model}
-                />
-              )}
-              {data.year && (
-                <Info
-                  label={tr("Year", "Metai", "Год")}
-                  value={String(data.year)}
-                />
-              )}
-              <Info
-                label={tr("Mileage", "Rida", "Пробег")}
-                value={`${formatMileage(data.mileage)} km`}
-              />
-              {data.city && (
-                <Info
-                  label={tr("City", "Miestas", "Город")}
-                  value={data.city}
-                />
-              )}
-            </div>
+            <dl className="mt-5 divide-y divide-border text-[15px]">
+              {summary.map((row) => (
+                <div key={row.label} className="flex gap-4 py-2">
+                  <dt className="w-[42%] shrink-0 text-muted-foreground">{row.label}</dt>
+                  <dd className="font-semibold text-foreground">{row.value}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
+
+          <ListingActions listingId={data.id} />
+
+          <LeasingCalculator price={data.price} year={data.year} />
 
           {data.description && (
             <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
@@ -198,25 +213,79 @@ export default function ListingDetailsPage() {
               </p>
             </div>
           )}
-
-          <ListingActions listingId={data.id} />
         </aside>
+
+        <section className="space-y-5 lg:col-span-7 lg:col-start-1 lg:row-start-2">
+          {optionGroups.length > 0 && (
+            <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="text-xl font-bold">
+                  {tr("Equipment", "Komplektacija", "Комплектация")}
+                </h2>
+                <span className="text-sm text-muted-foreground">
+                  {tr(
+                    `${optionCount} options`,
+                    `${optionCount} pasirinkimai`,
+                    `${optionCount} опций`
+                  )}
+                </span>
+              </div>
+              {data.optionsSource === "catalog" && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {tr(
+                    "Factory equipment of this version. Check the exact list with the seller.",
+                    "Gamyklinė šios modifikacijos komplektacija. Tikslų sąrašą pasitikslinkite pas pardavėją.",
+                    "Заводская комплектация этой модификации. Точный список уточняйте у продавца."
+                  )}
+                </p>
+              )}
+              <div className="mt-5 grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+                {optionGroups.map((group) => (
+                  <div key={group.id} className="break-inside-avoid">
+                    <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                      {tr(group.en, group.lt, group.ru)}
+                    </h3>
+                    <ul className="space-y-1.5 text-[15px]">
+                      {group.options.map((option) => (
+                        <li key={option.key} className="flex items-start gap-2">
+                          <AssetIcon name="check" size={16} className="mt-0.5 shrink-0 text-accent" />
+                          <span>{tr(option.en, option.lt, option.ru)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {sections.length > 0 && (
+            <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
+              <h2 className="text-xl font-bold">
+                {tr("Specifications", "Techniniai duomenys", "Характеристики")}
+              </h2>
+              <div className="mt-4 grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
+                {sections.map((section) => (
+                  <div key={section.title}>
+                    <h3 className="mb-1 text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                      {section.title}
+                    </h3>
+                    <dl className="divide-y divide-border text-sm">
+                      {section.rows.map((row) => (
+                        <div key={row.label} className="flex justify-between gap-4 py-2">
+                          <dt className="text-muted-foreground">{row.label}</dt>
+                          <dd className="text-right font-semibold">{row.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );
 }
 
-function Info({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-xl bg-muted p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="mt-1 font-semibold text-foreground">{value}</div>
-    </div>
-  );
-}

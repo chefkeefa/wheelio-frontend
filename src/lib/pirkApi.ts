@@ -278,7 +278,15 @@ export type ListingCreatePayload = {
   description: string;
   details: { year: number; mileage: number };
   city?: string;
+  /** Equipment option keys (see lib/carOptions). */
+  options?: string[];
 };
+
+/** Factory equipment of a catalog modification, used to pre-fill the seller's list. */
+export async function getCatalogOptions(modificationId: string): Promise<string[]> {
+  const data = await fetchJson<{ options?: unknown }>(`/catalog/options/${encodeURIComponent(modificationId)}`);
+  return Array.isArray(data?.options) ? data.options.filter((x): x is string => typeof x === "string") : [];
+}
 
 export function createPendingListing(payload: ListingCreatePayload) {
   return fetchJson<{ id: number; status: string; createdAt: string }>("/listings/create", {
