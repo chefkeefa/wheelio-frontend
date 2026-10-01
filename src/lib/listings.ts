@@ -31,15 +31,27 @@ export type ListingDetail = Listing & {
 export type ListingsQuery = {
   mark?: string;
   model?: string;
+  /** Exact year; older links only. */
   reg?: string;
+  yearMin?: number;
+  yearMax?: number;
+  /** Maximum mileage, km. */
   mileage?: string | number;
   priceMin?: number;
   priceMax?: number;
   doors?: string;
   transmission?: string;
+  /** FULL, FRONT or REAR. */
+  drive?: string;
   category?: string;
   fuel?: string;
+  /** Power in kW. */
   powerMin?: number;
+  powerMax?: number;
+  /** Engine volume in litres. */
+  volumeMin?: number;
+  volumeMax?: number;
+  withPhoto?: "1";
   limit?: number;
   offset?: number;
   sort?: string;
@@ -119,7 +131,7 @@ export async function getPublicListings(
   return normalizeList(arr);
 }
 
-export async function getPublicListingCount(query: Pick<ListingsQuery, "mark" | "model"> = {}): Promise<number> {
+export async function getPublicListingCount(query: Omit<ListingsQuery, "limit" | "offset" | "sort"> = {}): Promise<number> {
   const url = buildUrl(`${PUBLIC}/count`, query);
   const data = await fetchJson<{ count?: unknown }>(url, { method: "GET", absolute: true });
   const count = Number(data?.count);
