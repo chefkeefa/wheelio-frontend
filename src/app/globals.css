@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  /* Wheelio palette "Graphite & Saffron": warm graphite neutrals around the
-     logo saffron (#F6A316). Values are HSL triplets for hsl(var(--x) / a). */
+  /* Wheelio palette "Graphite & Amber": warm graphite neutrals around the
+     logo amber (#F58905). Values are HSL triplets for hsl(var(--x) / a). */
   --bg: 40 23% 96%;
   --fg: 30 12% 9%;
   --card: 0 0% 100%;
@@ -13,11 +13,11 @@
   --muted-fg: 30 7% 38%;
   --primary: 30 12% 9%;
   --primary-fg: 40 23% 97%;
-  --ring: 37 92% 53%;
-  --accent: 37 92% 53%;
+  --ring: 33 96% 49%;
+  --accent: 33 96% 49%;
   --accent-fg: 30 30% 8%;
-  /* Saffron dark enough for text and thin lines on light surfaces. */
-  --accent-ink: 32 92% 35%;
+  /* Amber dark enough for text and thin lines on light surfaces. */
+  --accent-ink: 29 92% 36%;
   /* Always-dark surfaces (hero search panel, dark dropdowns), same in both themes. */
   --ink: 30 10% 8%;
   --ink-raised: 30 8% 12%;
@@ -36,10 +36,10 @@
   --muted-fg: 35 8% 63%;
   --primary: 40 20% 94%;
   --primary-fg: 30 12% 9%;
-  --ring: 37 92% 53%;
-  --accent: 37 92% 53%;
+  --ring: 33 96% 49%;
+  --accent: 33 96% 49%;
   --accent-fg: 30 30% 8%;
-  --accent-ink: 38 95% 60%;
+  --accent-ink: 35 98% 60%;
   --ink: 30 10% 8%;
   --ink-raised: 30 8% 12%;
 }
