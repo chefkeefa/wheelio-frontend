@@ -208,6 +208,14 @@ export async function editListing(id: string, changes: { price?: number; descrip
   });
 }
 
+/** Makes the photo at `index` (position in the listing's image list) the listing's cover. */
+export async function setListingCover(id: string, index: number) {
+  return fetchJson<{ success: boolean }>(`${PRIVATE}/${encodeURIComponent(id)}/cover`, {
+    method: "PUT",
+    body: JSON.stringify({ index }),
+  });
+}
+
 /** Deletes the photo at `index` (position in the listing's image list). */
 export async function deleteListingImage(id: string, index: number) {
   return fetchJson<{ success: boolean }>(`${PRIVATE}/${encodeURIComponent(id)}/images/${index}`, { method: "DELETE" });

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/http";
-import { closeListing, deleteListingImage, editListing, getMyListings, type ListingDetail, type ListingStatus } from "@/lib/listings";
+import { closeListing, deleteListingImage, editListing, setListingCover, getMyListings, type ListingDetail, type ListingStatus } from "@/lib/listings";
 import { getPaymentConfig, startCheckout, uploadListingImage } from "@/lib/pirkApi";
 import AssetIcon from "@/components/ui/AssetIcon";
 
@@ -221,6 +221,19 @@ function EditListingPanel({
     }
   };
 
+  const makeCover = async (index: number) => {
+    setSaving(true);
+    setError("");
+    try {
+      await setListingCover(item.id, index);
+      await onReload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tr("Could not change the cover", "Nepavyko pakeisti viršelio", "Не удалось сменить обложку"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const addPhotos = async (files: FileList | null) => {
     if (!files?.length) return;
     setSaving(true);
@@ -254,6 +267,15 @@ function EditListingPanel({
           {images.map((src, index) => (
             <div key={src} className="relative h-20 overflow-hidden rounded-lg bg-muted">
               <img src={src} alt="" className="h-full w-full object-cover" />
+              {index === 0 ? (
+                <span className="absolute bottom-1 left-1 rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-bold text-accent-foreground">
+                  {tr("Cover", "Viršelis", "Обложка")}
+                </span>
+              ) : (
+                <button type="button" disabled={saving} onClick={() => makeCover(index)} className="absolute bottom-1 left-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white hover:bg-black/85">
+                  {tr("Make cover", "Padaryti viršeliu", "Сделать обложкой")}
+                </button>
+              )}
               <button type="button" disabled={saving} onClick={() => removePhoto(index)} aria-label={tr("Delete photo", "Ištrinti nuotrauką", "Удалить фото")} className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-black/70 text-white"><AssetIcon name="close" size={14} /></button>
             </div>
           ))}

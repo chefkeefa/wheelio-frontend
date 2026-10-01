@@ -1089,6 +1089,12 @@ export default function SellPage() {
     }));
   };
 
+  /** Moves a photo to the front: the first photo is uploaded first and becomes the listing's cover. */
+  const makeCover = (file: File) => {
+    const key = photoKey(file);
+    setPhotos((current) => [file, ...current.filter((item) => photoKey(item) !== key)]);
+  };
+
   const clearPhotos = () => {
     photoUrls.current.forEach((url) => URL.revokeObjectURL(url));
     photoUrls.current.clear();
@@ -1563,10 +1569,14 @@ export default function SellPage() {
                           <div key={key} className="overflow-hidden rounded-xl ring-1 ring-border">
                             <div className="relative aspect-[4/3] bg-muted">
                               <img src={photoUrl(f)} alt={f.name} className="absolute inset-0 h-full w-full object-cover" />
-                              {index === 0 && (
+                              {index === 0 ? (
                                 <span className="absolute left-2 top-2 rounded-md bg-accent px-2 py-0.5 text-[11px] font-bold text-accent-foreground">
                                   {tr("Cover", "Viršelis", "Обложка")}
                                 </span>
+                              ) : (
+                                <button type="button" onClick={() => makeCover(f)} className="absolute left-2 top-2 rounded-md bg-black/65 px-2 py-0.5 text-[11px] font-semibold text-white transition hover:bg-black/80 max-md:!min-h-6">
+                                  {tr("Make cover", "Padaryti viršeliu", "Сделать обложкой")}
+                                </button>
                               )}
                               <button type="button" onClick={() => removePhoto(f)} aria-label={tr("Delete photo", "Ištrinti nuotrauką", "Удалить фото")} className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/65 text-white transition hover:bg-black/80 max-md:!min-h-8">
                                 <AssetIcon name="close" size={14} />

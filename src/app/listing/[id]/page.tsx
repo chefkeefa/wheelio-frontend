@@ -76,10 +76,9 @@ export default function ListingDetailsPage() {
   const images = useMemo(() => {
     if (!data) return [];
 
-    const result = [
-      ...(data.images ?? []),
-      ...(data.thumbnail ? [data.thumbnail] : []),
-    ].filter(Boolean);
+    // The API returns the photos cover first. The thumbnail is a separate preview URL of the cover,
+    // so it is used only when the listing has no photo list, otherwise it would show up twice.
+    const result = (data.images?.length ? data.images : data.thumbnail ? [data.thumbnail] : []).filter(Boolean);
 
     return result.filter(
       (src, index, all) => all.indexOf(src) === index
