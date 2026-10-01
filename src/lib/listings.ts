@@ -19,6 +19,7 @@ export type Listing = {
   power?: number;
   transmission?: string;
   fuel?: string;
+  city?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -31,6 +32,7 @@ export type ListingDetail = Listing & {
 export type ListingsQuery = {
   mark?: string;
   model?: string;
+  city?: string;
   /** Exact year; older links only. */
   reg?: string;
   yearMin?: number;
@@ -93,6 +95,7 @@ function normalizeListing(x: RawListing, fallbackId?: number): Listing {
     power: Number(x?.power) > 0 ? Number(x?.power) : undefined,
     transmission: typeof x?.transmission === "string" && x.transmission ? x.transmission : undefined,
     fuel: typeof x?.fuel === "string" && x.fuel ? x.fuel : undefined,
+    city: typeof x?.city === "string" && x.city ? x.city : undefined,
     createdAt: typeof x?.createdAt === "string" ? x.createdAt : undefined,
     updatedAt: typeof x?.updatedAt === "string" ? x.updatedAt : undefined,
   };

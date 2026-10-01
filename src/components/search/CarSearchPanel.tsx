@@ -6,13 +6,14 @@ import AssetIcon, { type AssetIconName } from "@/components/ui/AssetIcon";
 import { useLanguage } from "@/context/LanguageContext";
 import { BACKEND_ORIGIN } from "@/lib/config";
 import { getPublicListingCount } from "@/lib/listings";
+import { LT_CITIES } from "@/lib/cities";
 import { EMPTY_FILTERS, countParameterFilters, filtersToQuery, type CarFilters } from "@/lib/carFilters";
 
 const CAR_API = `${BACKEND_ORIGIN}/cars`;
 const FIRST_YEAR = 1980;
 
 type Option = { value: string; label: string };
-type Sheet = "make" | "year" | "price" | "params" | null;
+type Sheet = "make" | "city" | "year" | "price" | "params" | null;
 
 interface Props {
   filters: CarFilters;
@@ -144,6 +145,8 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
     model: tr("Model", "Modelis", "Модель"),
     year: tr("Year", "Metai", "Год"),
     price: tr("Price", "Kaina", "Цена"),
+    city: tr("City", "Miestas", "Город"),
+    anyCity: tr("All Lithuania", "Visa Lietuva", "Вся Литва"),
     params: tr("Parameters", "Parametrai", "Параметры"),
     from: tr("from", "nuo", "от"),
     to: tr("to", "iki", "до"),
@@ -237,6 +240,7 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
       <div className="mb-4 rounded-3xl bg-card p-3 shadow-xl ring-1 ring-border md:hidden">
         <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-[2px] overflow-hidden rounded-2xl">
           <MobileCell className="col-span-3 px-4" label={labels.makeModel} value={makeModelValue} onClick={openMakePicker} />
+          <MobileCell className="col-span-3 px-4" label={labels.city} value={filters.city} onClick={() => setSheet("city")} />
           <MobileCell label={labels.year} value={yearValue} onClick={() => setSheet("year")} />
           <MobileCell label={labels.price} value={priceValue && `${priceValue} €`} onClick={() => setSheet("price")} />
           <button
@@ -269,31 +273,50 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
           </button>
         </div>
 
-        <div className="relative">
-          <button
-            type="button"
-            onClick={openMakePicker}
-            className="flex h-16 w-full min-w-0 items-center gap-3 rounded-xl bg-white/[0.06] pl-4 pr-20 text-left ring-1 ring-white/10 transition hover:bg-white/10"
-          >
-            <AssetIcon name="car" size={24} className="text-white/80" />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[13px] font-semibold leading-5 text-white">{labels.makeModel}</span>
-              <span className="block truncate text-sm leading-5 text-white/55">{makeModelValue || tr("Any", "Bet kuri", "Любая")}</span>
-            </span>
-          </button>
-          <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center gap-1">
-            {filters.mark && (
-              <button
-                type="button"
-                aria-label={tr("Clear make and model", "Išvalyti markę ir modelį", "Сбросить марку и модель")}
-                onClick={() => set({ mark: "", model: "" })}
-                className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full text-white/60 hover:bg-white/10 hover:text-white"
-              >
-                <AssetIcon name="close" size={16} />
-              </button>
-            )}
-            <AssetIcon name="chevron-down" size={18} className="text-white/60" />
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,280px)]">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={openMakePicker}
+              className="flex h-16 w-full min-w-0 items-center gap-3 rounded-xl bg-white/[0.06] pl-4 pr-20 text-left ring-1 ring-white/10 transition hover:bg-white/10"
+            >
+              <AssetIcon name="car" size={24} className="text-white/80" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] font-semibold leading-5 text-white">{labels.makeModel}</span>
+                <span className="block truncate text-sm leading-5 text-white/55">{makeModelValue || tr("Any", "Bet kuri", "Любая")}</span>
+              </span>
+            </button>
+            <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center gap-1">
+              {filters.mark && (
+                <button
+                  type="button"
+                  aria-label={tr("Clear make and model", "Išvalyti markę ir modelį", "Сбросить марку и модель")}
+                  onClick={() => set({ mark: "", model: "" })}
+                  className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full text-white/60 hover:bg-white/10 hover:text-white"
+                >
+                  <AssetIcon name="close" size={16} />
+                </button>
+              )}
+              <AssetIcon name="chevron-down" size={18} className="text-white/60" />
+            </div>
           </div>
+          <DesktopBox icon="map-pin" label={labels.city}>
+            <select
+              aria-label={labels.city}
+              value={filters.city}
+              onChange={(event) => set({ city: event.target.value })}
+              className="h-6 w-full min-w-0 cursor-pointer appearance-none truncate bg-transparent text-sm text-white/80 outline-none focus:text-white"
+            >
+              <option value="" className="bg-white text-black">
+                {labels.anyCity}
+              </option>
+              {LT_CITIES.map((city) => (
+                <option key={city} value={city} className="bg-white text-black">
+                  {city}
+                </option>
+              ))}
+            </select>
+          </DesktopBox>
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto]">
@@ -387,6 +410,32 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
                 {pickerStep === "model" && modelsLoading ? tr("Loading models…", "Įkeliami modeliai…", "Загружаем модели…") : tr("Nothing found", "Nieko nerasta", "Ничего не найдено")}
               </p>
             )}
+          </div>
+        </SheetFrame>
+      )}
+
+      {sheet === "city" && (
+        <SheetFrame title={labels.city} closeLabel={labels.close} onClose={() => setSheet(null)} footer={searchButton("min-h-12 w-full rounded-2xl bg-[#d9a339] px-4 text-sm")}>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-3 pt-2">
+            <PickerRow
+              label={labels.anyCity}
+              selected={!filters.city}
+              onClick={() => {
+                set({ city: "" });
+                setSheet(null);
+              }}
+            />
+            {LT_CITIES.map((city) => (
+              <PickerRow
+                key={city}
+                label={city}
+                selected={filters.city === city}
+                onClick={() => {
+                  set({ city });
+                  setSheet(null);
+                }}
+              />
+            ))}
           </div>
         </SheetFrame>
       )}

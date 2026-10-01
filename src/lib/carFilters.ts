@@ -4,6 +4,7 @@ import type { ListingsQuery } from "@/lib/listings";
 export type CarFilters = {
   mark: string;
   model: string;
+  city: string;
   yearMin: string;
   yearMax: string;
   priceMin: string;
@@ -27,6 +28,7 @@ export const DEFAULT_SORT = "newest";
 export const EMPTY_FILTERS: CarFilters = {
   mark: "",
   model: "",
+  city: "",
   yearMin: "",
   yearMax: "",
   priceMin: "",
@@ -62,6 +64,7 @@ export function filtersToQuery(f: CarFilters): ListingsQuery {
   return {
     mark: f.mark || undefined,
     model: f.model || undefined,
+    city: f.city || undefined,
     yearMin,
     yearMax,
     priceMin,
@@ -100,6 +103,7 @@ export function countParameterFilters(f: CarFilters) {
 const URL_KEYS: Array<[keyof CarFilters, string]> = [
   ["mark", "mark"],
   ["model", "model"],
+  ["city", "city"],
   ["yearMin", "yearMin"],
   ["yearMax", "yearMax"],
   ["priceMin", "priceMin"],

@@ -19,6 +19,7 @@ export interface CarCardProps {
   /** Engine volume in litres. */
   volume?: number;
   fuel?: string;
+  city?: string;
   /** Shows the heart button when set. */
   onToggleFavorite?: () => void;
   favorite?: boolean;
@@ -56,6 +57,7 @@ export default function CarCard({
   mileage,
   volume,
   fuel,
+  city,
   onToggleFavorite,
   favorite = false,
 }: CarCardProps) {
@@ -73,7 +75,7 @@ export default function CarCard({
     return fuel;
   })();
 
-  const hasSpecs = Boolean((year && year > 0) || volume || (mileage && mileage > 0) || fuelLabel);
+  const hasSpecs = Boolean((year && year > 0) || volume || (mileage && mileage > 0) || fuelLabel || city);
 
   return (
     <div className="group relative h-full rounded-2xl transition-transform duration-300 hover:-translate-y-1">
@@ -105,6 +107,7 @@ export default function CarCard({
               {volume ? <Spec icon="engine">{volume.toFixed(1)} l</Spec> : null}
               {mileage && mileage > 0 ? <Spec icon="gauge">{mileage.toLocaleString("lt-LT")} km</Spec> : null}
               {fuelLabel ? <Spec icon="fuel">{fuelLabel}</Spec> : null}
+              {city ? <span className="col-span-2 min-w-0 truncate"><Spec icon="map-pin">{city}</Spec></span> : null}
             </div>
           )}
         </div>

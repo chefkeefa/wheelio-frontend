@@ -107,6 +107,7 @@ function SearchInner() {
               mileage={item.mileage}
               volume={item.volume}
               fuel={item.fuel}
+              city={item.city}
             />
           ))}
         </div>

@@ -23,6 +23,7 @@ import {
   clearDraft,
   ContactMethod,
 } from "@/lib/sellDraft";
+import { LT_CITIES } from "@/lib/cities";
 import AssetIcon from "@/components/ui/AssetIcon";
 
 // --------- ВСПОМОГАТЕЛЬНОЕ ---------
@@ -1124,6 +1125,11 @@ export default function SellPage() {
       return;
     }
 
+    if (!draft.city.trim()) {
+      setPublishError(tr("Choose the city where the car is.", "Pasirinkite miestą, kuriame yra automobilis.", "Выберите город, где находится автомобиль."));
+      return;
+    }
+
     setPublishing(true);
     try {
       const normalizedPromo = paymentsOff ? "" : promoCode.trim().toUpperCase();
@@ -1146,6 +1152,7 @@ export default function SellPage() {
         price,
         description: draft.description.trim(),
         details: { year, mileage: Number.isFinite(mileage) ? mileage : 0 },
+        city: draft.city.trim() || undefined,
       });
 
       // Image failure should not charge the user silently. Stop before checkout.
@@ -1733,7 +1740,11 @@ export default function SellPage() {
                   <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     <div>
                       <L htmlFor="sell-city">{tr("City", "Miestas", "Город")}</L>
-                      <Input id="sell-city" placeholder="Vilnius" value={draft.city} onChange={(e) => setDraft({ ...draft, city: e.target.value })} />
+                      <Select id="sell-city" value={draft.city} onChange={(e) => setDraft({ ...draft, city: e.target.value })}>
+                        <option value="">{tr("Choose a city", "Pasirinkite miestą", "Выберите город")}</option>
+                        {draft.city && !(LT_CITIES as readonly string[]).includes(draft.city) && <option value={draft.city}>{draft.city}</option>}
+                        {LT_CITIES.map((city) => <option key={city} value={city}>{city}</option>)}
+                      </Select>
                     </div>
                     <div>
                       <L htmlFor="sell-area">{tr("Area / district", "Rajonas", "Район")}</L>
