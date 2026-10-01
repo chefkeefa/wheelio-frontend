@@ -22,11 +22,17 @@ export default function Header() {
 
   const tr = (en: string, lt: string, ru: string) => language === "LT" ? lt : language === "RU" ? ru : en;
 
+  // Site sections. Cars is the live marketplace (home, search and listings);
+  // the other sections show a "coming soon" page for now.
   const navigation = [
-    { name: t("buy"), href: "/" },
-    { name: t("sell"), href: "/sell" },
-    { name: t("about"), href: "/about" },
+    { name: tr("Cars", "Automobiliai", "Машины"), href: "/", match: ["/search", "/listing"] },
+    { name: tr("Motorcycles", "Motociklai", "Мотоциклы"), href: "/motorcycles" },
+    { name: tr("Car parts", "Autodalys", "Автозапчасти"), href: "/parts" },
+    { name: tr("Tires", "Padangos", "Шины"), href: "/tires" },
   ];
+  const isActive = (item: { href: string; match?: string[] }) =>
+    (item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)) ||
+    Boolean(item.match?.some((prefix) => pathname.startsWith(prefix)));
 
   useEffect(() => {
     // "pirkauto-theme" is the key used before the rename to Wheelio.
@@ -103,9 +109,9 @@ export default function Header() {
           />
         </Link>
 
-        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex">
+        <nav className="ml-10 mr-auto hidden items-center gap-6 lg:flex xl:ml-14 xl:gap-8">
           {navigation.map((item) => {
-            const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+            const active = isActive(item);
             return (
               <Link key={item.href} href={item.href} className={`relative text-[15px] font-semibold transition-colors duration-200 ${active ? "text-accent-ink" : "text-foreground hover:text-accent-ink"}`}>
                 {item.name}
@@ -115,10 +121,12 @@ export default function Header() {
           })}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-2 lg:flex xl:gap-3">
           <button type="button" onClick={toggleTheme} className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition hover:bg-foreground/5" aria-label="Toggle theme">{darkMode ? <AssetIcon name="sun" size={22} /> : <AssetIcon name="moon" size={22} />}</button>
           <button type="button" onClick={toggleLanguage} className="flex h-10 items-center gap-1.5 rounded-full px-2 text-foreground transition hover:bg-foreground/5" aria-label="Change language" title="EN → LT → RU"><AssetIcon name="globe" size={21} /><span className="min-w-[20px] text-xs font-bold">{language}</span></button>
-          <button type="button" className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition hover:bg-foreground/5" aria-label={tr("Recently viewed", "Neseniai peržiūrėta", "Недавно просмотренные")}><AssetIcon name="clock" size={21} /></button>
+          <button type="button" className="hidden h-10 w-10 items-center justify-center rounded-full text-foreground transition hover:bg-foreground/5 xl:flex" aria-label={tr("Recently viewed", "Neseniai peržiūrėta", "Недавно просмотренные")}><AssetIcon name="clock" size={21} /></button>
+
+          <Link href="/sell" className="flex h-10 items-center gap-1.5 rounded-full bg-accent px-4 text-[15px] font-semibold text-accent-foreground transition hover:opacity-90"><AssetIcon name="plus" size={19} /><span>{t("sell")}</span></Link>
 
           {user ? (
             <div className="relative" ref={accountRef}>
@@ -157,16 +165,18 @@ export default function Header() {
           )}
         </div>
 
-        <button type="button" onClick={() => setMobileMenuOpen((prev) => !prev)} className="flex h-11 w-11 items-center justify-center rounded-full text-foreground transition hover:bg-foreground/5 md:hidden" aria-label="Open menu">{mobileMenuOpen ? <AssetIcon name="close" size={26} /> : <AssetIcon name="menu" size={26} />}</button>
+        <button type="button" onClick={() => setMobileMenuOpen((prev) => !prev)} className="flex h-11 w-11 items-center justify-center rounded-full text-foreground transition hover:bg-foreground/5 lg:hidden" aria-label="Open menu">{mobileMenuOpen ? <AssetIcon name="close" size={26} /> : <AssetIcon name="menu" size={26} />}</button>
       </div>
 
       {mobileMenuOpen && (
-        <div className="border-t border-border bg-background px-4 pb-6 pt-3 sm:px-6 md:hidden">
+        <div className="border-t border-border bg-background px-4 pb-6 pt-3 sm:px-6 lg:hidden">
           <nav className="flex flex-col">
             {navigation.map((item) => {
-              const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+              const active = isActive(item);
               return <Link key={item.href} href={item.href} className={`rounded-xl px-3 py-3 text-base font-semibold transition ${active ? "bg-accent/10 text-accent-ink" : "text-foreground hover:bg-foreground/5"}`}>{item.name}</Link>;
             })}
+            <Link href="/sell" className="rounded-xl px-3 py-3 text-base font-semibold text-foreground hover:bg-foreground/5">{t("sell")}</Link>
+            <Link href="/about" className="rounded-xl px-3 py-3 text-base font-semibold text-foreground hover:bg-foreground/5">{t("about")}</Link>
             {user && accountItems.map((item) => <Link key={`m-${item.href}`} href={item.href} className="rounded-xl px-3 py-3 text-base font-semibold text-foreground hover:bg-foreground/5">{item.label}</Link>)}
           </nav>
 

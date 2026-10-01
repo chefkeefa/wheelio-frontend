@@ -53,13 +53,15 @@ export type AssetIconName =
   | "spinner"
   | "star"
   | "sun"
+  | "tire"
   | "support-chat"
   | "transmission"
   | "trash"
   | "truck"
   | "upload"
   | "user"
-  | "user-plus";
+  | "user-plus"
+  | "wrench";
 
 /** Monochrome SVG from public/icons rendered as a CSS mask, so it inherits the current text color in both themes. */
 export default function AssetIcon({
