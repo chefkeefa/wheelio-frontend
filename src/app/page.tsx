@@ -271,6 +271,7 @@ export default function HomePage() {
                   mileage={item.mileage}
                   volume={item.volume}
                   fuel={item.fuel}
+                  city={item.city}
                   favorite={favoriteIds.has(item.id)}
                   onToggleFavorite={() => toggleFavorite(item.id)}
                 />

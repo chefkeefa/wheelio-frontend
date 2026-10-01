@@ -277,6 +277,7 @@ export type ListingCreatePayload = {
   price: number;
   description: string;
   details: { year: number; mileage: number };
+  city?: string;
 };
 
 export function createPendingListing(payload: ListingCreatePayload) {

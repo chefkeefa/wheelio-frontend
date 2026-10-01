@@ -202,6 +202,12 @@ export default function ListingDetailsPage() {
                 label={tr("Mileage", "Rida", "Пробег")}
                 value={`${formatMileage(data.mileage)} km`}
               />
+              {data.city && (
+                <Info
+                  label={tr("City", "Miestas", "Город")}
+                  value={data.city}
+                />
+              )}
             </div>
           </div>
 
