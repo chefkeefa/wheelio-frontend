@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/http";
 import { useLatest } from "@/lib/useLatest";
 import {
   createPendingListing,
+  getCatalogOptions,
   getPaymentConfig,
   startCheckout,
   validatePromoCode,
@@ -16,6 +17,7 @@ import {
   type PhotoViewType,
   type PaymentConfig,
 } from "@/lib/pirkApi";
+import { CAR_OPTION_GROUPS, featureKeys } from "@/lib/carOptions";
 import {
   ListingDraft,
   loadDraft,
@@ -27,16 +29,6 @@ import { LT_CITIES } from "@/lib/cities";
 import AssetIcon from "@/components/ui/AssetIcon";
 
 // --------- ВСПОМОГАТЕЛЬНОЕ ---------
-const FEATURE_DEFS = [
-  { value: "Climate control", en: "Climate control", lt: "Klimato kontrolė", ru: "Климат-контроль" },
-  { value: "Leather seats", en: "Leather seats", lt: "Odinės sėdynės", ru: "Кожаные сиденья" },
-  { value: "Heated seats", en: "Heated seats", lt: "Šildomos sėdynės", ru: "Подогрев сидений" },
-  { value: "Parking sensors", en: "Parking sensors", lt: "Parkavimo jutikliai", ru: "Парктроники" },
-  { value: "LED lights", en: "LED lights", lt: "LED žibintai", ru: "LED-фары" },
-  { value: "Navigation", en: "Navigation", lt: "Navigacija", ru: "Навигация" },
-  { value: "Winter tires", en: "Winter tires", lt: "Žieminės padangos", ru: "Зимние шины" },
-  { value: "Apple CarPlay / Android Auto", en: "Apple CarPlay / Android Auto", lt: "Apple CarPlay / Android Auto", ru: "Apple CarPlay / Android Auto" },
-] as const;
 
 
 const CAR_API = `${BACKEND_ORIGIN}/cars`;
@@ -579,6 +571,9 @@ export default function SellPage() {
   const [generationCandidates, setGenerationCandidates] = useState<GenerationInfo[]>([]);
   const [engineOptions, setEngineOptions] = useState<EngineOption[]>([]);
   const [configurationLoading, setConfigurationLoading] = useState(false);
+  // Factory equipment of the chosen modification, offered as a starting list.
+  const [factoryOptions, setFactoryOptions] = useState<{ modificationId: string; keys: string[] } | null>(null);
+  const [openOptionGroups, setOpenOptionGroups] = useState<string[]>(["comfort", "parking"]);
 
   // VIN autofill
   const [vinLoading, setVinLoading] = useState(false);
@@ -618,6 +613,26 @@ export default function SellPage() {
   useEffect(() => {
     getPaymentConfig().then(setPaymentConfig).catch(() => setPaymentConfig(null));
   }, []);
+
+  // Pre-fill equipment from the catalog once a modification is chosen and nothing is ticked yet.
+  const chosenOptions = new Set(featureKeys(draft.features));
+  const chosenModificationId = engineOptions.find((option) => option.value === draft.engine)?.modificationId || "";
+  useEffect(() => {
+    if (!chosenModificationId) return;
+    let cancelled = false;
+    getCatalogOptions(chosenModificationId)
+      .then((keys) => {
+        if (cancelled) return;
+        setFactoryOptions({ modificationId: chosenModificationId, keys });
+        if (keys.length) setDraft((d) => (featureKeys(d.features).length ? d : { ...d, features: keys }));
+      })
+      .catch(() => {
+        if (!cancelled) setFactoryOptions(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [chosenModificationId]);
 
   // автосейв (debounce ~400ms)
   const saveRaf = useRef<number | null>(null);
@@ -1153,6 +1168,7 @@ export default function SellPage() {
         description: draft.description.trim(),
         details: { year, mileage: Number.isFinite(mileage) ? mileage : 0 },
         city: draft.city.trim() || undefined,
+        options: [...featureKeys(draft.features).filter((key) => key !== "service-book"), ...(draft.hasServiceBook ? ["service-book"] : [])],
       });
 
       // Image failure should not charge the user silently. Stop before checkout.
@@ -1639,23 +1655,71 @@ export default function SellPage() {
                   </div>
 
                   <div className="mt-7">
-                    <div className="mb-2 text-sm font-semibold text-foreground">{tr("Features", "Įranga", "Опции")}</div>
-                    <div className="flex flex-wrap gap-2">
-                      {FEATURE_DEFS.map((feature) => {
-                        const checked = draft.features.includes(feature.value);
+                    <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+                      <div className="text-sm font-semibold text-foreground">{tr("Equipment", "Komplektacija", "Комплектация")}</div>
+                      <span className="text-xs text-muted-foreground">
+                        {tr(`${chosenOptions.size} selected`, `Pasirinkta: ${chosenOptions.size}`, `Выбрано: ${chosenOptions.size}`)}
+                      </span>
+                    </div>
+                    {factoryOptions && factoryOptions.modificationId === chosenModificationId && factoryOptions.keys.length > 0 && (
+                      <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        <span>
+                          {tr(
+                            "Factory equipment of this version is ticked. Untick what your car doesn't have and add the rest.",
+                            "Pažymėta gamyklinė šios modifikacijos komplektacija. Nuimkite tai, ko jūsų automobilis neturi, ir pridėkite trūkstamą.",
+                            "Отмечена заводская комплектация этой модификации. Снимите то, чего в вашей машине нет, и добавьте недостающее."
+                          )}
+                        </span>
+                        <button
+                          type="button"
+                          className="font-semibold text-accent hover:underline"
+                          onClick={() => setDraft((d) => ({ ...d, features: [...new Set([...featureKeys(d.features), ...factoryOptions.keys])] }))}
+                        >
+                          {tr("Tick factory equipment", "Pažymėti gamyklinę", "Отметить заводскую")}
+                        </button>
+                      </div>
+                    )}
+                    <div className="divide-y divide-border rounded-xl border border-border">
+                      {CAR_OPTION_GROUPS.map((group) => {
+                        const options = group.options.filter((option) => option.key !== "service-book");
+                        const open = openOptionGroups.includes(group.id);
+                        const count = options.filter((option) => chosenOptions.has(option.key)).length;
                         return (
-                          <ToggleChip
-                            key={feature.value}
-                            on={checked}
-                            onClick={() =>
-                              setDraft((d) => ({
-                                ...d,
-                                features: checked ? d.features.filter((x) => x !== feature.value) : [...d.features, feature.value],
-                              }))
-                            }
-                          >
-                            {tr(feature.en, feature.lt, feature.ru)}
-                          </ToggleChip>
+                          <div key={group.id}>
+                            <button
+                              type="button"
+                              aria-expanded={open}
+                              onClick={() => setOpenOptionGroups((list) => (open ? list.filter((x) => x !== group.id) : [...list, group.id]))}
+                              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold text-foreground"
+                            >
+                              <span>
+                                {tr(group.en, group.lt, group.ru)}
+                                {count > 0 && <span className="ml-2 rounded-full bg-accent/15 px-2 py-0.5 text-xs text-accent">{count}</span>}
+                              </span>
+                              <AssetIcon name="chevron-down" size={16} className={cx("text-muted-foreground transition", open && "rotate-180")} />
+                            </button>
+                            {open && (
+                              <div className="flex flex-wrap gap-2 px-4 pb-4">
+                                {options.map((option) => {
+                                  const checked = chosenOptions.has(option.key);
+                                  return (
+                                    <ToggleChip
+                                      key={option.key}
+                                      on={checked}
+                                      onClick={() =>
+                                        setDraft((d) => {
+                                          const keys = featureKeys(d.features);
+                                          return { ...d, features: checked ? keys.filter((x) => x !== option.key) : [...keys, option.key] };
+                                        })
+                                      }
+                                    >
+                                      {tr(option.en, option.lt, option.ru)}
+                                    </ToggleChip>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
                         );
                       })}
                     </div>
@@ -1836,7 +1900,7 @@ export default function SellPage() {
                           [tr("Engine", "Variklis", "Двигатель"), draft.engine || "—"],
                           [tr("Mileage", "Rida", "Пробег"), draft.mileage ? `${Number(draft.mileage).toLocaleString("lt-LT")} km` : "—"],
                           [tr("Condition", "Būklė", "Состояние"), conditionOptions.find((option) => option.value === draft.condition)?.title || "—"],
-                          [tr("Features", "Įranga", "Опции"), draft.features.length ? FEATURE_DEFS.filter((f) => draft.features.includes(f.value)).map((f) => tr(f.en, f.lt, f.ru)).join(", ") : "—"],
+                          [tr("Equipment", "Komplektacija", "Комплектация"), chosenOptions.size ? tr(`${chosenOptions.size} options`, `${chosenOptions.size} pasirinkimai`, `${chosenOptions.size} опций`) : "—"],
                           [tr("City/Area", "Miestas / rajonas", "Город / район"), [draft.city, draft.area].filter(Boolean).join(", ") || "—"],
                           [tr("Contacts", "Kontaktai", "Контакты"), `${draft.contactMethods.map(contactLabel).join(", ") || tr("chat only", "tik pokalbis", "только чат")}${draft.phone ? ` (${draft.phone})` : ""}`],
                         ].map(([term, value]) => (

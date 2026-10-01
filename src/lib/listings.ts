@@ -1,5 +1,6 @@
 import { ApiError, buildUrl, fetchJson } from "@/lib/http";
 import { resolveApiAsset } from "@/lib/config";
+import type { CarSpecs } from "@/lib/carSpecs";
 
 export type ListingStatus = "ACTIVE" | "SOLD" | "CLOSED" | "PENDING_PAYMENT";
 
@@ -27,6 +28,12 @@ export type Listing = {
 export type ListingDetail = Listing & {
   description?: string;
   images?: string[];
+  /** Catalog specifications of the car's version (detail endpoint only). */
+  specs?: CarSpecs | null;
+  /** Equipment option keys (see lib/carOptions). */
+  options?: string[];
+  /** "seller" when the seller chose the list, "catalog" for the version's factory equipment. */
+  optionsSource?: "seller" | "catalog" | null;
 };
 
 export type ListingsQuery = {
@@ -114,6 +121,9 @@ function normalizeDetail(x: RawListing): ListingDetail {
     images: Array.isArray(x?.images)
       ? x.images.filter((s: unknown): s is string => typeof s === "string" && Boolean(s)).map((s) => resolveApiAsset(s)!)
       : [],
+    specs: x?.specs && typeof x.specs === "object" ? (x.specs as CarSpecs) : null,
+    options: Array.isArray(x?.options) ? x.options.filter((k: unknown): k is string => typeof k === "string") : [],
+    optionsSource: x?.optionsSource === "seller" || x?.optionsSource === "catalog" ? x.optionsSource : null,
   };
 }
 
