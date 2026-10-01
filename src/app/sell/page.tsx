@@ -2,8 +2,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import Button from "@/components/Button";
-import { anybody } from "@/lib/fonts";
 import { BACKEND_ORIGIN } from "@/lib/config";
 import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/http";
@@ -425,20 +423,6 @@ function cx(...cls: Array<string | false | null | undefined>) {
   return cls.filter(Boolean).join(" ");
 }
 
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={cx("rounded-2xl bg-card text-foreground ring-1 ring-border p-4 md:p-6", className)}>
-      {children}
-    </div>
-  );
-}
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className={`${anybody.className} mb-4 text-2xl font-bold`}>{children}</h2>
-  );
-}
-
 // подсказка цены (MVP-фикция)
 function usePriceHint(draft: ListingDraft) {
   return useMemo(() => {
@@ -461,17 +445,114 @@ function formatEUR(n: number) {
   }
 }
 
-function SellLabel({ children }: { children: React.ReactNode }) {
-  return <label className={`${anybody.className} mb-1 block text-[15px] font-bold text-muted-foreground md:text-base`}>{children}</label>;
+const FIELD =
+  "w-full rounded-xl border border-border bg-muted px-4 text-[15px] font-medium text-foreground outline-none transition placeholder:font-normal placeholder:text-muted-foreground/70 focus:border-accent focus:bg-card disabled:cursor-not-allowed disabled:opacity-60";
+const PRIMARY_BUTTON =
+  "inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-accent px-6 text-[15px] font-bold text-black transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60";
+const SECONDARY_BUTTON =
+  "inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-border px-5 text-[15px] font-semibold text-foreground transition hover:border-accent disabled:cursor-not-allowed disabled:opacity-60";
+
+function SellLabel({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
+  return <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-semibold text-foreground">{children}</label>;
 }
-function SellInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={cx(anybody.className, "w-full rounded-xl border border-[hsl(var(--border))] bg-[#D9D9D9] px-4 py-2.5 text-[15px] font-bold text-black outline-none focus:border-[hsl(var(--accent))]", props.className)} />;
+function Hint({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <p className={cx("mt-1.5 text-xs leading-5 text-muted-foreground", className)}>{children}</p>;
+}
+function SellInput({ suffix, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { suffix?: string }) {
+  const input = <input {...props} className={cx(FIELD, "h-12", suffix && "pr-14", props.className)} />;
+  if (!suffix) return input;
+  return (
+    <div className="relative">
+      {input}
+      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">{suffix}</span>
+    </div>
+  );
 }
 function SellTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...props} className={cx(anybody.className, "min-h-[120px] w-full resize-vertical rounded-xl border border-[hsl(var(--border))] bg-[#D9D9D9] px-4 py-3 text-[15px] font-bold text-black outline-none focus:border-[hsl(var(--accent))]", props.className)} />;
+  return <textarea {...props} className={cx(FIELD, "min-h-[150px] resize-y py-3 leading-6", props.className)} />;
 }
 function SellSelect(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={cx(anybody.className, "w-full appearance-none rounded-xl border border-[hsl(var(--border))] bg-[#D9D9D9] px-4 py-2.5 text-[15px] font-bold text-black outline-none focus:border-[hsl(var(--accent))]", props.className)} />;
+  return (
+    <div className="relative">
+      <select {...props} className={cx(FIELD, "h-12 cursor-pointer appearance-none truncate pr-11", props.className)} />
+      <AssetIcon name="chevron-down" size={18} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+    </div>
+  );
+}
+
+/** Large selectable option (condition, price strategy). */
+function ChoiceCard({ selected, title, note, onClick }: { selected: boolean; title: string; note?: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onClick}
+      className={cx(
+        "flex min-h-[64px] w-full items-start gap-3 rounded-xl border px-4 py-3 text-left transition",
+        selected ? "border-accent bg-accent/10" : "border-border hover:border-muted-foreground/40"
+      )}
+    >
+      <span className={cx("mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2", selected ? "border-accent" : "border-muted-foreground/40")}>
+        {selected && <span className="h-2 w-2 rounded-full bg-accent" />}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold text-foreground">{title}</span>
+        {note && <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">{note}</span>}
+      </span>
+    </button>
+  );
+}
+
+/** Multi-select chip (features, contact methods). */
+function ToggleChip({ on, children, onClick }: { on: boolean; children: React.ReactNode; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={onClick}
+      className={cx(
+        "inline-flex min-h-10 items-center gap-2 rounded-lg border px-3.5 text-sm font-medium transition",
+        on ? "border-accent bg-accent/10 text-foreground" : "border-border text-muted-foreground hover:text-foreground"
+      )}
+    >
+      <AssetIcon name={on ? "check" : "plus"} size={15} className={on ? "text-accent" : ""} />
+      {children}
+    </button>
+  );
+}
+
+function CheckRow({ id, checked, onChange, children }: { id: string; checked: boolean; onChange: (value: boolean) => void; children: React.ReactNode }) {
+  return (
+    <label htmlFor={id} className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-border px-4 text-sm font-medium text-foreground">
+      <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-[18px] w-[18px] shrink-0 accent-accent" />
+      {children}
+    </label>
+  );
+}
+
+function StepHeading({ title, lead }: { title: string; lead?: string }) {
+  return (
+    <div className="mb-6">
+      <h2 className="text-2xl font-bold tracking-tight text-foreground md:text-[28px]">{title}</h2>
+      {lead && <p className="mt-1.5 max-w-xl text-sm leading-6 text-muted-foreground">{lead}</p>}
+    </div>
+  );
+}
+
+const STATUS_STYLES = {
+  success: "bg-emerald-500/10 text-emerald-700 ring-emerald-500/25 dark:text-emerald-300",
+  warning: "bg-amber-500/10 text-amber-800 ring-amber-500/25 dark:text-amber-200",
+  error: "bg-red-500/10 text-red-700 ring-red-500/25 dark:text-red-300",
+} as const;
+
+function StatusNote({ type, children, className = "" }: { type: keyof typeof STATUS_STYLES; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cx("flex gap-2.5 rounded-xl px-3.5 py-3 text-sm leading-6 ring-1", STATUS_STYLES[type], className)}>
+      <AssetIcon name={type === "success" ? "check-circle" : "alert-circle"} size={18} className="mt-[3px]" />
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
 }
 
 // --------- СТРАНИЦА ---------
@@ -509,6 +590,20 @@ export default function SellPage() {
   const [promoValid, setPromoValid] = useState(false);
   const [promoChecking, setPromoChecking] = useState(false);
   const [publishedListingId, setPublishedListingId] = useState<number | null>(null);
+
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
+  // One object URL per photo, created on first use and revoked when the photo is removed.
+  const photoUrls = useRef(new Map<string, string>());
+  const photoUrl = (file: File) => {
+    const key = photoKey(file);
+    let url = photoUrls.current.get(key);
+    if (!url) {
+      url = URL.createObjectURL(file);
+      photoUrls.current.set(key, url);
+    }
+    return url;
+  };
 
   // загрузка черновика
   useEffect(() => {
@@ -977,8 +1072,20 @@ export default function SellPage() {
     }));
   };
 
+  const clearPhotos = () => {
+    photoUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    photoUrls.current.clear();
+    setPhotos([]);
+    setPhotoMeta({});
+  };
+
   const removePhoto = (file: File) => {
     const key = photoKey(file);
+    const url = photoUrls.current.get(key);
+    if (url) {
+      URL.revokeObjectURL(url);
+      photoUrls.current.delete(key);
+    }
     setPhotos((current) => current.filter((item) => photoKey(item) !== key));
     setPhotoMeta((current) => {
       const copy = { ...current };
@@ -1073,720 +1180,809 @@ export default function SellPage() {
     }
   };
 
+  const conditionOptions: Array<{ value: ListingDraft["condition"]; title: string; note: string }> = [
+    { value: "clean", title: tr("Not crashed", "Nedaužtas", "Не бит"), note: tr("No accident damage", "Be avarijos pažeidimų", "Без повреждений после ДТП") },
+    { value: "minor", title: tr("Minor paint", "Smulkūs dažymo darbai", "Небольшие окрасы"), note: tr("Cosmetic repairs only", "Tik kosmetiniai taisymai", "Только косметический ремонт") },
+    { value: "damaged", title: tr("Crashed", "Daužtas", "Бит"), note: tr("Was in an accident", "Patyręs avariją", "Был в ДТП") },
+    { value: "needs_repair", title: tr("Needs repair", "Reikia remonto", "Требует ремонта"), note: tr("Sold as is", "Parduodamas toks, koks yra", "Продаётся как есть") },
+  ];
+  const strategyOptions: Array<{ value: ListingDraft["strategy"]; title: string; note: string }> = [
+    { value: "fixed", title: tr("Fixed", "Fiksuota", "Фиксированная"), note: tr("The price stays as listed", "Kaina nesikeičia", "Цена не меняется") },
+    { value: "negotiable", title: tr("Negotiable", "Derinama", "Договорная"), note: tr("Open to offers", "Laukiate pasiūlymų", "Готовы к предложениям") },
+    { value: "quick", title: tr("Quick sale", "Greitas pardavimas", "Быстрая продажа"), note: tr("You want it gone this week", "Norite parduoti šią savaitę", "Хотите продать на этой неделе") },
+  ];
+  const contactLabel = (method: ContactMethod) =>
+    method === "chat" ? tr("Chat", "Pokalbis", "Чат") : method === "phone" ? tr("Phone", "Telefonas", "Телефон") : method === "whatsapp" ? "WhatsApp" : "Telegram";
+
+  const steps = [
+    { title: tr("Car", "Automobilis", "Автомобиль"), done: Boolean(draft.mark && draft.model && draft.year && draft.engine) },
+    { title: tr("Photos", "Nuotraukos", "Фотографии"), done: photos.length > 0 },
+    { title: tr("Condition", "Būklė", "Состояние"), done: Boolean(draft.mileage && draft.description.trim()) },
+    { title: tr("Price", "Kaina", "Цена"), done: Boolean(draft.price) },
+    { title: tr("Contacts", "Kontaktai", "Контакты"), done: Boolean(draft.city && draft.contactMethods.length) },
+    { title: tr("Preview", "Peržiūra", "Предпросмотр"), done: false },
+  ];
+
+  // What publish() checks before payment, shown in the sidebar so nothing comes as a surprise on the last step.
+  const requirements = [
+    { label: tr("Make, model and year", "Markė, modelis ir metai", "Марка, модель и год"), done: Boolean(draft.mark && draft.model && draft.year), step: 1 },
+    { label: tr("Engine / configuration", "Variklis / komplektacija", "Двигатель / комплектация"), done: Boolean(engineOptions.some((option) => option.value === draft.engine)), step: 1 },
+    { label: tr("Description", "Aprašymas", "Описание"), done: Boolean(draft.description.trim()), step: 3 },
+    { label: tr("Price", "Kaina", "Цена"), done: Boolean(Number(draft.price) > 0), step: 4 },
+  ];
+  const requirementsLeft = requirements.filter((item) => !item.done).length;
+
+  const locale = language === "LT" ? "lt-LT" : language === "RU" ? "ru-RU" : "en-GB";
+  const savedLabel = lastSaved
+    ? `${tr("Draft saved", "Juodraštis išsaugotas", "Черновик сохранён")} ${lastSaved.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`
+    : tr("Draft not saved yet", "Juodraštis dar neišsaugotas", "Черновик ещё не сохранён");
+
+  const listingTitle = [draft.mark, draft.model].filter(Boolean).join(" ") || tr("Your car", "Jūsų automobilis", "Ваш автомобиль");
+  const coverUrl = photos[0] ? photoUrl(photos[0]) : "/images/no-photo.svg";
+  const publicationPrice = promoValid
+    ? `0.00 ${paymentConfig?.currency || "EUR"}`
+    : paymentConfig
+    ? `${paymentConfig.publicationPrice.toFixed(2)} ${paymentConfig.currency}`
+    : "4.99 EUR";
+  const engineShort = draft.engine.includes(" — ") ? draft.engine.split(" — ").slice(1).join(" — ") : draft.engine;
+
+  const goTo = (n: number) => {
+    setStep(n);
+    const top = panelRef.current?.getBoundingClientRect().top;
+    if (top !== undefined && top < 0) panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const stepFooter = (
+    <div className="mt-10 flex items-center gap-3 border-t border-border pt-5">
+      {step > 1 ? (
+        <button type="button" onClick={() => goTo(step - 1)} className="inline-flex h-12 items-center gap-2 rounded-xl px-2 text-[15px] font-semibold text-muted-foreground transition hover:text-foreground">
+          <AssetIcon name="arrow-left" size={18} />
+          {tr("Back", "Atgal", "Назад")}
+        </button>
+      ) : null}
+      <button type="button" onClick={() => goTo(step + 1)} className="ml-auto inline-flex h-12 items-center px-2 text-[15px] font-semibold text-muted-foreground transition hover:text-foreground">
+        {tr("Skip", "Praleisti", "Пропустить")}
+      </button>
+      <button type="button" onClick={() => goTo(step + 1)} className={PRIMARY_BUTTON}>
+        {tr("Next", "Toliau", "Далее")}
+        <AssetIcon name="arrow-right" size={18} />
+      </button>
+    </div>
+  );
+
   return (
-    <div className="container py-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className={`${anybody.className} text-3xl md:text-4xl font-extrabold`}>{tr("Sell a car", "Parduoti automobilį", "Продать автомобиль")}</h1>
-        <div className="text-sm text-muted-foreground">
-          {lastSaved
-            ? `${tr("Draft saved", "Juodraštis išsaugotas", "Черновик сохранён")} ${lastSaved.toLocaleTimeString(
-                language === "LT" ? "lt-LT" : language === "RU" ? "ru-RU" : "en-GB"
-              )}`
-            : tr("Draft not saved yet", "Juodraštis dar neišsaugotas", "Черновик ещё не сохранён")}
+    <div>
+      <section className="relative">
+        <div className="relative h-[240px] overflow-hidden sm:h-[300px] md:h-[360px]">
+          <img
+            src="/images/hero.jpg"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover object-[72%_center]"
+            loading="eager"
+          />
+          <div className="absolute inset-0 bg-black/35" />
+          <div className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-black/90 via-black/60 to-transparent sm:w-[75%] md:w-[60%]" />
+
+          <div className="container relative pt-8 md:pt-16">
+            <p className="mb-3 hidden items-center gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/80 md:flex">
+              <span className="h-px w-8 bg-white/70" />
+              {tr("New listing", "Naujas skelbimas", "Новое объявление")}
+            </p>
+            <h1 className="max-w-[620px] text-3xl font-bold leading-[1.08] tracking-tight text-white sm:text-4xl md:text-5xl">
+              {tr("Sell your car", "Parduok automobilį", "Продай автомобиль")}
+            </h1>
+            <p className="mt-3 max-w-[460px] text-sm leading-6 text-white/75 md:text-base md:leading-7">
+              {tr(
+                "Six short steps. The draft saves on this device, so you can stop and come back later.",
+                "Šeši trumpi žingsniai. Juodraštis išsaugomas šiame įrenginyje, todėl galite sustoti ir grįžti vėliau.",
+                "Шесть коротких шагов. Черновик сохраняется на этом устройстве, можно прерваться и вернуться позже."
+              )}
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Степпер */}
-      <Card className="p-3 md:p-4">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-2 md:gap-3">
-          {[
-            tr("Car", "Automobilis", "Автомобиль"),
-            tr("Photos", "Nuotraukos", "Фотографии"),
-            tr("Condition", "Būklė", "Состояние"),
-            tr("Price", "Kaina", "Цена"),
-            tr("Contacts", "Kontaktai", "Контакты"),
-            tr("Preview", "Peržiūra", "Предпросмотр"),
-          ].map((label, i) => {
-            const n = i + 1;
-            const active = step === n;
-            return (
-              <button
-                key={label}
-                className={cx(
-                "min-h-11 touch-manipulation rounded-xl px-3 py-2 text-sm font-medium transition-colors",
-                  active && "bg-[hsl(var(--accent))] text-white",
-                  !active && "bg-[hsl(var(--muted))] hover:bg-[hsl(var(--muted))/0.8]",
-                )}
-                onClick={() => setStep(n)}
-              >
-                {n}. {label}
-              </button>
-            );
-          })}
-        </div>
-      </Card>
-
-      {/* ШАГ 1 — автомобиль */}
-      {step === 1 && (
-        <Card>
-          <SectionTitle>{tr("Identify your car", "Nurodykite automobilį", "Определите автомобиль")}</SectionTitle>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
-              <L>{tr("Plate (LT) or VIN", "Valst. numeris (LT) arba VIN", "Госномер (LT) или VIN")}</L>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="e.g. ABC123 / WBAXX..."
-                  value={draft.plateOrVin}
-                  onChange={(e) => {
-                    setDraft({ ...draft, plateOrVin: e.target.value });
-                    if (vinStatus) setVinStatus(null);
-                  }}
-                />
-                <Button
-                  variant="outline"
-                  onClick={autofillByVin}
-                  disabled={vinLoading}
-                >
-                  {vinLoading ? tr("Checking...", "Tikrinama...", "Проверка...") : tr("Autofill", "Užpildyti automatiškai", "Заполнить автоматически")}
-                </Button>
-              </div>
-
-              {vinStatus && (
-                <div
-                  className={cx(
-                    "mt-2 rounded-lg px-3 py-2 text-sm",
-                    vinStatus.type === "success"
-                      ? "bg-green-50 text-green-700"
-                      : vinStatus.type === "warning"
-                      ? "bg-amber-50 text-amber-800"
-                      : "bg-red-50 text-red-700"
-                  )}
-                >
-                  {vinStatus.text}
-                </div>
-              )}
-
-              <p className="mt-2 text-sm text-muted-foreground">
-                {tr("VIN autofill uses the public NHTSA vPIC decoder. Lithuanian plate lookup can be connected separately.", "VIN automatinis užpildymas naudoja viešą NHTSA vPIC dekoderį. Lietuvos valstybinių numerių paiešką galima prijungti atskirai.", "Автозаполнение VIN использует публичный декодер NHTSA vPIC. Поиск по литовскому госномеру можно подключить отдельно.")}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <L>{tr("Mark", "Markė", "Марка")}</L>
-                <Select
-                  value={draft.mark}
-                  disabled={catalogLoading}
-                  onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      mark: e.target.value,
-                      model: "",
-                      engine: "",
-                    })
-                  }
-                >
-                  <option value="">
-                    {catalogLoading ? tr("Loading makes...", "Kraunamos markės...", "Загрузка марок...") : tr("Any", "Bet kuri", "Любая")}
-                  </option>
-                  {draft.mark && !marks.some((mark) => mark.name === draft.mark) && (
-                    <option value={draft.mark}>{draft.mark}</option>
-                  )}
-                  {marks.map((mark) => (
-                    <option key={mark.id} value={mark.name}>
-                      {mark.name}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-
-              <div>
-                <L>{tr("Model", "Modelis", "Модель")}</L>
-                <Select
-                  value={draft.model}
-                  disabled={!draft.mark || modelsLoading}
-                  onChange={(e) =>
-                    setDraft({ ...draft, model: e.target.value, engine: "" })
-                  }
-                >
-                  <option value="">
-                    {!draft.mark
-                      ? tr("Choose a make first", "Pirmiausia pasirinkite markę", "Сначала выберите марку")
-                      : modelsLoading
-                      ? tr("Loading models...", "Kraunami modeliai...", "Загрузка моделей...")
-                      : tr("Any", "Bet kuris", "Любая")}
-                  </option>
-                  {draft.model && !models.some((model) => model.name === draft.model) && (
-                    <option value={draft.model}>{draft.model}</option>
-                  )}
-                  {models.map((model) => (
-                    <option key={model.id} value={model.name}>
-                      {model.name}
-                    </option>
-                  ))}
-                </Select>
+      <section className="container">
+        <div ref={panelRef} className="relative z-10 -mt-14 scroll-mt-20 overflow-hidden rounded-2xl bg-card text-foreground shadow-xl ring-1 ring-border sm:-mt-20 md:-mt-24">
+          {/* Stepper: compact progress on phones, tabs on wider screens */}
+          <div className="border-b border-border px-4 pt-4 sm:hidden">
+            <div className="flex items-baseline justify-between gap-3">
+              <div className="text-[15px] font-bold text-foreground">{steps[step - 1].title}</div>
+              <div className="text-xs font-semibold text-muted-foreground">
+                {tr(`Step ${step} of 6`, `${step} žingsnis iš 6`, `Шаг ${step} из 6`)}
               </div>
             </div>
-
-            <div>
-              <L>{tr("Model year", "Modelio metai", "Модельный год")}</L>
-              <Input
-                placeholder="2017"
-                value={draft.year}
-                onChange={(e) =>
-                  setDraft({
-                    ...draft,
-                    year: e.target.value.replace(/\D+/g, "").slice(0, 4),
-                    engine: "",
-                  })
-                }
-              />
-              <p className="mt-1 text-xs text-muted-foreground">
-                {tr("VIN provides the model year. The first registration year can be different.", "VIN nurodo modelio metus. Pirmos registracijos metai gali skirtis.", "VIN указывает модельный год. Год первой регистрации может отличаться.")}
-              </p>
-              {matchedGeneration && (
-                <p className="mt-1 text-xs text-green-700">
-                  {tr("Local catalog generation:", "Vietinio katalogo karta:", "Поколение в локальном каталоге:")} {matchedGeneration.name}
-                  {matchedGeneration.yearStart || matchedGeneration.yearStop
-                    ? ` (${matchedGeneration.yearStart ?? "?"}–${matchedGeneration.yearStop ?? "present"})`
-                    : ""}
-                </p>
-              )}
-              {generationCandidates.length > 1 && (
-                <p className="mt-1 text-xs text-amber-700">
-                  {tr("This year overlaps several generations:", "Šie metai sutampa su keliomis kartomis:", "Этот год пересекается с несколькими поколениями:")} {generationCandidates.map((g) => g.name).join(", ")}.{" "}
-                  {tr("Engine/configuration will not be guessed automatically.", "Variklis / komplektacija nebus parinkta automatiškai.", "Двигатель / комплектация не будут угаданы автоматически.")}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <L>{tr("Engine / configuration", "Variklis / komplektacija", "Двигатель / комплектация")}</L>
-              {configurationLoading ? (
-                <Input value={tr("Loading local configurations...", "Kraunamos vietinės komplektacijos...", "Загрузка комплектаций...")} disabled />
-              ) : engineOptions.length > 0 ? (
-                <Select
-                  value={draft.engine}
-                  onChange={(e) => setDraft({ ...draft, engine: e.target.value })}
+            <div className="mt-3 grid grid-cols-6 gap-1 pb-4">
+              {steps.map((item, i) => (
+                <button
+                  key={item.title}
+                  type="button"
+                  onClick={() => goTo(i + 1)}
+                  aria-label={item.title}
+                  className="!min-h-0 py-1.5"
                 >
-                  <option value="">{tr("Choose configuration", "Pasirinkite komplektaciją", "Выберите комплектацию")}</option>
-                  {draft.engine && !engineOptions.some((option) => option.value === draft.engine) && (
-                    <option value={draft.engine}>{draft.engine}</option>
-                  )}
-                  {engineOptions.map((option) => (
-                    <option
-                      key={`${option.configurationId}:${option.modificationId}`}
-                      value={option.value}
+                  <span className={cx("block h-1 rounded-full", i + 1 === step ? "bg-accent" : item.done ? "bg-foreground/50" : "bg-muted-foreground/25")} />
+                </button>
+              ))}
+            </div>
+          </div>
+          <nav className="hidden overflow-x-auto border-b border-border px-4 sm:block md:px-8" aria-label={tr("Steps", "Žingsniai", "Шаги")}>
+            <ol className="flex min-w-max gap-1 lg:gap-4">
+              {steps.map((item, i) => {
+                const n = i + 1;
+                const active = step === n;
+                return (
+                  <li key={item.title}>
+                    <button
+                      type="button"
+                      onClick={() => goTo(n)}
+                      aria-current={active ? "step" : undefined}
+                      className={cx(
+                        "-mb-px inline-flex h-14 items-center gap-2.5 border-b-2 px-2 text-sm font-semibold transition",
+                        active ? "border-accent text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+                      )}
                     >
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
-              ) : (
-                <Input
-                  placeholder={tr("Choose mark, model and model year first", "Pirmiausia pasirinkite markę, modelį ir modelio metus", "Сначала выберите марку, модель и модельный год")}
-                  value={draft.engine}
-                  onChange={(e) => setDraft({ ...draft, engine: e.target.value })}
-                />
-              )}
-              <p className="mt-1 text-xs text-muted-foreground">
-                {tr("Autofill selects a configuration only when the VIN and the local catalog agree on at least two independent engine facts and there is one clear match.", "Komplektacija parenkama automatiškai tik tada, kai VIN ir vietinis katalogas sutampa bent pagal du nepriklausomus variklio parametrus ir yra vienas aiškus atitikmuo.", "Комплектация выбирается автоматически только если VIN и локальный каталог совпадают минимум по двум независимым параметрам двигателя и есть одно однозначное совпадение.")}
-              </p>
-            </div>
-          </div>
+                      <span
+                        className={cx(
+                          "flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold",
+                          active ? "bg-accent text-black" : item.done ? "bg-foreground text-background" : "bg-muted text-muted-foreground ring-1 ring-border"
+                        )}
+                      >
+                        {item.done && !active ? <AssetIcon name="check" size={14} /> : n}
+                      </span>
+                      {item.title}
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
 
-          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-            <Button className="w-full sm:w-auto" variant="ghost" onClick={() => setStep(2)}>
-              {tr("Skip", "Praleisti", "Пропустить")}
-            </Button>
-            <Button className="w-full sm:w-auto" onClick={() => setStep(2)}>{tr("Next", "Toliau", "Далее")}</Button>
-          </div>
-        </Card>
-      )}
+          <div className={cx("grid", step < 6 && "lg:grid-cols-[minmax(0,1fr)_340px]")}>
+            <div className="min-w-0 px-4 py-6 sm:px-6 md:px-8 md:py-8">
+              {/* ШАГ 1 — автомобиль */}
+              {step === 1 && (
+                <>
+                  <StepHeading
+                    title={tr("Which car are you selling?", "Kokį automobilį parduodate?", "Какой автомобиль вы продаёте?")}
+                    lead={tr("Enter the VIN to fill in the make, model and year, or choose them yourself.", "Įveskite VIN, kad užpildytume markę, modelį ir metus, arba pasirinkite juos patys.", "Введите VIN, чтобы заполнить марку, модель и год, или выберите их сами.")}
+                  />
 
-      {/* ШАГ 2 — фото */}
-      {step === 2 && (
-        <Card>
-          <SectionTitle>{tr("Photos & video", "Nuotraukos ir vaizdo įrašas", "Фото и видео")}</SectionTitle>
-          <p className="mb-4 text-sm text-muted-foreground">
-            {tr("Add key angles to increase trust. We’ll help you with a checklist.", "Pridėkite svarbiausius rakursus, kad skelbimas keltų daugiau pasitikėjimo. Padėsime kontroliniu sąrašu.", "Добавьте основные ракурсы, чтобы объявление вызывало больше доверия. Мы дадим чек-лист.")}
-          </p>
-          <p className="-mt-2 mb-4 text-xs text-muted-foreground">{tr("When AI photo recognition is configured, each uploaded photo is classified automatically. You can always correct the angle manually.", "Kai sukonfigūruotas AI nuotraukų atpažinimas, kiekvienas vaizdas klasifikuojamas automatiškai. Rakursą visada galima pataisyti rankiniu būdu.", "Когда настроено AI-распознавание, каждое фото классифицируется автоматически. Ракурс всегда можно исправить вручную.")}</p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2">
-              <div
-                className="flex h-48 items-center justify-center rounded-2xl border-2 border-dashed border-[hsl(var(--border))] bg-[hsl(var(--muted))]"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const files = Array.from(e.dataTransfer.files || []);
-                  addPhotos(files);
-                }}
-              >
-                <div className="text-center">
-                  <div className={`${anybody.className} mb-2 text-lg font-bold`}>{tr("Drop photos here", "Nutempkite nuotraukas čia", "Перетащите фотографии сюда")}</div>
-                  <div className="text-sm text-muted-foreground">{tr("or use the button below", "arba naudokite mygtuką žemiau", "или используйте кнопку ниже")}</div>
-                </div>
-              </div>
-
-              <div className="mt-3">
-                <input
-                  id="photo-input"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files || []);
-                    addPhotos(files);
-                    e.target.value = "";
-                  }}
-                  className="hidden"
-                />
-                <Button as="label" htmlFor="photo-input" className="cursor-pointer">
-                  {tr("Upload from device", "Įkelti iš įrenginio", "Загрузить с устройства")}
-                </Button>
-              </div>
-
-              {photos.length > 0 && (
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-                  {photos.map((f) => {
-                    const key = photoKey(f);
-                    const meta = photoMeta[key] || { label: "OTHER" as PhotoViewType, confidence: 0, source: "manual", loading: false };
-                    const url = URL.createObjectURL(f);
-                    return (
-                      <div key={key} className="overflow-hidden rounded-xl bg-card ring-1 ring-border">
-                        <div className="relative h-32 bg-muted">
-                          <img src={url} alt={f.name} className="absolute inset-0 h-full w-full object-cover" />
-                          <button type="button" onClick={() => removePhoto(f)} aria-label={tr("Delete photo", "Ištrinti nuotrauką", "Удалить фото")} className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-black/70 text-white"><AssetIcon name="close" size={14} /></button>
-                          <div className="absolute bottom-2 left-2 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">
-                            {meta.loading ? tr("Detecting…", "Atpažįstama…", "Распознаём…") : photoTypeLabel(meta.label)}
-                          </div>
-                        </div>
-                        <div className="p-2">
-                          <select
-                            value={meta.label}
-                            onChange={(e) => setPhotoType(f, e.target.value as PhotoViewType)}
-                            className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-foreground"
-                          >
-                            {(["FRONT","REAR","LEFT_SIDE","RIGHT_SIDE","INTERIOR","DASHBOARD","VIN_PLATE","OTHER"] as PhotoViewType[]).map((type) => (
-                              <option key={type} value={type}>{photoTypeLabel(type)}</option>
-                            ))}
-                          </select>
-                          {meta.source === "openai" && !meta.loading && (
-                            <div className="mt-1 text-[11px] text-muted-foreground">AI · {Math.round(meta.confidence * 100)}%</div>
-                          )}
-                          {meta.error && <div className="mt-1 text-[11px] text-amber-600">{meta.error}</div>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <div className={`${anybody.className} mb-2 text-base font-bold`}>{tr("Checklist", "Kontrolinis sąrašas", "Чек-лист")}</div>
-              <ul className="space-y-2 text-sm">
-                {(["FRONT","REAR","LEFT_SIDE","RIGHT_SIDE","INTERIOR","DASHBOARD","VIN_PLATE"] as PhotoViewType[]).map((type) => {
-                  const done = Object.values(photoMeta).some((meta) => meta.label === type && !meta.loading);
-                  return (
-                    <li key={type} className="flex items-center gap-2">
-                      <span className={`inline-block h-2.5 w-2.5 rounded-full ${done ? "bg-emerald-500" : "bg-[hsl(var(--accent))]"}`} />
-                      <span className={done ? "font-semibold text-emerald-500" : ""}>{photoTypeLabel(type)}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-              <div className="mt-3 text-xs text-muted-foreground">
-                {tr("Tip: we can mask plates later for privacy.", "Patarimas: dėl privatumo valstybinius numerius vėliau galima užmaskuoti.", "Совет: позже можно скрыть номера автомобиля для приватности.")}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-            <Button className="w-full sm:w-auto" variant="ghost" onClick={() => setStep(3)}>
-              {tr("Skip", "Praleisti", "Пропустить")}
-            </Button>
-            <Button className="w-full sm:w-auto" onClick={() => setStep(3)}>{tr("Next", "Toliau", "Далее")}</Button>
-          </div>
-        </Card>
-      )}
-
-      {/* ШАГ 3 — состояние/комплектация */}
-      {step === 3 && (
-        <Card>
-          <SectionTitle>{tr("Condition & equipment", "Būklė ir įranga", "Состояние и комплектация")}</SectionTitle>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <L>{tr("Mileage", "Rida", "Пробег")}</L>
-              <Input
-                placeholder="145 000"
-                value={draft.mileage}
-                onChange={(e) => setDraft({ ...draft, mileage: e.target.value.replace(/\D+/g, "") })}
-              />
-            </div>
-            <div>
-              <L>{tr("Owners", "Savininkai", "Владельцы")}</L>
-              <Input
-                placeholder="1"
-                value={draft.owners}
-                onChange={(e) => setDraft({ ...draft, owners: e.target.value.replace(/\D+/g, "") })}
-              />
-            </div>
-            <div className="flex items-end gap-3">
-              <input
-                id="service-book"
-                type="checkbox"
-                checked={draft.hasServiceBook}
-                onChange={(e) => setDraft({ ...draft, hasServiceBook: e.target.checked })}
-                className="h-5 w-5 rounded border-[hsl(var(--border))]"
-              />
-              <label htmlFor="service-book" className="text-sm">{tr("Has service book / docs", "Yra serviso knygelė / dokumentai", "Есть сервисная книжка / документы")}</label>
-            </div>
-
-            <div>
-              <L>{tr("Next service until", "Kitas aptarnavimas iki", "Следующее ТО до")}</L>
-              <Input
-                type="date"
-                value={draft.nextServiceDate}
-                onChange={(e) => setDraft({ ...draft, nextServiceDate: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <L>{tr("Condition", "Būklė", "Состояние")}</L>
-              <Select
-                value={draft.condition}
-                onChange={(e) => setDraft({ ...draft, condition: e.target.value as ListingDraft["condition"] })}
-              >
-                <option value="clean">{tr("Not crashed", "Nedaužtas", "Не бит")}</option>
-                <option value="minor">{tr("Minor paint", "Smulkūs dažymo darbai", "Небольшие окрасы")}</option>
-                <option value="damaged">{tr("Crashed", "Daužtas", "Бит")}</option>
-                <option value="needs_repair">{tr("Needs repair", "Reikia remonto", "Требует ремонта")}</option>
-              </Select>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <L>{tr("Features", "Įranga", "Опции")}</L>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {FEATURE_DEFS.map((feature) => {
-                const checked = draft.features.includes(feature.value);
-                return (
-                  <label key={feature.value} className="flex items-center gap-2 rounded-xl bg-[hsl(var(--muted))] px-3 py-2">
-                    <input
-                      type="checkbox"
-                      checked={checked}
+                  <L htmlFor="sell-vin">{tr("Plate (LT) or VIN", "Valst. numeris (LT) arba VIN", "Госномер (LT) или VIN")}</L>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      id="sell-vin"
+                      placeholder="WVGZZZ7LZ5D012345"
+                      autoComplete="off"
+                      spellCheck={false}
+                      className="font-mono uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal"
+                      value={draft.plateOrVin}
                       onChange={(e) => {
-                        setDraft((d) => ({
-                          ...d,
-                          features: e.target.checked
-                            ? [...d.features, feature.value]
-                            : d.features.filter((x) => x !== feature.value),
-                        }));
+                        setDraft({ ...draft, plateOrVin: e.target.value });
+                        if (vinStatus) setVinStatus(null);
                       }}
-                      className="h-4 w-4 rounded border-[hsl(var(--border))]"
                     />
-                    <span className="text-sm">{tr(feature.en, feature.lt, feature.ru)}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
+                    <button type="button" onClick={autofillByVin} disabled={vinLoading} className={cx(SECONDARY_BUTTON, "shrink-0")}>
+                      {vinLoading ? <AssetIcon name="spinner" size={18} className="animate-spin" /> : <AssetIcon name="search" size={18} />}
+                      {vinLoading ? tr("Checking...", "Tikrinama...", "Проверка...") : tr("Autofill", "Užpildyti automatiškai", "Заполнить автоматически")}
+                    </button>
+                  </div>
+                  <Hint>
+                    {tr("VIN autofill uses the public NHTSA vPIC decoder. Lithuanian plate lookup can be connected separately.", "VIN automatinis užpildymas naudoja viešą NHTSA vPIC dekoderį. Lietuvos valstybinių numerių paiešką galima prijungti atskirai.", "Автозаполнение VIN использует публичный декодер NHTSA vPIC. Поиск по литовскому госномеру можно подключить отдельно.")}
+                  </Hint>
+                  {vinStatus && <StatusNote type={vinStatus.type} className="mt-3">{vinStatus.text}</StatusNote>}
 
-          <div className="mt-4">
-            <L>{tr("Description", "Aprašymas", "Описание")}</L>
-            <Textarea
-              placeholder={tr("Tell about condition, maintenance, what you like about the car...", "Aprašykite būklę, priežiūrą ir kas jums patinka šiame automobilyje...", "Расскажите о состоянии, обслуживании и о том, что вам нравится в автомобиле...")}
-              value={draft.description}
-              onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-            />
-          </div>
+                  <div className="mt-7 grid grid-cols-1 gap-x-5 gap-y-5 md:grid-cols-2">
+                    <div>
+                      <L htmlFor="sell-mark">{tr("Mark", "Markė", "Марка")}</L>
+                      <Select
+                        id="sell-mark"
+                        value={draft.mark}
+                        disabled={catalogLoading}
+                        onChange={(e) => setDraft({ ...draft, mark: e.target.value, model: "", engine: "" })}
+                      >
+                        <option value="">
+                          {catalogLoading ? tr("Loading makes...", "Kraunamos markės...", "Загрузка марок...") : tr("Choose a make", "Pasirinkite markę", "Выберите марку")}
+                        </option>
+                        {draft.mark && !marks.some((mark) => mark.name === draft.mark) && <option value={draft.mark}>{draft.mark}</option>}
+                        {marks.map((mark) => (
+                          <option key={mark.id} value={mark.name}>{mark.name}</option>
+                        ))}
+                      </Select>
+                    </div>
 
-          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-            <Button className="w-full sm:w-auto" variant="ghost" onClick={() => setStep(4)}>
-              {tr("Skip", "Praleisti", "Пропустить")}
-            </Button>
-            <Button className="w-full sm:w-auto" onClick={() => setStep(4)}>{tr("Next", "Toliau", "Далее")}</Button>
-          </div>
-        </Card>
-      )}
+                    <div>
+                      <L htmlFor="sell-model">{tr("Model", "Modelis", "Модель")}</L>
+                      <Select
+                        id="sell-model"
+                        value={draft.model}
+                        disabled={!draft.mark || modelsLoading}
+                        onChange={(e) => setDraft({ ...draft, model: e.target.value, engine: "" })}
+                      >
+                        <option value="">
+                          {!draft.mark
+                            ? tr("Choose a make first", "Pirmiausia pasirinkite markę", "Сначала выберите марку")
+                            : modelsLoading
+                            ? tr("Loading models...", "Kraunami modeliai...", "Загрузка моделей...")
+                            : tr("Choose a model", "Pasirinkite modelį", "Выберите модель")}
+                        </option>
+                        {draft.model && !models.some((model) => model.name === draft.model) && <option value={draft.model}>{draft.model}</option>}
+                        {models.map((model) => (
+                          <option key={model.id} value={model.name}>{model.name}</option>
+                        ))}
+                      </Select>
+                    </div>
 
-      {/* ШАГ 4 — цена */}
-      {step === 4 && (
-        <Card>
-          <SectionTitle>{tr("Price & strategy", "Kaina ir pardavimo strategija", "Цена и стратегия продажи")}</SectionTitle>
+                    <div>
+                      <L htmlFor="sell-year">{tr("Model year", "Modelio metai", "Модельный год")}</L>
+                      <Input
+                        id="sell-year"
+                        inputMode="numeric"
+                        placeholder="2017"
+                        value={draft.year}
+                        onChange={(e) => setDraft({ ...draft, year: e.target.value.replace(/\D+/g, "").slice(0, 4), engine: "" })}
+                      />
+                      <Hint>{tr("VIN provides the model year. The first registration year can be different.", "VIN nurodo modelio metus. Pirmos registracijos metai gali skirtis.", "VIN указывает модельный год. Год первой регистрации может отличаться.")}</Hint>
+                      {matchedGeneration && (
+                        <Hint className="!mt-1 font-medium text-foreground">
+                          {tr("Generation:", "Karta:", "Поколение:")} {matchedGeneration.name}
+                          {matchedGeneration.yearStart || matchedGeneration.yearStop
+                            ? ` (${matchedGeneration.yearStart ?? "?"}–${matchedGeneration.yearStop ?? tr("present", "dabar", "н. в.")})`
+                            : ""}
+                        </Hint>
+                      )}
+                      {generationCandidates.length > 1 && (
+                        <Hint className="!mt-1 text-amber-700 dark:text-amber-300">
+                          {tr("This year overlaps several generations:", "Šie metai sutampa su keliomis kartomis:", "Этот год пересекается с несколькими поколениями:")} {generationCandidates.map((g) => g.name).join(", ")}.{" "}
+                          {tr("Engine/configuration will not be guessed automatically.", "Variklis / komplektacija nebus parinkta automatiškai.", "Двигатель / комплектация не будут угаданы автоматически.")}
+                        </Hint>
+                      )}
+                    </div>
 
-          {priceHint && (
-            <div className="mb-4 rounded-xl bg-[hsl(var(--muted))] p-3 text-sm">
-              {tr("Recommended:", "Rekomenduojama:", "Рекомендуется:")} <strong>{formatEUR(priceHint.low)} – {formatEUR(priceHint.high)}</strong>
-              <div className="text-[12px] text-muted-foreground">
-                {tr("Based on similar cars and year.", "Pagal panašius automobilius ir metus.", "На основе похожих автомобилей и года.")}
-              </div>
-            </div>
-          )}
+                    <div className="md:col-span-2">
+                      <L htmlFor="sell-engine">{tr("Engine / configuration", "Variklis / komplektacija", "Двигатель / комплектация")}</L>
+                      {configurationLoading ? (
+                        <Input id="sell-engine" value={tr("Loading configurations...", "Kraunamos komplektacijos...", "Загрузка комплектаций...")} disabled readOnly />
+                      ) : engineOptions.length > 0 ? (
+                        <Select id="sell-engine" value={draft.engine} onChange={(e) => setDraft({ ...draft, engine: e.target.value })}>
+                          <option value="">{tr("Choose configuration", "Pasirinkite komplektaciją", "Выберите комплектацию")}</option>
+                          {draft.engine && !engineOptions.some((option) => option.value === draft.engine) && <option value={draft.engine}>{draft.engine}</option>}
+                          {engineOptions.map((option) => (
+                            <option key={`${option.configurationId}:${option.modificationId}`} value={option.value}>{option.label}</option>
+                          ))}
+                        </Select>
+                      ) : (
+                        <Input
+                          id="sell-engine"
+                          placeholder={tr("Choose mark, model and model year first", "Pirmiausia pasirinkite markę, modelį ir modelio metus", "Сначала выберите марку, модель и модельный год")}
+                          value={draft.engine}
+                          onChange={(e) => setDraft({ ...draft, engine: e.target.value })}
+                        />
+                      )}
+                      <Hint>{tr("Autofill selects a configuration only when the VIN and the local catalog agree on at least two independent engine facts and there is one clear match.", "Komplektacija parenkama automatiškai tik tada, kai VIN ir vietinis katalogas sutampa bent pagal du nepriklausomus variklio parametrus ir yra vienas aiškus atitikmuo.", "Комплектация выбирается автоматически только если VIN и локальный каталог совпадают минимум по двум независимым параметрам двигателя и есть одно однозначное совпадение.")}</Hint>
+                    </div>
+                  </div>
+                  {stepFooter}
+                </>
+              )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <L>{tr("Price", "Kaina", "Цена")}</L>
-              <Input
-                placeholder="12000"
-                value={draft.price}
-                onChange={(e) => setDraft({ ...draft, price: e.target.value.replace(/\D+/g, "") })}
-              />
-            </div>
-            <div>
-              <L>{tr("Strategy", "Strategija", "Стратегия")}</L>
-              <Select
-                value={draft.strategy}
-                onChange={(e) => setDraft({ ...draft, strategy: e.target.value as ListingDraft["strategy"] })}
-              >
-                <option value="fixed">{tr("Fixed", "Fiksuota", "Фиксированная")}</option>
-                <option value="negotiable">{tr("Negotiable", "Derinama", "Договорная")}</option>
-                <option value="quick">{tr("Quick sale", "Greitas pardavimas", "Быстрая продажа")}</option>
-              </Select>
-            </div>
-            <div className="flex items-end gap-3">
-              <input
-                id="bargain"
-                type="checkbox"
-                checked={draft.allowBargain}
-                onChange={(e) => setDraft({ ...draft, allowBargain: e.target.checked })}
-                className="h-5 w-5 rounded border-[hsl(var(--border))]"
-              />
-              <label htmlFor="bargain" className="text-sm">{tr("Allow small bargain", "Leisti nedideles derybas", "Разрешить небольшой торг")}</label>
-            </div>
-          </div>
+              {/* ШАГ 2 — фото */}
+              {step === 2 && (
+                <>
+                  <StepHeading
+                    title={tr("Photos", "Nuotraukos", "Фотографии")}
+                    lead={tr("Buyers look at photos first. Shoot in daylight and cover the angles below.", "Pirkėjai pirmiausia žiūri nuotraukas. Fotografuokite dienos šviesoje ir apimkite rakursus žemiau.", "Покупатели сначала смотрят фото. Снимайте при дневном свете и покажите ракурсы ниже.")}
+                  />
 
-          {/* простая подсказка времени продажи */}
-          {!!draft.price && priceHint && (
-            <div className="mt-3 text-sm text-muted-foreground">
-              {tr("With this price, expected time to sell ~", "Su šia kaina numatomas pardavimo laikas ~", "С этой ценой ожидаемый срок продажи ~")}{" "}
-              <strong>
-                {Number(draft.price) <= priceHint.low
-                  ? tr("5–7 days", "5–7 dienos", "5–7 дней")
-                  : Number(draft.price) <= priceHint.high
-                  ? tr("1–2 weeks", "1–2 savaitės", "1–2 недели")
-                  : tr("2–4 weeks", "2–4 savaitės", "2–4 недели")}
-              </strong>
-            </div>
-          )}
-
-          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-            <Button className="w-full sm:w-auto" variant="ghost" onClick={() => setStep(5)}>
-              {tr("Skip", "Praleisti", "Пропустить")}
-            </Button>
-            <Button className="w-full sm:w-auto" onClick={() => setStep(5)}>{tr("Next", "Toliau", "Далее")}</Button>
-          </div>
-        </Card>
-      )}
-
-      {/* ШАГ 5 — контакты/расписание */}
-      {step === 5 && (
-        <Card>
-          <SectionTitle>{tr("Contacts & schedule", "Kontaktai ir laikas", "Контакты и время")}</SectionTitle>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <L>{tr("City", "Miestas", "Город")}</L>
-              <Input
-                placeholder="Vilnius"
-                value={draft.city}
-                onChange={(e) => setDraft({ ...draft, city: e.target.value })}
-              />
-            </div>
-            <div>
-              <L>{tr("Area / district", "Rajonas", "Район")}</L>
-              <Input
-                placeholder="Antakalnis"
-                value={draft.area}
-                onChange={(e) => setDraft({ ...draft, area: e.target.value })}
-              />
-            </div>
-            <div>
-              <L>{tr("Phone", "Telefonas", "Телефон")}</L>
-              <Input
-                placeholder="+370..."
-                value={draft.phone}
-                onChange={(e) => setDraft({ ...draft, phone: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <L>{tr("Preferred contact methods", "Pageidaujami susisiekimo būdai", "Предпочтительные способы связи")}</L>
-            <div className="flex flex-wrap gap-2">
-              {(["chat", "phone", "whatsapp", "telegram"] as ContactMethod[]).map((m) => {
-                const on = draft.contactMethods.includes(m);
-                return (
-                  <button
-                    key={m}
-                    type="button"
-                    className={cx(
-                      "rounded-full px-3 py-1 text-sm ring-1",
-                      on
-                        ? "bg-[hsl(var(--accent))] text-white ring-transparent"
-                        : "bg-[hsl(var(--muted))] text-foreground ring-[hsl(var(--border))]"
-                    )}
-                    onClick={() =>
-                      setDraft((d) => ({
-                        ...d,
-                        contactMethods: on
-                          ? d.contactMethods.filter((x) => x !== m)
-                          : [...d.contactMethods, m],
-                      }))
-                    }
+                  <input
+                    id="photo-input"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => {
+                      addPhotos(Array.from(e.target.files || []));
+                      e.target.value = "";
+                    }}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="photo-input"
+                    className="flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/60 px-6 py-8 text-center transition hover:border-accent"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      addPhotos(Array.from(e.dataTransfer.files || []));
+                    }}
                   >
-                    {m === "chat" ? tr("Chat", "Pokalbis", "Чат") : m === "phone" ? tr("Phone", "Telefonas", "Телефон") : m}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+                    <AssetIcon name="upload" size={28} className="text-muted-foreground" />
+                    <span className="mt-3 text-[15px] font-semibold text-foreground">
+                      {tr("Drop photos here or choose files", "Nutempkite nuotraukas čia arba pasirinkite failus", "Перетащите фото сюда или выберите файлы")}
+                    </span>
+                    <span className="mt-1 text-xs text-muted-foreground">
+                      {tr(`Up to 10 photos · ${photos.length}/10 added`, `Iki 10 nuotraukų · pridėta ${photos.length}/10`, `До 10 фото · добавлено ${photos.length}/10`)}
+                    </span>
+                  </label>
 
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <L>{tr("Weekdays time", "Laikas darbo dienomis", "Время в будни")}</L>
-              <Input
-                placeholder="e.g. 18:00–21:00"
-                value={draft.viewingWeekdays}
-                onChange={(e) => setDraft({ ...draft, viewingWeekdays: e.target.value })}
-              />
-            </div>
-            <div>
-              <L>{tr("Weekend time", "Laikas savaitgaliais", "Время в выходные")}</L>
-              <Input
-                placeholder={tr("e.g. by arrangement", "pvz., susitarus", "например, по договорённости")}
-                value={draft.viewingWeekend}
-                onChange={(e) => setDraft({ ...draft, viewingWeekend: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-            <Button className="w-full sm:w-auto" variant="ghost" onClick={() => setStep(6)}>
-              {tr("Skip", "Praleisti", "Пропустить")}
-            </Button>
-            <Button className="w-full sm:w-auto" onClick={() => setStep(6)}>{tr("Next", "Toliau", "Далее")}</Button>
-          </div>
-        </Card>
-      )}
-
-      {/* ШАГ 6 — предпросмотр/публикация */}
-      {step === 6 && (
-        <Card>
-          <SectionTitle>{tr("Preview & publish", "Peržiūra ir paskelbimas", "Предпросмотр и публикация")}</SectionTitle>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="rounded-2xl ring-1 ring-[hsl(var(--border))] overflow-hidden bg-white">
-              <div className="relative h-56 bg-[hsl(var(--muted))]">
-                {photos[0] ? (
-                  <img
-                    src={URL.createObjectURL(photos[0])}
-                    alt="preview"
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src="https://placehold.co/800x600/png"
-                    alt="placeholder"
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                )}
-              </div>
-              <div className="p-4">
-                <h3 className={`${anybody.className} text-[15px] font-bold`}>
-                  {draft.mark || tr("Car", "Automobilis", "Автомобиль")} {draft.model} {draft.year && `(${draft.year})`}
-                </h3>
-                <div className={`${anybody.className} mt-2 text-base font-bold text-[hsl(var(--accent))]`}>
-                  {draft.price ? `${Number(draft.price).toLocaleString()} €` : "—"}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3 text-sm">
-              <div><strong>{tr("Engine:", "Variklis:", "Двигатель:")}</strong> {draft.engine || "—"}</div>
-              <div><strong>{tr("Mileage:", "Rida:", "Пробег:")}</strong> {draft.mileage ? `${draft.mileage} km` : "—"}</div>
-              <div><strong>{tr("Condition:", "Būklė:", "Состояние:")}</strong> {draft.condition}</div>
-              <div><strong>{tr("Features:", "Įranga:", "Опции:")}</strong> {draft.features.length ? draft.features.join(", ") : "—"}</div>
-              <div><strong>{tr("City/Area:", "Miestas / rajonas:", "Город / район:")}</strong> {[draft.city, draft.area].filter(Boolean).join(", ") || "—"}</div>
-              <div><strong>{tr("Contacts:", "Kontaktai:", "Контакты:")}</strong> {draft.contactMethods.join(", ") || tr("chat only", "tik pokalbis", "только чат")} {draft.phone && `(${draft.phone})`}</div>
-              {priceHint && (
-                <div className="rounded-xl bg-[hsl(var(--muted))] p-3">
-                  <div>{tr("Recommended range:", "Rekomenduojamas intervalas:", "Рекомендуемый диапазон:")} <strong>{formatEUR(priceHint.low)}–{formatEUR(priceHint.high)}</strong></div>
-                </div>
-              )}
-              {draft.description && (
-                <div className="rounded-xl bg-[hsl(var(--muted))] p-3">
-                  <div className="font-medium mb-1">{tr("Description", "Aprašymas", "Описание")}</div>
-                  <div className="whitespace-pre-wrap">{draft.description}</div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-2xl border border-[hsl(var(--accent))]/40 bg-[hsl(var(--muted))] p-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="font-bold">{tr("Listing publication", "Skelbimo publikavimas", "Размещение объявления")}</div>
-                <div className="text-sm text-muted-foreground">
-                  {tr(
-                    promoValid ? "With this promo code, the listing is published for free." : "The listing becomes public only after confirmed payment.",
-                    promoValid ? "Su šiuo kodu skelbimas paskelbiamas nemokamai." : "Skelbimas tampa viešas tik patvirtinus mokėjimą.",
-                    promoValid ? "С этим промокодом объявление публикуется бесплатно." : "Объявление станет публичным только после подтверждённой оплаты."
+                  {photos.length > 0 && (
+                    <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
+                      {photos.map((f, index) => {
+                        const key = photoKey(f);
+                        const meta = photoMeta[key] || { label: "OTHER" as PhotoViewType, confidence: 0, source: "manual", loading: false };
+                        return (
+                          <div key={key} className="overflow-hidden rounded-xl ring-1 ring-border">
+                            <div className="relative aspect-[4/3] bg-muted">
+                              <img src={photoUrl(f)} alt={f.name} className="absolute inset-0 h-full w-full object-cover" />
+                              {index === 0 && (
+                                <span className="absolute left-2 top-2 rounded-md bg-accent px-2 py-0.5 text-[11px] font-bold text-black">
+                                  {tr("Cover", "Viršelis", "Обложка")}
+                                </span>
+                              )}
+                              <button type="button" onClick={() => removePhoto(f)} aria-label={tr("Delete photo", "Ištrinti nuotrauką", "Удалить фото")} className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/65 text-white transition hover:bg-black/80 max-md:!min-h-8">
+                                <AssetIcon name="close" size={14} />
+                              </button>
+                            </div>
+                            <div className="p-2">
+                              <div className="relative">
+                                <select
+                                  value={meta.label}
+                                  onChange={(e) => setPhotoType(f, e.target.value as PhotoViewType)}
+                                  aria-label={tr("Angle", "Rakursas", "Ракурс")}
+                                  className="h-9 w-full cursor-pointer appearance-none rounded-lg bg-muted px-2.5 pr-8 text-xs font-medium text-foreground outline-none max-md:!min-h-9 max-md:!text-xs"
+                                >
+                                  {(["FRONT", "REAR", "LEFT_SIDE", "RIGHT_SIDE", "INTERIOR", "DASHBOARD", "VIN_PLATE", "OTHER"] as PhotoViewType[]).map((type) => (
+                                    <option key={type} value={type}>{photoTypeLabel(type)}</option>
+                                  ))}
+                                </select>
+                                <AssetIcon name={meta.loading ? "spinner" : "chevron-down"} size={14} className={cx("pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground", meta.loading && "animate-spin")} />
+                              </div>
+                              {meta.source === "openai" && !meta.loading && (
+                                <div className="mt-1 px-0.5 text-[11px] text-muted-foreground">AI · {Math.round(meta.confidence * 100)}%</div>
+                              )}
+                              {meta.error && <div className="mt-1 px-0.5 text-[11px] leading-4 text-amber-700 dark:text-amber-300">{meta.error}</div>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
-                </div>
-              </div>
-              <div className="text-2xl font-extrabold text-[hsl(var(--accent))]">
-                {promoValid ? `0.00 ${paymentConfig?.currency || "EUR"}` : paymentConfig ? `${paymentConfig.publicationPrice.toFixed(2)} ${paymentConfig.currency}` : "4.99 EUR"}
-              </div>
-            </div>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
-              <label className="flex-1 text-sm font-medium">
-                {tr("Promo code", "Nuolaidos kodas", "Промокод")}
-                <input
-                  value={promoCode}
-                  onChange={(event) => { setPromoCode(event.target.value); setPromoValid(false); setPublishError(""); }}
-                  placeholder={tr("Enter promo code", "Įveskite kodą", "Введите промокод")}
-                  autoComplete="off"
-                  maxLength={64}
-                  className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-foreground"
-                />
-              </label>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={!promoCode.trim() || promoChecking || publishing}
-                loading={promoChecking}
-                onClick={async () => {
-                  setPromoChecking(true); setPublishError("");
-                  try {
-                    const result = await validatePromoCode(promoCode.trim().toUpperCase());
-                    setPromoValid(result.valid);
-                    if (!result.valid) setPublishError(tr("This promo code is invalid or expired.", "Šis nuolaidos kodas neteisingas arba nebegalioja.", "Промокод неверный или больше не действует."));
-                  } catch (error) {
-                    setPromoValid(false);
-                    setPublishError(error instanceof Error ? error.message : String(error));
-                  } finally { setPromoChecking(false); }
-                }}
-              >
-                {tr("Apply", "Taikyti", "Применить")}
-              </Button>
-            </div>
-            {promoValid && <div className="mt-2 text-sm font-semibold text-green-600">{tr("Code applied — this listing is free.", "Kodas pritaikytas — skelbimas nemokamas.", "Промокод применён — публикация бесплатна.")}</div>}
-            {paymentConfig?.devMode && (
-              <div className="mt-2 text-xs font-bold text-amber-600">
-                DEV MODE — {tr("test payment is enabled", "įjungtas bandomasis mokėjimas", "включена тестовая оплата")}
-              </div>
-            )}
-            {publishError && <div className="mt-3 rounded-lg bg-red-500/10 p-3 text-sm text-red-600">{publishError}</div>}
-            {publishedListingId && <div className="mt-3 rounded-lg bg-green-500/10 p-3 text-sm font-semibold text-green-700">{tr("Your listing is published for free!", "Skelbimas paskelbtas nemokamai!", "Объявление опубликовано бесплатно!")} <a className="underline" href={`/listing/${publishedListingId}`}>{tr("Open listing", "Atidaryti skelbimą", "Открыть объявление")}</a></div>}
-          </div>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Button className="w-full sm:w-auto" variant="ghost" onClick={() => { clearDraft(); setDraft(INITIAL); setPhotos([]); }}>
-              {tr("Clear draft", "Išvalyti juodraštį", "Очистить черновик")}
-            </Button>
-            <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:gap-3">
-              <Button className="w-full sm:w-auto" variant="outline" onClick={() => setStep(1)}>{tr("Edit", "Redaguoti", "Редактировать")}</Button>
-              <Button className="w-full sm:w-auto" onClick={publishedListingId ? () => { window.location.href = "/account/listings"; } : publish} loading={publishing} disabled={publishing}>
-                {publishedListingId ? tr("My listings", "Mano skelbimai", "Мои объявления") : promoValid ? tr("Publish for free", "Paskelbti nemokamai", "Опубликовать бесплатно") : tr("Pay & publish", "Mokėti ir paskelbti", "Оплатить и опубликовать")}
-              </Button>
+                  <div className="mt-7">
+                    <div className="text-sm font-semibold text-foreground">{tr("Angles buyers expect", "Rakursai, kurių tikisi pirkėjai", "Ракурсы, которые ждут покупатели")}</div>
+                    <ul className="mt-3 flex flex-wrap gap-2">
+                      {(["FRONT", "REAR", "LEFT_SIDE", "RIGHT_SIDE", "INTERIOR", "DASHBOARD", "VIN_PLATE"] as PhotoViewType[]).map((type) => {
+                        const done = Object.values(photoMeta).some((meta) => meta.label === type && !meta.loading);
+                        return (
+                          <li key={type} className={cx("inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium", done ? "bg-foreground text-background" : "bg-muted text-muted-foreground")}>
+                            {done && <AssetIcon name="check" size={14} />}
+                            {photoTypeLabel(type)}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <Hint className="!mt-3">{tr("When AI photo recognition is configured, each uploaded photo is classified automatically. You can always correct the angle manually.", "Kai sukonfigūruotas AI nuotraukų atpažinimas, kiekvienas vaizdas klasifikuojamas automatiškai. Rakursą visada galima pataisyti rankiniu būdu.", "Когда настроено AI-распознавание, каждое фото классифицируется автоматически. Ракурс всегда можно исправить вручную.")}</Hint>
+                  </div>
+                  {stepFooter}
+                </>
+              )}
+
+              {/* ШАГ 3 — состояние/комплектация */}
+              {step === 3 && (
+                <>
+                  <StepHeading
+                    title={tr("Condition & equipment", "Būklė ir įranga", "Состояние и комплектация")}
+                    lead={tr("Be honest here. A clear description saves you calls from the wrong buyers.", "Būkite sąžiningi. Aiškus aprašymas sutaupys skambučių iš netinkamų pirkėjų.", "Пишите честно. Понятное описание избавит от лишних звонков.")}
+                  />
+
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                    <div>
+                      <L htmlFor="sell-mileage">{tr("Mileage", "Rida", "Пробег")}</L>
+                      <Input id="sell-mileage" inputMode="numeric" suffix="km" placeholder="145000" value={draft.mileage} onChange={(e) => setDraft({ ...draft, mileage: e.target.value.replace(/\D+/g, "") })} />
+                    </div>
+                    <div>
+                      <L htmlFor="sell-owners">{tr("Owners", "Savininkai", "Владельцы")}</L>
+                      <Input id="sell-owners" inputMode="numeric" placeholder="1" value={draft.owners} onChange={(e) => setDraft({ ...draft, owners: e.target.value.replace(/\D+/g, "") })} />
+                    </div>
+                    <div>
+                      <L htmlFor="sell-service">{tr("Next service until", "Kitas aptarnavimas iki", "Следующее ТО до")}</L>
+                      <Input id="sell-service" type="date" value={draft.nextServiceDate} onChange={(e) => setDraft({ ...draft, nextServiceDate: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <CheckRow id="service-book" checked={draft.hasServiceBook} onChange={(value) => setDraft({ ...draft, hasServiceBook: value })}>
+                      {tr("Has service book / docs", "Yra serviso knygelė / dokumentai", "Есть сервисная книжка / документы")}
+                    </CheckRow>
+                  </div>
+
+                  <div className="mt-7">
+                    <div className="mb-2 text-sm font-semibold text-foreground">{tr("Condition", "Būklė", "Состояние")}</div>
+                    <div role="radiogroup" aria-label={tr("Condition", "Būklė", "Состояние")} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {conditionOptions.map((option) => (
+                        <ChoiceCard key={option.value} selected={draft.condition === option.value} title={option.title} note={option.note} onClick={() => setDraft({ ...draft, condition: option.value })} />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-7">
+                    <div className="mb-2 text-sm font-semibold text-foreground">{tr("Features", "Įranga", "Опции")}</div>
+                    <div className="flex flex-wrap gap-2">
+                      {FEATURE_DEFS.map((feature) => {
+                        const checked = draft.features.includes(feature.value);
+                        return (
+                          <ToggleChip
+                            key={feature.value}
+                            on={checked}
+                            onClick={() =>
+                              setDraft((d) => ({
+                                ...d,
+                                features: checked ? d.features.filter((x) => x !== feature.value) : [...d.features, feature.value],
+                              }))
+                            }
+                          >
+                            {tr(feature.en, feature.lt, feature.ru)}
+                          </ToggleChip>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="mt-7">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <L htmlFor="sell-description">{tr("Description", "Aprašymas", "Описание")}</L>
+                      <span className="text-xs text-muted-foreground">{draft.description.length}</span>
+                    </div>
+                    <Textarea
+                      id="sell-description"
+                      placeholder={tr("Tell about condition, maintenance, what you like about the car...", "Aprašykite būklę, priežiūrą ir kas jums patinka šiame automobilyje...", "Расскажите о состоянии, обслуживании и о том, что вам нравится в автомобиле...")}
+                      value={draft.description}
+                      onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                    />
+                  </div>
+                  {stepFooter}
+                </>
+              )}
+
+              {/* ШАГ 4 — цена */}
+              {step === 4 && (
+                <>
+                  <StepHeading
+                    title={tr("Price", "Kaina", "Цена")}
+                    lead={tr("Set the price buyers will see. You can change it later in My listings.", "Nustatykite kainą, kurią matys pirkėjai. Vėliau ją galėsite pakeisti skiltyje „Mano skelbimai“.", "Укажите цену, которую увидят покупатели. Позже её можно изменить в «Моих объявлениях».")}
+                  />
+
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <div>
+                      <L htmlFor="sell-price">{tr("Price", "Kaina", "Цена")}</L>
+                      <Input id="sell-price" inputMode="numeric" suffix="€" placeholder="12000" className="!h-14 !text-xl font-bold" value={draft.price} onChange={(e) => setDraft({ ...draft, price: e.target.value.replace(/\D+/g, "") })} />
+                      {!!draft.price && priceHint && (
+                        <Hint>
+                          {tr("With this price, expected time to sell ~", "Su šia kaina numatomas pardavimo laikas ~", "С этой ценой ожидаемый срок продажи ~")}{" "}
+                          <strong className="font-semibold text-foreground">
+                            {Number(draft.price) <= priceHint.low
+                              ? tr("5–7 days", "5–7 dienos", "5–7 дней")
+                              : Number(draft.price) <= priceHint.high
+                              ? tr("1–2 weeks", "1–2 savaitės", "1–2 недели")
+                              : tr("2–4 weeks", "2–4 savaitės", "2–4 недели")}
+                          </strong>
+                        </Hint>
+                      )}
+                    </div>
+                    {priceHint && (
+                      <div className="self-start rounded-xl border border-border px-4 py-3 md:mt-[26px]">
+                        <div className="text-xs font-medium text-muted-foreground">{tr("Recommended:", "Rekomenduojama:", "Рекомендуется:")}</div>
+                        <div className="mt-0.5 text-lg font-bold text-foreground">{formatEUR(priceHint.low)} – {formatEUR(priceHint.high)}</div>
+                        <div className="text-xs text-muted-foreground">{tr("Based on similar cars and year.", "Pagal panašius automobilius ir metus.", "На основе похожих автомобилей и года.")}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-7">
+                    <div className="mb-2 text-sm font-semibold text-foreground">{tr("Strategy", "Strategija", "Стратегия")}</div>
+                    <div role="radiogroup" aria-label={tr("Strategy", "Strategija", "Стратегия")} className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                      {strategyOptions.map((option) => (
+                        <ChoiceCard key={option.value} selected={draft.strategy === option.value} title={option.title} note={option.note} onClick={() => setDraft({ ...draft, strategy: option.value })} />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <CheckRow id="bargain" checked={draft.allowBargain} onChange={(value) => setDraft({ ...draft, allowBargain: value })}>
+                      {tr("Allow small bargain", "Leisti nedideles derybas", "Разрешить небольшой торг")}
+                    </CheckRow>
+                  </div>
+                  {stepFooter}
+                </>
+              )}
+
+              {/* ШАГ 5 — контакты/расписание */}
+              {step === 5 && (
+                <>
+                  <StepHeading
+                    title={tr("Contacts & viewing", "Kontaktai ir apžiūra", "Контакты и осмотр")}
+                    lead={tr("Where the car is and when buyers can come to see it.", "Kur yra automobilis ir kada pirkėjai gali jį apžiūrėti.", "Где находится автомобиль и когда его можно посмотреть.")}
+                  />
+
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <div>
+                      <L htmlFor="sell-city">{tr("City", "Miestas", "Город")}</L>
+                      <Input id="sell-city" placeholder="Vilnius" value={draft.city} onChange={(e) => setDraft({ ...draft, city: e.target.value })} />
+                    </div>
+                    <div>
+                      <L htmlFor="sell-area">{tr("Area / district", "Rajonas", "Район")}</L>
+                      <Input id="sell-area" placeholder="Antakalnis" value={draft.area} onChange={(e) => setDraft({ ...draft, area: e.target.value })} />
+                    </div>
+                    <div>
+                      <L htmlFor="sell-phone">{tr("Phone", "Telefonas", "Телефон")}</L>
+                      <Input id="sell-phone" type="tel" placeholder="+370..." value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div className="mt-7">
+                    <div className="mb-2 text-sm font-semibold text-foreground">{tr("Preferred contact methods", "Pageidaujami susisiekimo būdai", "Предпочтительные способы связи")}</div>
+                    <div className="flex flex-wrap gap-2">
+                      {(["chat", "phone", "whatsapp", "telegram"] as ContactMethod[]).map((m) => {
+                        const on = draft.contactMethods.includes(m);
+                        return (
+                          <ToggleChip
+                            key={m}
+                            on={on}
+                            onClick={() =>
+                              setDraft((d) => ({
+                                ...d,
+                                contactMethods: on ? d.contactMethods.filter((x) => x !== m) : [...d.contactMethods, m],
+                              }))
+                            }
+                          >
+                            {contactLabel(m)}
+                          </ToggleChip>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <div>
+                      <L htmlFor="sell-weekdays">{tr("Weekdays time", "Laikas darbo dienomis", "Время в будни")}</L>
+                      <Input id="sell-weekdays" placeholder={tr("e.g. 18:00–21:00", "pvz., 18:00–21:00", "например, 18:00–21:00")} value={draft.viewingWeekdays} onChange={(e) => setDraft({ ...draft, viewingWeekdays: e.target.value })} />
+                    </div>
+                    <div>
+                      <L htmlFor="sell-weekend">{tr("Weekend time", "Laikas savaitgaliais", "Время в выходные")}</L>
+                      <Input id="sell-weekend" placeholder={tr("e.g. by arrangement", "pvz., susitarus", "например, по договорённости")} value={draft.viewingWeekend} onChange={(e) => setDraft({ ...draft, viewingWeekend: e.target.value })} />
+                    </div>
+                  </div>
+                  {stepFooter}
+                </>
+              )}
+
+              {/* ШАГ 6 — предпросмотр/публикация */}
+              {step === 6 && (
+                <>
+                  <StepHeading
+                    title={tr("Check and publish", "Patikrinkite ir paskelbkite", "Проверьте и опубликуйте")}
+                    lead={tr("This is how buyers will see your listing.", "Taip pirkėjai matys jūsų skelbimą.", "Так покупатели увидят ваше объявление.")}
+                  />
+
+                  <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+                    <div>
+                      <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-muted">
+                        <img src={coverUrl} alt={listingTitle} className="absolute inset-0 h-full w-full object-cover" />
+                      </div>
+                      {photos.length > 1 && (
+                        <div className="mt-2 grid grid-cols-5 gap-2">
+                          {photos.slice(1, 6).map((f) => (
+                            <div key={photoKey(f)} className="relative aspect-[4/3] overflow-hidden rounded-lg bg-muted">
+                              <img src={photoUrl(f)} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {draft.description && (
+                        <div className="mt-6">
+                          <div className="mb-1.5 text-sm font-semibold text-foreground">{tr("Description", "Aprašymas", "Описание")}</div>
+                          <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{draft.description}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <h3 className="text-xl font-bold leading-7 text-foreground">
+                        {listingTitle} {draft.year && <span className="font-semibold text-muted-foreground">{draft.year}</span>}
+                      </h3>
+                      <div className="mt-1 text-[28px] font-extrabold tracking-tight text-foreground">
+                        {draft.price ? formatEUR(Number(draft.price)) : "—"}
+                      </div>
+
+                      <dl className="mt-5 divide-y divide-border border-y border-border text-sm">
+                        {[
+                          [tr("Engine", "Variklis", "Двигатель"), draft.engine || "—"],
+                          [tr("Mileage", "Rida", "Пробег"), draft.mileage ? `${Number(draft.mileage).toLocaleString("lt-LT")} km` : "—"],
+                          [tr("Condition", "Būklė", "Состояние"), conditionOptions.find((option) => option.value === draft.condition)?.title || "—"],
+                          [tr("Features", "Įranga", "Опции"), draft.features.length ? FEATURE_DEFS.filter((f) => draft.features.includes(f.value)).map((f) => tr(f.en, f.lt, f.ru)).join(", ") : "—"],
+                          [tr("City/Area", "Miestas / rajonas", "Город / район"), [draft.city, draft.area].filter(Boolean).join(", ") || "—"],
+                          [tr("Contacts", "Kontaktai", "Контакты"), `${draft.contactMethods.map(contactLabel).join(", ") || tr("chat only", "tik pokalbis", "только чат")}${draft.phone ? ` (${draft.phone})` : ""}`],
+                        ].map(([term, value]) => (
+                          <div key={term} className="grid grid-cols-[120px_minmax(0,1fr)] gap-3 py-2.5">
+                            <dt className="text-muted-foreground">{term}</dt>
+                            <dd className="break-words font-medium text-foreground">{value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+
+                      <div className="mt-6 rounded-xl border border-border p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <div className="text-[15px] font-bold text-foreground">{tr("Listing publication", "Skelbimo publikavimas", "Размещение объявления")}</div>
+                            <div className="mt-0.5 text-sm leading-6 text-muted-foreground">
+                              {tr(
+                                promoValid ? "With this promo code, the listing is published for free." : "The listing becomes public only after confirmed payment.",
+                                promoValid ? "Su šiuo kodu skelbimas paskelbiamas nemokamai." : "Skelbimas tampa viešas tik patvirtinus mokėjimą.",
+                                promoValid ? "С этим промокодом объявление публикуется бесплатно." : "Объявление станет публичным только после подтверждённой оплаты."
+                              )}
+                            </div>
+                          </div>
+                          <div className="shrink-0 text-xl font-extrabold text-foreground">{publicationPrice}</div>
+                        </div>
+
+                        <label htmlFor="sell-promo" className="mt-4 block text-sm font-semibold text-foreground">{tr("Promo code", "Nuolaidos kodas", "Промокод")}</label>
+                        <div className="mt-1.5 flex gap-2">
+                          <input
+                            id="sell-promo"
+                            value={promoCode}
+                            onChange={(event) => { setPromoCode(event.target.value); setPromoValid(false); setPublishError(""); }}
+                            placeholder={tr("Enter promo code", "Įveskite kodą", "Введите промокод")}
+                            autoComplete="off"
+                            maxLength={64}
+                            className={cx(FIELD, "h-12 min-w-0 flex-1 uppercase placeholder:normal-case")}
+                          />
+                          <button
+                            type="button"
+                            className={SECONDARY_BUTTON}
+                            disabled={!promoCode.trim() || promoChecking || publishing}
+                            onClick={async () => {
+                              setPromoChecking(true); setPublishError("");
+                              try {
+                                const result = await validatePromoCode(promoCode.trim().toUpperCase());
+                                setPromoValid(result.valid);
+                                if (!result.valid) setPublishError(tr("This promo code is invalid or expired.", "Šis nuolaidos kodas neteisingas arba nebegalioja.", "Промокод неверный или больше не действует."));
+                              } catch (error) {
+                                setPromoValid(false);
+                                setPublishError(error instanceof Error ? error.message : String(error));
+                              } finally { setPromoChecking(false); }
+                            }}
+                          >
+                            {promoChecking && <AssetIcon name="spinner" size={18} className="animate-spin" />}
+                            {tr("Apply", "Taikyti", "Применить")}
+                          </button>
+                        </div>
+                        {promoValid && <StatusNote type="success" className="mt-3">{tr("Code applied — this listing is free.", "Kodas pritaikytas — skelbimas nemokamas.", "Промокод применён — публикация бесплатна.")}</StatusNote>}
+                        {paymentConfig?.devMode && (
+                          <div className="mt-3 text-xs font-bold text-amber-700 dark:text-amber-300">
+                            DEV MODE — {tr("test payment is enabled", "įjungtas bandomasis mokėjimas", "включена тестовая оплата")}
+                          </div>
+                        )}
+                      </div>
+
+                      {requirementsLeft > 0 && (
+                        <StatusNote type="warning" className="mt-4">
+                          {tr("Still missing:", "Dar trūksta:", "Ещё не заполнено:")}{" "}
+                          {requirements.filter((item) => !item.done).map((item, i, list) => (
+                            <span key={item.label}>
+                              <button type="button" onClick={() => goTo(item.step)} className="font-semibold underline underline-offset-2 max-md:!min-h-0">{item.label}</button>
+                              {i < list.length - 1 ? ", " : ""}
+                            </span>
+                          ))}
+                        </StatusNote>
+                      )}
+                      {publishError && <StatusNote type="error" className="mt-4">{publishError}</StatusNote>}
+                      {publishedListingId && (
+                        <StatusNote type="success" className="mt-4">
+                          <span className="font-semibold">{tr("Your listing is published for free!", "Skelbimas paskelbtas nemokamai!", "Объявление опубликовано бесплатно!")}</span>{" "}
+                          <a className="underline" href={`/listing/${publishedListingId}`}>{tr("Open listing", "Atidaryti skelbimą", "Открыть объявление")}</a>
+                        </StatusNote>
+                      )}
+
+                      <button
+                        type="button"
+                        className={cx(PRIMARY_BUTTON, "mt-5 h-14 w-full text-base")}
+                        onClick={publishedListingId ? () => { window.location.href = "/account/listings"; } : publish}
+                        disabled={publishing}
+                        aria-busy={publishing || undefined}
+                      >
+                        {publishing && <AssetIcon name="spinner" size={20} className="animate-spin" />}
+                        {publishedListingId ? tr("My listings", "Mano skelbimai", "Мои объявления") : promoValid ? tr("Publish for free", "Paskelbti nemokamai", "Опубликовать бесплатно") : tr("Pay & publish", "Mokėti ir paskelbti", "Оплатить и опубликовать")}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-border pt-5">
+                    <button type="button" onClick={() => goTo(5)} className="inline-flex h-12 items-center gap-2 rounded-xl px-2 text-[15px] font-semibold text-muted-foreground transition hover:text-foreground">
+                      <AssetIcon name="arrow-left" size={18} />
+                      {tr("Back", "Atgal", "Назад")}
+                    </button>
+                    <button type="button" onClick={() => goTo(1)} className="inline-flex h-12 items-center gap-2 rounded-xl px-2 text-[15px] font-semibold text-muted-foreground transition hover:text-foreground">
+                      <AssetIcon name="edit" size={18} />
+                      {tr("Edit", "Redaguoti", "Редактировать")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { clearDraft(); setDraft(INITIAL); clearPhotos(); }}
+                      className="ml-auto inline-flex h-12 items-center gap-2 rounded-xl px-2 text-[15px] font-semibold text-muted-foreground transition hover:text-red-600"
+                    >
+                      <AssetIcon name="trash" size={18} />
+                      {tr("Clear draft", "Išvalyti juodraštį", "Очистить черновик")}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
+
+            {/* Live summary of the listing (steps 1–5, desktop) */}
+            {step < 6 && (
+              <aside className="hidden border-l border-border bg-muted/40 p-6 lg:block">
+                <div className="sticky top-24">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-bold text-foreground">{tr("Your listing", "Jūsų skelbimas", "Ваше объявление")}</div>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <AssetIcon name="clock" size={14} />
+                      {savedLabel}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 overflow-hidden rounded-xl bg-card ring-1 ring-border">
+                    <div className="relative aspect-[16/10] bg-muted">
+                      <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                      {photos.length > 1 && (
+                        <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-md bg-black/65 px-2 py-0.5 text-[11px] font-semibold text-white">
+                          <AssetIcon name="image" size={12} />
+                          {photos.length}
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <div className="truncate text-[15px] font-semibold text-foreground">{listingTitle}</div>
+                      <div className="mt-0.5 text-xl font-extrabold tracking-tight text-foreground">
+                        {draft.price ? formatEUR(Number(draft.price)) : <span className="text-muted-foreground/60">— €</span>}
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-border pt-3 text-xs font-medium text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5"><AssetIcon name="calendar" size={15} className="text-muted-foreground/80" />{draft.year || "—"}</span>
+                        <span className="inline-flex items-center gap-1.5"><AssetIcon name="gauge" size={15} className="text-muted-foreground/80" />{draft.mileage ? `${Number(draft.mileage).toLocaleString("lt-LT")} km` : "—"}</span>
+                        <span className="col-span-2 inline-flex min-w-0 items-center gap-1.5"><AssetIcon name="engine" size={15} className="text-muted-foreground/80" /><span className="truncate">{engineShort || "—"}</span></span>
+                        {draft.city && <span className="col-span-2 inline-flex items-center gap-1.5"><AssetIcon name="map-pin" size={15} className="text-muted-foreground/80" />{[draft.city, draft.area].filter(Boolean).join(", ")}</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                      {requirementsLeft
+                        ? tr(`Needed to publish · ${requirementsLeft} left`, `Reikia paskelbimui · liko ${requirementsLeft}`, `Нужно для публикации · осталось ${requirementsLeft}`)
+                        : tr("Ready to publish", "Paruošta paskelbti", "Готово к публикации")}
+                    </div>
+                    <ul className="mt-3 space-y-1">
+                      {requirements.map((item) => (
+                        <li key={item.label}>
+                          <button type="button" onClick={() => goTo(item.step)} className="flex w-full items-center gap-2.5 rounded-lg py-1.5 text-left text-sm transition hover:text-foreground">
+                            <span className={cx("flex h-5 w-5 shrink-0 items-center justify-center rounded-full", item.done ? "bg-foreground text-background" : "ring-1 ring-inset ring-muted-foreground/40")}>
+                              {item.done && <AssetIcon name="check" size={12} />}
+                            </span>
+                            <span className={item.done ? "text-muted-foreground line-through decoration-muted-foreground/40" : "font-medium text-foreground"}>{item.label}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="mt-6 flex items-center justify-between border-t border-border pt-4 text-sm">
+                    <span className="text-muted-foreground">{tr("Publication fee", "Paskelbimo kaina", "Стоимость публикации")}</span>
+                    <span className="font-bold text-foreground">{publicationPrice}</span>
+                  </div>
+                </div>
+              </aside>
+            )}
           </div>
-        </Card>
-      )}
+        </div>
+        <p className="mt-3 text-center text-xs text-muted-foreground lg:hidden">{savedLabel}</p>
+      </section>
     </div>
   );
 }
