@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import AssetIcon from "@/components/ui/AssetIcon";
 import { isAdminUser, isSupportUser, logout, me, type AuthUser } from "@/lib/pirkApi";
+import { needsPhone, usePhoneVerificationConfig, verificationOff } from "@/lib/usePhoneVerification";
 
 export default function Header() {
   const pathname = usePathname();
@@ -17,6 +18,7 @@ export default function Header() {
   const [darkMode, setDarkMode] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const accountRef = useRef<HTMLDivElement>(null);
+  const phoneConfig = usePhoneVerificationConfig();
 
   const tr = (en: string, lt: string, ru: string) => language === "LT" ? lt : language === "RU" ? ru : en;
 
@@ -81,7 +83,9 @@ export default function Header() {
     { href: "/account/profile", label: tr("Profile & settings", "Profilis ir nustatymai", "Профиль и настройки"), icon: <AssetIcon name="settings" size={19} /> },
     ...(isAdminUser(user) ? [{ href: "/admin", label: tr("Administration", "Administravimas", "Администрирование"), icon: <AssetIcon name="shield" size={19} /> }] : []),
     ...(!isAdminUser(user) && isSupportUser(user) ? [{ href: "/admin/support", label: tr("Support desk", "Pagalbos centras", "Поддержка"), icon: <AssetIcon name="support-chat" size={19} /> }] : []),
-    ...(!user?.phoneVerified ? [{ href: "/verify-phone", label: tr("Verify phone", "Patvirtinti telefoną", "Подтвердить телефон"), icon: <AssetIcon name="phone" size={19} /> }] : []),
+    ...(needsPhone(user, phoneConfig)
+      ? [{ href: "/verify-phone", label: verificationOff(phoneConfig) ? tr("Add phone", "Pridėti telefoną", "Добавить телефон") : tr("Verify phone", "Patvirtinti telefoną", "Подтвердить телефон"), icon: <AssetIcon name="phone" size={19} /> }]
+      : []),
     { href: "/help", label: tr("Help", "Pagalba", "Помощь"), icon: <AssetIcon name="help" size={19} /> },
   ];
 

@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import PhoneVerificationBox from "@/components/PhoneVerificationBox";
 import { googleLoginUrl, registerUser } from "@/lib/pirkApi";
+import { usePhoneVerificationConfig, verificationOff } from "@/lib/usePhoneVerification";
 
 export default function RegisterPage() {
   const { tr } = useLanguage();
   const router = useRouter();
   const [form, setForm] = useState({ email: "", name: "", surname: "", city: "", address: "", zip: "", phone: "", password: "", confirm: "" });
   const [token, setToken] = useState("");
+  const off = verificationOff(usePhoneVerificationConfig());
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const set = (key: keyof typeof form, value: string) => setForm((f) => ({ ...f, [key]: value }));
@@ -23,7 +25,7 @@ export default function RegisterPage() {
       setError(tr("Passwords do not match", "Slaptažodžiai nesutampa", "Пароли не совпадают"));
       return;
     }
-    if (!token) {
+    if (!token && !off) {
       setError(tr("Verify your phone first", "Pirmiausia patvirtinkite telefoną", "Сначала подтвердите телефон"));
       return;
     }
@@ -37,7 +39,7 @@ export default function RegisterPage() {
         address: form.address,
         zip: form.zip,
         phone: form.phone,
-        verificationToken: token,
+        verificationToken: token || undefined,
         password: form.password,
       });
       router.push("/auth/login?registered=1");
@@ -102,7 +104,7 @@ export default function RegisterPage() {
             )}
           </p>
           {error && <div className="rounded-lg bg-red-500/10 p-3 text-red-600 md:col-span-2">{error}</div>}
-          <button disabled={loading || !token} className="h-12 rounded-lg bg-[#5f5f5f] font-bold text-white hover:bg-accent disabled:opacity-50 md:col-span-2">
+          <button disabled={loading || (!token && !off)} className="h-12 rounded-lg bg-[#5f5f5f] font-bold text-white hover:bg-accent disabled:opacity-50 md:col-span-2">
             {loading ? "…" : tr("Create account", "Sukurti paskyrą", "Создать аккаунт")}
           </button>
         </form>
