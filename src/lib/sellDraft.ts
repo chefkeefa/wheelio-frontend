@@ -37,6 +37,7 @@ export interface ListingDraft {
 }
 
 const KEY = "sell-draft-v1";
+const SAVED_AT_KEY = "sell-draft-v1-saved-at";
 
 /** Базовый пустой черновик — используем для санитации при загрузке */
 const EMPTY_DRAFT: ListingDraft = {
@@ -145,6 +146,7 @@ export function saveDraft(draft: ListingDraft) {
   try {
     const trimmed = trimStringFields(draft, 4000);
     localStorage.setItem(KEY, JSON.stringify(trimmed));
+    localStorage.setItem(SAVED_AT_KEY, new Date().toISOString());
   } catch {
     // ignore
   }
@@ -154,7 +156,37 @@ export function clearDraft() {
   if (typeof window === "undefined") return;
   try {
     localStorage.removeItem(KEY);
+    localStorage.removeItem(SAVED_AT_KEY);
   } catch {
     // ignore
   }
+}
+
+/** When the draft was last written to this device, or null. */
+export function loadDraftSavedAt(): Date | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(SAVED_AT_KEY);
+    const date = raw ? new Date(raw) : null;
+    return date && !Number.isNaN(date.getTime()) ? date : null;
+  } catch {
+    return null;
+  }
+}
+
+/** True when the user has typed anything worth keeping (autosave also stores an empty draft). */
+export function hasDraftContent(draft: ListingDraft | null): draft is ListingDraft {
+  if (!draft) return false;
+  return Boolean(
+    draft.plateOrVin.trim() ||
+      draft.mark ||
+      draft.model ||
+      draft.year ||
+      draft.mileage ||
+      draft.description.trim() ||
+      draft.price ||
+      draft.city.trim() ||
+      draft.phone.trim() ||
+      draft.features.length
+  );
 }

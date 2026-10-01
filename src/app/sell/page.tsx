@@ -564,6 +564,7 @@ export default function SellPage() {
   const [photos, setPhotos] = useState<File[]>([]); // в память, в localStorage не кладём
   const [photoMeta, setPhotoMeta] = useState<Record<string, PhotoMeta>>({});
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [draftSavedNotice, setDraftSavedNotice] = useState(false);
 
   // Реальный каталог автомобилей из Spring Boot
   const [marks, setMarks] = useState<CarMark[]>([]);
@@ -1226,27 +1227,53 @@ export default function SellPage() {
     : "4.99 EUR";
   const engineShort = draft.engine.includes(" — ") ? draft.engine.split(" — ").slice(1).join(" — ") : draft.engine;
 
+  const saveDraftNow = () => {
+    saveDraft(draft);
+    setLastSaved(new Date());
+    setDraftSavedNotice(true);
+  };
+
+  const draftNotice = draftSavedNotice && (
+    <StatusNote type="success" className="mt-4">
+      {tr("Draft saved on this device. You can continue it any time from ", "Juodraštis išsaugotas šiame įrenginyje. Tęsti galite bet kada iš ", "Черновик сохранён на этом устройстве. Продолжить можно в любой момент из ")}
+      <a href="/account/profile" className="font-semibold underline underline-offset-2">{tr("your profile", "savo profilio", "профиля")}</a>.
+      {photos.length > 0 && ` ${tr("Photos are not stored in the draft, so you will need to add them again.", "Nuotraukos juodraštyje nesaugomos, jas reikės įkelti iš naujo.", "Фото в черновике не хранятся, их нужно будет добавить заново.")}`}
+    </StatusNote>
+  );
+
+  const saveDraftButton = (
+    <button type="button" onClick={saveDraftNow} className="inline-flex h-12 items-center gap-2 rounded-xl px-2 text-[15px] font-semibold text-muted-foreground transition hover:text-foreground">
+      <AssetIcon name="bookmark" size={18} />
+      {tr("Save draft", "Išsaugoti juodraštį", "Сохранить черновик")}
+    </button>
+  );
+
   const goTo = (n: number) => {
     setStep(n);
+    setDraftSavedNotice(false);
     const top = panelRef.current?.getBoundingClientRect().top;
     if (top !== undefined && top < 0) panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const stepFooter = (
-    <div className="mt-10 flex items-center gap-3 border-t border-border pt-5">
-      {step > 1 ? (
-        <button type="button" onClick={() => goTo(step - 1)} className="inline-flex h-12 items-center gap-2 rounded-xl px-2 text-[15px] font-semibold text-muted-foreground transition hover:text-foreground">
-          <AssetIcon name="arrow-left" size={18} />
-          {tr("Back", "Atgal", "Назад")}
+    <div className="mt-10 border-t border-border pt-5">
+      <div className="flex items-center gap-2 sm:gap-3">
+        {step > 1 ? (
+          <button type="button" onClick={() => goTo(step - 1)} aria-label={tr("Back", "Atgal", "Назад")} className="inline-flex h-12 items-center gap-2 rounded-xl px-2 text-[15px] font-semibold text-muted-foreground transition hover:text-foreground">
+            <AssetIcon name="arrow-left" size={18} />
+            <span className="hidden sm:inline">{tr("Back", "Atgal", "Назад")}</span>
+          </button>
+        ) : null}
+        {saveDraftButton}
+        <button type="button" onClick={() => goTo(step + 1)} className="ml-auto hidden h-12 items-center px-2 text-[15px] font-semibold text-muted-foreground transition hover:text-foreground sm:inline-flex">
+          {tr("Skip", "Praleisti", "Пропустить")}
         </button>
-      ) : null}
-      <button type="button" onClick={() => goTo(step + 1)} className="ml-auto inline-flex h-12 items-center px-2 text-[15px] font-semibold text-muted-foreground transition hover:text-foreground">
-        {tr("Skip", "Praleisti", "Пропустить")}
-      </button>
-      <button type="button" onClick={() => goTo(step + 1)} className={PRIMARY_BUTTON}>
-        {tr("Next", "Toliau", "Далее")}
-        <AssetIcon name="arrow-right" size={18} />
-      </button>
+        <button type="button" onClick={() => goTo(step + 1)} className={cx(PRIMARY_BUTTON, "max-sm:ml-auto max-sm:px-5")}>
+          {tr("Next", "Toliau", "Далее")}
+          <AssetIcon name="arrow-right" size={18} />
+        </button>
+      </div>
+      {draftNotice}
     </div>
   );
 
@@ -1903,15 +1930,17 @@ export default function SellPage() {
                       <AssetIcon name="edit" size={18} />
                       {tr("Edit", "Redaguoti", "Редактировать")}
                     </button>
+                    {saveDraftButton}
                     <button
                       type="button"
-                      onClick={() => { clearDraft(); setDraft(INITIAL); clearPhotos(); }}
+                      onClick={() => { clearDraft(); setDraft(INITIAL); clearPhotos(); setDraftSavedNotice(false); }}
                       className="ml-auto inline-flex h-12 items-center gap-2 rounded-xl px-2 text-[15px] font-semibold text-muted-foreground transition hover:text-red-600"
                     >
                       <AssetIcon name="trash" size={18} />
                       {tr("Clear draft", "Išvalyti juodraštį", "Очистить черновик")}
                     </button>
                   </div>
+                  {draftNotice}
                 </>
               )}
             </div>

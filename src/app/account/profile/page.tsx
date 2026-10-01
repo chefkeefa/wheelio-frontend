@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
+import SellDraftCard from "@/components/SellDraftCard";
 import { ApiError } from "@/lib/http";
 import { changeEmail, changePassword, me, updateProfile, type AuthUser } from "@/lib/pirkApi";
 
@@ -50,6 +51,7 @@ export default function ProfilePage() {
         <h1 className="text-4xl font-extrabold md:text-5xl">{tr("Profile & settings", "Profilis ir nustatymai", "Профиль и настройки")}</h1>
         {loading ? <div className="mt-8 h-72 animate-pulse rounded-2xl bg-muted" /> : user && (
           <div className="mt-8 grid gap-6 md:grid-cols-2">
+            <SellDraftCard className="md:col-span-2" />
             <section className="rounded-2xl border border-border bg-card p-6">
               <h2 className="text-xl font-bold">{tr("Account", "Paskyra", "Аккаунт")}</h2>
               <form onSubmit={save} className="mt-4 space-y-4">
