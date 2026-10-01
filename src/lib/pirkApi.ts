@@ -92,6 +92,7 @@ export type AdminUser = {
   phoneVerified: number | boolean;
   disabled: number | boolean;
   registrationDate: string | null;
+  roles?: string[];
 };
 export type AdminListing = {
   id: number;
@@ -123,6 +124,10 @@ export function listAdminUsers(page = 0, size = 50) {
 }
 export function setUserDisabled(id: number, disabled: boolean) {
   return fetchJson<{ success: boolean }>(`/users/${id}/edit`, { method: "POST", body: JSON.stringify({ disabled: disabled ? 1 : 0 }) });
+}
+/** Gives or removes support desk access (the SUPPORT role) without admin rights. */
+export function setUserSupportRole(id: number, enabled: boolean) {
+  return fetchJson<{ id: number; roles: string[] }>(`/admin/users/${id}/support`, { method: "POST", body: JSON.stringify({ enabled }) });
 }
 export function listAdminListings(page = 0, size = 50) {
   return fetchJson<Paged<AdminListing>>(`/admin/listings?page=${page}&size=${size}`);
@@ -349,6 +354,30 @@ export function setSupportTicketStatus(id: number, status: SupportTicket["status
   return fetchJson<SupportTicket>(`/support/tickets/${id}/status?status=${status}`, {
     method: "POST",
   });
+}
+
+export type SupportTicketReply = {
+  id: number;
+  ticketId: number;
+  sender: "AGENT" | "USER";
+  authorEmail: string | null;
+  message: string;
+  emailed: boolean;
+  createdAt: string;
+};
+
+export type SupportReplyEmailError = "MAIL_NOT_CONFIGURED" | "NO_CUSTOMER_EMAIL" | "SEND_FAILED";
+
+export function listSupportTicketReplies(id: number) {
+  return fetchJson<SupportTicketReply[]>(`/support/tickets/${id}/replies`);
+}
+
+/** Stores a staff reply and e-mails it to the customer unless sendEmail is false (internal note). */
+export function replyToSupportTicket(id: number, message: string, sendEmail = true) {
+  return fetchJson<{ reply: SupportTicketReply; emailed: boolean; emailError: SupportReplyEmailError | null; ticket: SupportTicket }>(
+    `/support/tickets/${id}/replies`,
+    { method: "POST", body: JSON.stringify({ message, sendEmail }) }
+  );
 }
 
 export function startLiveSupport(payload: { name?: string; email?: string; phone?: string }) {
