@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import AssetIcon, { type AssetIconName } from "@/components/ui/AssetIcon";
+import Dropdown from "@/components/search/Dropdown";
 import { useLanguage } from "@/context/LanguageContext";
 import { BACKEND_ORIGIN } from "@/lib/config";
 import { getPublicListingCount } from "@/lib/listings";
@@ -301,21 +302,17 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
             </div>
           </div>
           <DesktopBox icon="map-pin" label={labels.city}>
-            <select
-              aria-label={labels.city}
+            <Dropdown
+              variant="inline"
+              ariaLabel={labels.city}
               value={filters.city}
-              onChange={(event) => set({ city: event.target.value })}
-              className="h-6 w-full min-w-0 cursor-pointer appearance-none truncate bg-transparent text-sm text-white/80 outline-none focus:text-white"
-            >
-              <option value="" className="bg-white text-black">
-                {labels.anyCity}
-              </option>
-              {LT_CITIES.map((city) => (
-                <option key={city} value={city} className="bg-white text-black">
-                  {city}
-                </option>
-              ))}
-            </select>
+              placeholder={labels.anyCity}
+              options={LT_CITIES.map((city) => ({ value: city, label: city }))}
+              onChange={(city) => set({ city })}
+              searchable
+              searchPlaceholder={tr("Search", "Ieškoti", "Поиск")}
+              className="w-full"
+            />
           </DesktopBox>
         </div>
 
@@ -632,6 +629,31 @@ function RangeSelects({
     ? "h-8 min-w-0 flex-1 cursor-pointer appearance-none rounded-md bg-transparent text-sm text-white/80 outline-none focus:text-white"
     : `${compact ? "h-12" : "h-14"} min-w-0 flex-1 cursor-pointer appearance-none rounded-xl border border-border bg-muted px-4 text-center ${compact ? "text-sm" : "text-lg"} font-semibold text-foreground outline-none focus:border-[#d9a339]`;
   const optionCls = dark ? "bg-white text-black" : undefined;
+  if (dark) {
+    return (
+      <div className="flex items-center gap-2">
+        <Dropdown
+          variant="inline"
+          ariaLabel={fromLabel}
+          placeholder={fromLabel}
+          value={min}
+          options={options}
+          onChange={(value) => onChange(value, above(value, max) ? value : max)}
+          className="flex-1"
+        />
+        <span className="text-white/30">—</span>
+        <Dropdown
+          variant="inline"
+          ariaLabel={toLabel}
+          placeholder={toLabel}
+          value={max}
+          options={options}
+          onChange={(value) => onChange(above(min, value) ? value : min, value)}
+          className="flex-1"
+        />
+      </div>
+    );
+  }
   return (
     <div className={`flex items-center ${dark ? "gap-1.5" : "gap-3"}`}>
       <select
@@ -742,6 +764,23 @@ function FieldLabel({ label, dark, children }: { label: string; dark: boolean; c
 }
 
 function SelectField({ label, value, options, onChange, dark = false }: { label: string; value: string; options: Option[]; onChange: (value: string) => void; dark?: boolean }) {
+  if (dark) {
+    const any = options.find((o) => o.value === "");
+    return (
+      <div>
+        <span className="mb-2 block text-sm font-semibold text-white">{label}</span>
+        <Dropdown
+          ariaLabel={label}
+          value={value}
+          options={options.filter((o) => o.value !== "")}
+          placeholder={any?.label ?? label}
+          clearable={Boolean(any)}
+          onChange={onChange}
+          className="w-full"
+        />
+      </div>
+    );
+  }
   return (
     <label className="block">
       <span className={`mb-2 block text-sm font-semibold ${dark ? "text-white" : "text-foreground"}`}>{label}</span>
