@@ -1126,7 +1126,7 @@ export default function SellPage() {
 
     setPublishing(true);
     try {
-      const normalizedPromo = promoCode.trim().toUpperCase();
+      const normalizedPromo = paymentsOff ? "" : promoCode.trim().toUpperCase();
       if (normalizedPromo) {
         const validation = await validatePromoCode(normalizedPromo);
         if (!validation.valid) {
@@ -1220,7 +1220,8 @@ export default function SellPage() {
 
   const listingTitle = [draft.mark, draft.model].filter(Boolean).join(" ") || tr("Your car", "Jūsų automobilis", "Ваш автомобиль");
   const coverUrl = photos[0] ? photoUrl(photos[0]) : "/images/no-photo.svg";
-  const publicationPrice = promoValid
+  const paymentsOff = paymentConfig?.paymentsEnabled === false;
+  const publicationPrice = promoValid || paymentsOff
     ? `0.00 ${paymentConfig?.currency || "EUR"}`
     : paymentConfig
     ? `${paymentConfig.publicationPrice.toFixed(2)} ${paymentConfig.currency}`
@@ -1840,7 +1841,11 @@ export default function SellPage() {
                           <div>
                             <div className="text-[15px] font-bold text-foreground">{tr("Listing publication", "Skelbimo publikavimas", "Размещение объявления")}</div>
                             <div className="mt-0.5 text-sm leading-6 text-muted-foreground">
-                              {tr(
+                              {paymentsOff ? tr(
+                                "Publishing is free for now. The listing goes public right away.",
+                                "Kol kas skelbti nemokama. Skelbimas paskelbiamas iš karto.",
+                                "Сейчас публикация бесплатна. Объявление появится сразу."
+                              ) : tr(
                                 promoValid ? "With this promo code, the listing is published for free." : "The listing becomes public only after confirmed payment.",
                                 promoValid ? "Su šiuo kodu skelbimas paskelbiamas nemokamai." : "Skelbimas tampa viešas tik patvirtinus mokėjimą.",
                                 promoValid ? "С этим промокодом объявление публикуется бесплатно." : "Объявление станет публичным только после подтверждённой оплаты."
@@ -1850,6 +1855,7 @@ export default function SellPage() {
                           <div className="shrink-0 text-xl font-extrabold text-foreground">{publicationPrice}</div>
                         </div>
 
+                        {!paymentsOff && (<>
                         <label htmlFor="sell-promo" className="mt-4 block text-sm font-semibold text-foreground">{tr("Promo code", "Nuolaidos kodas", "Промокод")}</label>
                         <div className="mt-1.5 flex gap-2">
                           <input
@@ -1882,6 +1888,7 @@ export default function SellPage() {
                           </button>
                         </div>
                         {promoValid && <StatusNote type="success" className="mt-3">{tr("Code applied — this listing is free.", "Kodas pritaikytas — skelbimas nemokamas.", "Промокод применён — публикация бесплатна.")}</StatusNote>}
+                        </>)}
                         {paymentConfig?.devMode && (
                           <div className="mt-3 text-xs font-bold text-amber-700 dark:text-amber-300">
                             DEV MODE — {tr("test payment is enabled", "įjungtas bandomasis mokėjimas", "включена тестовая оплата")}
@@ -1903,7 +1910,7 @@ export default function SellPage() {
                       {publishError && <StatusNote type="error" className="mt-4">{publishError}</StatusNote>}
                       {publishedListingId && (
                         <StatusNote type="success" className="mt-4">
-                          <span className="font-semibold">{tr("Your listing is published for free!", "Skelbimas paskelbtas nemokamai!", "Объявление опубликовано бесплатно!")}</span>{" "}
+                          <span className="font-semibold">{paymentsOff ? tr("Your listing is published!", "Skelbimas paskelbtas!", "Объявление опубликовано!") : tr("Your listing is published for free!", "Skelbimas paskelbtas nemokamai!", "Объявление опубликовано бесплатно!")}</span>{" "}
                           <a className="underline" href={`/listing/${publishedListingId}`}>{tr("Open listing", "Atidaryti skelbimą", "Открыть объявление")}</a>
                         </StatusNote>
                       )}
@@ -1916,7 +1923,7 @@ export default function SellPage() {
                         aria-busy={publishing || undefined}
                       >
                         {publishing && <AssetIcon name="spinner" size={20} className="animate-spin" />}
-                        {publishedListingId ? tr("My listings", "Mano skelbimai", "Мои объявления") : promoValid ? tr("Publish for free", "Paskelbti nemokamai", "Опубликовать бесплатно") : tr("Pay & publish", "Mokėti ir paskelbti", "Оплатить и опубликовать")}
+                        {publishedListingId ? tr("My listings", "Mano skelbimai", "Мои объявления") : paymentsOff ? tr("Publish", "Paskelbti", "Опубликовать") : promoValid ? tr("Publish for free", "Paskelbti nemokamai", "Опубликовать бесплатно") : tr("Pay & publish", "Mokėti ir paskelbti", "Оплатить и опубликовать")}
                       </button>
                     </div>
                   </div>
