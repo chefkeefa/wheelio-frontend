@@ -52,9 +52,9 @@ export default function RegisterPage() {
 
   const input = "h-11 w-full rounded-lg bg-muted px-3 text-foreground ring-1 ring-inset ring-border placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-accent";
   return (
-    <main className="bg-background px-4 py-10 text-foreground">
-      <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card shadow-card p-7">
-        <h1 className="mb-6 text-center text-5xl font-bold">{tr("Create account", "Sukurti paskyrą", "Создать аккаунт")}</h1>
+    <main className="bg-background px-4 py-10 text-foreground md:py-14">
+      <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-6 shadow-card sm:p-10">
+        <h1 className="mb-8 text-center text-3xl font-bold tracking-tight md:text-4xl">{tr("Create account", "Sukurti paskyrą", "Создать аккаунт")}</h1>
         <form onSubmit={submit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field label="E-mail">
             <input className={input} type="email" autoComplete="email" required value={form.email} onChange={(e) => set("email", e.target.value)} />

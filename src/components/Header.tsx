@@ -91,7 +91,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/70 bg-background/85 backdrop-blur-md">
-      <div className="mx-auto flex h-[68px] w-full max-w-[1600px] items-center justify-between px-4 sm:h-[86px] sm:px-6 lg:px-10">
+      <div className="container relative flex h-16 items-center justify-between sm:h-20">
         <Link href="/" className="flex shrink-0 items-center">
           <Image
             src="/images/wheeliologo.svg"
@@ -99,15 +99,15 @@ export default function Header() {
             width={168}
             height={35}
             priority
-            className="h-auto w-[148px] sm:w-[168px]"
+            className="h-auto w-[132px] sm:w-[152px]"
           />
         </Link>
 
-        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-9 md:flex">
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex">
           {navigation.map((item) => {
             const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
             return (
-              <Link key={item.href} href={item.href} className={`relative text-[17px] font-semibold transition-colors duration-200 ${active ? "text-accent-ink" : "text-foreground hover:text-accent-ink"}`}>
+              <Link key={item.href} href={item.href} className={`relative text-[15px] font-semibold transition-colors duration-200 ${active ? "text-accent-ink" : "text-foreground hover:text-accent-ink"}`}>
                 {item.name}
                 {active && <span className="absolute -bottom-2 left-1/2 h-[3px] w-5 -translate-x-1/2 rounded-full bg-accent" />}
               </Link>
@@ -153,7 +153,7 @@ export default function Header() {
               )}
             </div>
           ) : (
-            <Link href="/auth/login" className="flex h-10 items-center gap-2 rounded-full px-2 text-[16px] font-medium text-foreground transition hover:text-accent-ink"><AssetIcon name="user" size={21} /><span>{t("login")}</span></Link>
+            <Link href="/auth/login" className="flex h-10 items-center gap-2 rounded-full px-2 text-[15px] font-semibold text-foreground transition hover:text-accent-ink"><AssetIcon name="user" size={21} /><span>{t("login")}</span></Link>
           )}
         </div>
 
@@ -161,16 +161,16 @@ export default function Header() {
       </div>
 
       {mobileMenuOpen && (
-        <div className="border-t border-border bg-background px-6 pb-6 pt-4 md:hidden">
+        <div className="border-t border-border bg-background px-4 pb-6 pt-3 sm:px-6 md:hidden">
           <nav className="flex flex-col">
             {navigation.map((item) => {
               const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-              return <Link key={item.href} href={item.href} className={`rounded-xl px-4 py-3 text-lg font-semibold transition ${active ? "bg-accent/10 text-accent-ink" : "text-foreground hover:bg-foreground/5"}`}>{item.name}</Link>;
+              return <Link key={item.href} href={item.href} className={`rounded-xl px-3 py-3 text-base font-semibold transition ${active ? "bg-accent/10 text-accent-ink" : "text-foreground hover:bg-foreground/5"}`}>{item.name}</Link>;
             })}
-            {user && accountItems.map((item) => <Link key={`m-${item.href}`} href={item.href} className="rounded-xl px-4 py-3 text-lg font-semibold text-foreground hover:bg-foreground/5">{item.label}</Link>)}
+            {user && accountItems.map((item) => <Link key={`m-${item.href}`} href={item.href} className="rounded-xl px-3 py-3 text-base font-semibold text-foreground hover:bg-foreground/5">{item.label}</Link>)}
           </nav>
 
-          <div className="mt-4 flex items-center gap-2 border-t border-black/5 pt-4">
+          <div className="mt-4 flex items-center gap-2 border-t border-border pt-4">
             <button type="button" onClick={toggleTheme} className="flex h-11 w-11 items-center justify-center rounded-full bg-foreground/5 text-foreground">{darkMode ? <AssetIcon name="sun" size={22} /> : <AssetIcon name="moon" size={22} />}</button>
             <button type="button" onClick={toggleLanguage} className="flex h-11 items-center gap-2 rounded-full bg-foreground/5 px-3 text-foreground"><AssetIcon name="globe" size={21} /><span className="text-sm font-bold">{language}</span></button>
             {user ? (

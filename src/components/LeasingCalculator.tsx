@@ -27,7 +27,7 @@ export default function LeasingCalculator({ price, year }: { price: number; year
 
   if (!terms.length) {
     return (
-      <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
+      <div className="rounded-2xl bg-card p-5 shadow-card ring-1 ring-border sm:p-6">
         <h2 className="text-lg font-bold">{title}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           {tr(
@@ -46,7 +46,7 @@ export default function LeasingCalculator({ price, year }: { price: number; year
   const estimate = leasingEstimate(price, down, annualRate, effectiveTerm);
 
   return (
-    <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
+    <div className="rounded-2xl bg-card p-5 shadow-card ring-1 ring-border sm:p-6">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-lg font-bold">{title}</h2>
         <span className="text-xs text-muted-foreground">{tr("estimate", "preliminariai", "примерно")}</span>

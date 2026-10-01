@@ -179,7 +179,7 @@ export default function HomePage() {
   return (
     <div>
       <section className="relative">
-        <div className="relative h-[420px] overflow-hidden rounded-2xl sm:h-[500px] md:h-[600px] md:rounded-none lg:h-[620px]">
+        <div className="relative h-[420px] overflow-hidden rounded-b-[28px] sm:h-[500px] md:h-[600px] md:rounded-none lg:h-[620px]">
           <img
             src="/images/hero.jpg"
             alt="Wheelio"

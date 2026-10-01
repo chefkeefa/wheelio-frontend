@@ -89,10 +89,10 @@ export default function MyListingsPage() {
 
   return (
     <main className="min-h-[70vh] bg-background text-foreground">
-      <div className="container mx-auto max-w-6xl px-4 py-10">
+      <div className="container mx-auto max-w-6xl px-4 py-10 sm:px-6 md:py-14 lg:px-8">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-extrabold md:text-5xl">{tr("My listings", "Mano skelbimai", "Мои объявления")}</h1>
+            <h1 className="page-title">{tr("My listings", "Mano skelbimai", "Мои объявления")}</h1>
             <p className="mt-2 text-muted-foreground">{tr("Manage the cars you are selling on Wheelio.", "Valdykite Wheelio parduodamus automobilius.", "Управляйте автомобилями, которые вы продаёте на Wheelio.")}</p>
           </div>
           <Link href="/sell" className="rounded-xl bg-accent px-5 py-3 font-bold text-accent-foreground transition hover:brightness-95">+ {tr("Sell a car", "Parduoti automobilį", "Продать автомобиль")}</Link>

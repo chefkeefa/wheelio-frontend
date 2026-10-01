@@ -61,8 +61,8 @@ function ResetPasswordInner() {
   const input = "h-12 w-full rounded-lg bg-muted px-4 text-foreground ring-1 ring-inset ring-border placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-accent";
   return (
     <main className="flex min-h-[70vh] items-center justify-center bg-background px-4 py-12 text-foreground">
-      <div className="w-full max-w-xl rounded-2xl border border-border bg-card shadow-card p-8">
-        <h1 className="mb-4 text-4xl font-bold">{tr("Set a new password", "Naujas slaptažodis", "Новый пароль")}</h1>
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-card sm:p-10">
+        <h1 className="mb-3 text-3xl font-bold tracking-tight md:text-4xl">{tr("Set a new password", "Naujas slaptažodis", "Новый пароль")}</h1>
 
         {(enabled === null || token === null) && <p className="text-muted-foreground">…</p>}
 

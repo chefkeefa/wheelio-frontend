@@ -106,7 +106,7 @@ export default function ListingActions({ listingId }: { listingId: string }) {
   };
 
   return (
-    <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
+    <div className="rounded-2xl bg-card p-5 shadow-card ring-1 ring-border sm:p-6">
       {contact ? (
         <div className="rounded-lg bg-muted p-4">
           <div className="text-xs text-muted-foreground">{tr("Seller", "Pardavėjas", "Продавец")}</div>

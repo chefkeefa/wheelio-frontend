@@ -21,12 +21,12 @@ export default function HelpPage() {
   const [tab, setTab] = useState<"live" | "ticket">("live");
 
   return (
-    <main className="container py-12 text-foreground">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="mb-3 text-5xl font-bold">
+    <div className="page text-foreground">
+      <div className="mx-auto max-w-3xl">
+        <h1 className="page-title">
           {tr("Help & support", "Pagalba", "Помощь и поддержка")}
         </h1>
-        <p className="mb-7 text-muted-foreground">
+        <p className="page-lead">
           {tr(
             "Chat with support in real time or send a ticket if your question is not urgent.",
             "Kalbėkitės su pagalba realiuoju laiku arba išsiųskite užklausą, jei klausimas nėra skubus.",
@@ -34,7 +34,7 @@ export default function HelpPage() {
           )}
         </p>
 
-        <div className="mb-5 flex gap-2 rounded-xl bg-muted p-1">
+        <div className="mb-6 mt-8 flex gap-1 rounded-xl bg-muted p-1">
           <button
             onClick={() => setTab("live")}
             className={`flex-1 rounded-lg px-4 py-3 font-bold transition ${tab === "live" ? "bg-accent text-accent-foreground" : "hover:bg-background"}`}
@@ -51,7 +51,7 @@ export default function HelpPage() {
 
         {tab === "live" ? <LiveChat tr={tr} /> : <TicketForm tr={tr} />}
       </div>
-    </main>
+    </div>
   );
 }
 

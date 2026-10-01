@@ -36,8 +36,8 @@ function LoginInner() {
 
   return (
     <main className="flex min-h-[72vh] items-center justify-center bg-background px-4 py-12 text-foreground">
-      <div className="w-full max-w-xl rounded-2xl border border-border bg-card shadow-card p-8">
-        <h1 className="mb-6 text-center text-5xl font-bold">{tr("Login", "Prisijungti", "Войти")}</h1>
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-card sm:p-10">
+        <h1 className="mb-8 text-center text-3xl font-bold tracking-tight md:text-4xl">{tr("Login", "Prisijungti", "Войти")}</h1>
         <form onSubmit={submit} className="space-y-5">
           <label className="block"><span className="mb-2 block font-bold">E-mail</span><input type="email" required value={email} onChange={(e)=>setEmail(e.target.value)} className="h-12 w-full rounded-lg bg-muted px-4 text-foreground ring-1 ring-inset ring-border placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-accent" /></label>
           <label className="block"><span className="mb-2 block font-bold">{tr("Password","Slaptažodis","Пароль")}</span><input type="password" required value={password} onChange={(e)=>setPassword(e.target.value)} className="h-12 w-full rounded-lg bg-muted px-4 text-foreground ring-1 ring-inset ring-border placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-accent" /></label>

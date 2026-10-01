@@ -73,6 +73,13 @@ body {
   a { @apply underline-offset-4; }
 }
 
+/* Shared page rhythm: one vertical padding, one title size, one lead size. */
+@layer components {
+  .page { @apply mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 md:py-14 lg:px-8; }
+  .page-title { @apply text-3xl font-bold tracking-tight text-foreground md:text-[40px] md:leading-[48px]; }
+  .page-lead { @apply mt-2 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg md:leading-8; }
+}
+
 .btn {
   @apply inline-flex items-center justify-center rounded-2xl px-4 py-2 bg-primary text-primary-foreground hover:opacity-90 active:opacity-80;
 }

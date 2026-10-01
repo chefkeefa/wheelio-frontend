@@ -70,58 +70,56 @@ export default function AboutPage() {
   }[language];
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="flex flex-col items-center px-4 pt-8 pb-16">
-        <h1 className="text-6xl md:text-8xl lg:text-[96px] font-bold text-foreground text-center mb-8 leading-none">
-          {copy.title}
-        </h1>
+    <div className="page text-foreground">
+      <div className="mx-auto max-w-3xl">
+        <h1 className="page-title">{copy.title}</h1>
 
-        <section className="w-full max-w-[974px] bg-card rounded-2xl border border-border shadow-card p-8 md:p-12 mb-8">
-          <h2 className="text-[48px] font-bold text-accent-ink mb-6 leading-[50px] text-center">
-            {copy.who}
-          </h2>
+        <section className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-card sm:p-10">
+          <h2 className="text-2xl font-bold tracking-tight text-accent-ink md:text-3xl">{copy.who}</h2>
 
-          <p className="text-foreground text-[20px] leading-8 text-center mb-6">
-            <strong>Wheelio</strong> {copy.intro}
-          </p>
-
-          <div className="text-foreground text-[20px] leading-8 space-y-6 text-center">
+          <div className="mt-5 space-y-5 text-base leading-7 text-foreground/90 md:text-lg md:leading-8">
+            <p>
+              <strong className="text-foreground">Wheelio</strong> {copy.intro}
+            </p>
             <p>{copy.decision}</p>
-
-            <div className="mx-auto max-w-[760px] text-left">
-              <h3 className="text-[24px] font-bold text-foreground mb-2 text-center md:text-left">
-                {copy.why}
-              </h3>
-
-              <ul className="list-disc pl-6 space-y-2">
-                <li><span className="font-semibold">{copy.verifiedTitle}</span> {copy.verifiedText}</li>
-                <li><span className="font-semibold">{copy.filtersTitle}</span> {copy.filtersText}</li>
-                <li><span className="font-semibold">{copy.directTitle}</span> {copy.directText}</li>
-                <li><span className="font-semibold">{copy.uiTitle}</span> {copy.uiText}</li>
-                <li><span className="font-semibold">{copy.updatesTitle}</span> {copy.updatesText}</li>
-              </ul>
-            </div>
-
-            <p>{copy.mission}</p>
           </div>
+
+          <h3 className="mt-8 text-lg font-bold text-foreground md:text-xl">{copy.why}</h3>
+          <ul className="mt-4 space-y-3 text-base leading-7 text-foreground/90 md:text-lg md:leading-8">
+            {[
+              [copy.verifiedTitle, copy.verifiedText],
+              [copy.filtersTitle, copy.filtersText],
+              [copy.directTitle, copy.directText],
+              [copy.uiTitle, copy.uiText],
+              [copy.updatesTitle, copy.updatesText],
+            ].map(([title, text]) => (
+              <li key={title} className="flex gap-3">
+                <span className="mt-[0.7em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                <span>
+                  <span className="font-semibold text-foreground">{title}</span> {text}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <p className="mt-8 border-t border-border pt-6 text-base leading-7 text-foreground/90 md:text-lg md:leading-8">{copy.mission}</p>
         </section>
 
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <Link
             href="/"
-            className="inline-flex items-center justify-center px-8 h-[60px] bg-accent border-2 border-accent rounded-lg text-[20px] font-bold text-accent-foreground hover:opacity-90 transition-opacity"
+            className="inline-flex h-12 items-center justify-center rounded-xl bg-accent px-6 text-base font-bold text-accent-foreground transition hover:brightness-105"
           >
             {copy.browse}
           </Link>
-
           <Link
             href="/sell"
-            className="inline-flex items-center justify-center px-8 h-[60px] bg-card border-2 border-accent rounded-lg text-[20px] font-bold text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            className="inline-flex h-12 items-center justify-center rounded-xl border border-border bg-card px-6 text-base font-bold text-foreground transition hover:border-accent"
           >
             {copy.sell}
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -6,25 +6,30 @@ import { useLanguage } from "@/context/LanguageContext";
 export default function Footer() {
   const { language } = useLanguage();
   const copy = {
-    EN: { about: "About us", help: "Help", rules: "Rules" },
-    LT: { about: "Apie mus", help: "Pagalba", rules: "Taisyklės" },
-    RU: { about: "О нас", help: "Помощь", rules: "Правила" },
+    EN: { about: "About us", help: "Help", rules: "Rules", tagline: "Car marketplace for the Baltics" },
+    LT: { about: "Apie mus", help: "Pagalba", rules: "Taisyklės", tagline: "Automobilių skelbimai Baltijos šalyse" },
+    RU: { about: "О нас", help: "Помощь", rules: "Правила", tagline: "Автомобильные объявления в Балтии" },
   }[language];
 
+  const links = [
+    { href: "/about", label: copy.about },
+    { href: "/help", label: copy.help },
+    { href: "/rules", label: copy.rules },
+  ];
+
   return (
-    <footer className="mt-16 border-t border-border bg-card text-foreground">
-      <div className="container py-8">
-        <div className="flex flex-wrap justify-center gap-8">
-          <Link href="/about" className="text-lg font-medium text-foreground/70 transition-colors hover:text-foreground">
-            {copy.about}
-          </Link>
-          <Link href="/help" className="text-lg font-medium text-foreground/70 transition-colors hover:text-foreground">
-            {copy.help}
-          </Link>
-          <Link href="/rules" className="text-lg font-medium text-foreground/70 transition-colors hover:text-foreground">
-            {copy.rules}
-          </Link>
-        </div>
+    <footer className="border-t border-border bg-card text-foreground">
+      <div className="container flex flex-col gap-4 py-8 text-sm sm:flex-row sm:items-center sm:justify-between">
+        <p className="leading-6 text-muted-foreground">
+          © {new Date().getFullYear()} Wheelio · {copy.tagline}
+        </p>
+        <nav className="flex flex-wrap gap-x-6 gap-y-2">
+          {links.map((link) => (
+            <Link key={link.href} href={link.href} className="font-medium text-muted-foreground transition-colors hover:text-foreground">
+              {link.label}
+            </Link>
+          ))}
+        </nav>
       </div>
     </footer>
   );

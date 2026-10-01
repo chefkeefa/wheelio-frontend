@@ -49,8 +49,8 @@ export default function ProfilePage() {
 
   return (
     <main className="min-h-[70vh] bg-background text-foreground">
-      <div className="container mx-auto max-w-4xl px-4 py-10">
-        <h1 className="text-4xl font-extrabold md:text-5xl">{tr("Profile & settings", "Profilis ir nustatymai", "Профиль и настройки")}</h1>
+      <div className="container mx-auto max-w-4xl px-4 py-10 sm:px-6 md:py-14 lg:px-8">
+        <h1 className="page-title">{tr("Profile & settings", "Profilis ir nustatymai", "Профиль и настройки")}</h1>
         {loading ? <div className="mt-8 h-72 animate-pulse rounded-2xl bg-muted" /> : user && (
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             <SellDraftCard className="md:col-span-2" />

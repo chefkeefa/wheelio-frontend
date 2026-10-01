@@ -45,8 +45,8 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="flex min-h-[70vh] items-center justify-center bg-background px-4 py-12 text-foreground">
-      <div className="w-full max-w-xl rounded-2xl border border-border bg-card shadow-card p-8">
-        <h1 className="mb-3 text-4xl font-bold">{tr("Reset password", "Atkurti slaptažodį", "Восстановить пароль")}</h1>
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-card sm:p-10">
+        <h1 className="mb-3 text-3xl font-bold tracking-tight md:text-4xl">{tr("Reset password", "Atkurti slaptažodį", "Восстановить пароль")}</h1>
 
         {availability === "loading" && <p className="text-muted-foreground">…</p>}
 
