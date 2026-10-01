@@ -41,7 +41,13 @@ export async function logout() {
   return fetchJson<void>("/auth/logout", { method: "POST" });
 }
 
-export type PhoneVerificationConfig = { available: boolean; channels: VerificationChannel[]; voiceAvailable: boolean };
+export type PhoneVerificationConfig = {
+  /** false when the backend runs with PHONE_VERIFICATION_ENABLED=false (older backends omit it). */
+  enabled?: boolean;
+  available: boolean;
+  channels: VerificationChannel[];
+  voiceAvailable: boolean;
+};
 
 export async function changePassword(oldPassword: string, newPassword: string) {
   return fetchJson<{ success: boolean }>("/users/change/password", {
@@ -208,7 +214,7 @@ export async function registerUser(payload: {
   address: string;
   zip: string;
   phone: string;
-  verificationToken: string;
+  verificationToken?: string;
   password: string;
 }) {
   return fetchJson<{ id: number }>("/users/register", {

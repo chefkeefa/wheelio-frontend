@@ -2,13 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
-import {
-  getPhoneVerificationConfig,
-  requestPhoneCode,
-  verifyPhoneCode,
-  type PhoneVerificationConfig,
-  type VerificationChannel,
-} from "@/lib/pirkApi";
+import { requestPhoneCode, verifyPhoneCode, type VerificationChannel } from "@/lib/pirkApi";
+import { usePhoneVerificationConfig, verificationOff } from "@/lib/usePhoneVerification";
 
 type Props = {
   phone: string;
@@ -17,6 +12,11 @@ type Props = {
   onVerified: (verificationToken: string, normalizedPhone: string) => void | Promise<void>;
   verified?: boolean;
   inputClassName?: string;
+  /**
+   * When verification is switched off on the backend, show a button that hands the typed number to onVerified
+   * with an empty token (used by /verify-phone). Registration leaves it off and just submits the typed number.
+   */
+  saveWhenOff?: boolean;
 };
 
 /**
@@ -24,9 +24,9 @@ type Props = {
  * Only channels reported by GET /phone-verification/config are offered, and the success
  * message describes the channel the backend actually used (never "call" for an SMS).
  */
-export default function PhoneVerificationBox({ phone, onPhoneChange, onVerified, verified = false, inputClassName }: Props) {
+export default function PhoneVerificationBox({ phone, onPhoneChange, onVerified, verified = false, inputClassName, saveWhenOff = false }: Props) {
   const { tr } = useLanguage();
-  const [config, setConfig] = useState<PhoneVerificationConfig | null>(null);
+  const config = usePhoneVerificationConfig();
   const [code, setCode] = useState("");
   const [sending, setSending] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -34,19 +34,6 @@ export default function PhoneVerificationBox({ phone, onPhoneChange, onVerified,
   const [devCode, setDevCode] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    let alive = true;
-    getPhoneVerificationConfig()
-      .then((c) => alive && setConfig(c))
-      .catch(() => {
-        // Older backends have no config endpoint: they only support SMS.
-        if (alive) setConfig({ available: true, channels: ["SMS"], voiceAvailable: false });
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -92,6 +79,49 @@ export default function PhoneVerificationBox({ phone, onPhoneChange, onVerified,
     } finally {
       setChecking(false);
     }
+  }
+
+  async function saveTyped() {
+    setError("");
+    setChecking(true);
+    try {
+      await onVerified("", phone.trim());
+      setMessage(tr("Phone saved ✓", "Telefonas išsaugotas ✓", "Телефон сохранён ✓"));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  if (verificationOff(config)) {
+    return (
+      <div>
+        <div className={saveWhenOff ? "grid gap-2 sm:grid-cols-[1fr_auto]" : ""}>
+          <input
+            className={input}
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            required
+            placeholder="+3706XXXXXXX"
+            value={phone}
+            disabled={verified}
+            onChange={(e) => onPhoneChange(e.target.value)}
+          />
+          {saveWhenOff && (
+            <button type="button" disabled={checking || verified || !phone.trim()} onClick={saveTyped} className="min-h-11 rounded-lg bg-[#5f5f5f] px-5 font-bold text-white hover:bg-accent disabled:opacity-50">
+              {checking ? "…" : tr("Save", "Išsaugoti", "Сохранить")}
+            </button>
+          )}
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {tr("International format, e.g. +37060000000.", "Tarptautiniu formatu, pvz. +37060000000.", "В международном формате, например +37060000000.")}
+        </p>
+        {message && <div className="mt-2 text-sm text-green-600">{message}</div>}
+        {error && <div className="mt-2 text-sm text-red-600">{error}</div>}
+      </div>
+    );
   }
 
   if (config && !config.available) {

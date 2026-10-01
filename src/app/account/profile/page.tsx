@@ -7,12 +7,14 @@ import { useLanguage } from "@/context/LanguageContext";
 import SellDraftCard from "@/components/SellDraftCard";
 import { ApiError } from "@/lib/http";
 import { changeEmail, changePassword, me, updateProfile, type AuthUser } from "@/lib/pirkApi";
+import { usePhoneVerificationConfig, verificationOff } from "@/lib/usePhoneVerification";
 
 export default function ProfilePage() {
   const { language } = useLanguage();
   const router = useRouter();
   const tr = (en: string, lt: string, ru: string) => language === "LT" ? lt : language === "RU" ? ru : en;
   const [user, setUser] = useState<AuthUser | null>(null);
+  const phoneOff = verificationOff(usePhoneVerificationConfig());
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
@@ -66,6 +68,12 @@ export default function ProfilePage() {
             <section className="rounded-2xl border border-border bg-card p-6">
               <h2 className="text-xl font-bold">{tr("Security", "Saugumas", "Безопасность")}</h2>
               <Info label={tr("Phone", "Telefonas", "Телефон")} value={user.phone || "—"} />
+              {phoneOff ? (
+                <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-muted p-4">
+                  <div className="font-bold">{user.phone ? tr("Change phone number", "Keisti telefono numerį", "Изменить номер телефона") : tr("Add a phone number to publish listings", "Pridėkite telefoną, kad galėtumėte skelbti", "Добавьте телефон, чтобы публиковать объявления")}</div>
+                  <Link href="/verify-phone?return=/account/profile" className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-black">{user.phone ? tr("Change", "Keisti", "Изменить") : tr("Add", "Pridėti", "Добавить")}</Link>
+                </div>
+              ) : (
               <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-muted p-4">
                 <div>
                   <div className="font-bold">{tr("Phone verification", "Telefono patvirtinimas", "Подтверждение телефона")}</div>
@@ -73,6 +81,7 @@ export default function ProfilePage() {
                 </div>
                 {!user.phoneVerified && <Link href="/verify-phone?return=/account/profile" className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-black">{tr("Verify", "Patvirtinti", "Подтвердить")}</Link>}
               </div>
+              )}
             </section>
             <CredentialsSection user={user} tr={tr} onEmailChanged={(email) => setUser({ ...user, email })} />
             <Link href="/account/favorites" className="rounded-2xl border border-border bg-card p-6 transition hover:border-accent"><div className="text-xl font-bold">{tr("Favorites", "Mėgstami", "Избранное")}</div><p className="mt-2 text-muted-foreground">{tr("Cars you saved.", "Išsaugoti automobiliai.", "Сохранённые автомобили.")}</p></Link>
