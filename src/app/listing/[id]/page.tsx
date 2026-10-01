@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import Link from "next/link";
@@ -9,8 +8,7 @@ import { getListingById, type ListingDetail } from "@/lib/listings";
 import { useLanguage } from "@/context/LanguageContext";
 import ListingActions from "@/components/ListingActions";
 import AssetIcon from "@/components/ui/AssetIcon";
-
-const FALLBACK_IMAGE = "/images/no-photo.svg";
+import ListingGallery from "@/components/ListingGallery";
 
 function formatPrice(value: number) {
   return new Intl.NumberFormat("lt-LT", {
@@ -141,28 +139,7 @@ export default function ListingDetailsPage() {
 
       <div className="grid grid-cols-1 gap-7 lg:grid-cols-12">
         <section className="lg:col-span-7">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {(images.length ? images : [FALLBACK_IMAGE]).map(
-              (src, index) => (
-                <div
-                  key={`${src}-${index}`}
-                  className={`relative overflow-hidden rounded-2xl bg-muted ring-1 ring-border ${
-                    index === 0 ? "sm:col-span-2 h-[420px]" : "h-52"
-                  }`}
-                >
-                  <img
-                    src={src}
-                    alt={`${data.title} ${index + 1}`}
-                    className="absolute inset-0 h-full w-full object-cover"
-                    onError={(event) => {
-                      event.currentTarget.onerror = null;
-                      event.currentTarget.src = FALLBACK_IMAGE;
-                    }}
-                  />
-                </div>
-              )
-            )}
-          </div>
+          <ListingGallery images={images} title={data.title} />
         </section>
 
         <aside className="space-y-5 lg:col-span-5">
