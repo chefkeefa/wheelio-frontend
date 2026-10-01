@@ -93,7 +93,7 @@ export default function ListingDetailsPage() {
 
   if (loading) {
     return (
-      <main className="container mx-auto min-h-[55vh] px-4 py-10 text-foreground">
+      <main className="page min-h-[55vh] text-foreground">
         {tr("Loading...", "Kraunama...", "Загрузка...")}
       </main>
     );
@@ -101,7 +101,7 @@ export default function ListingDetailsPage() {
 
   if (!data) {
     return (
-      <main className="container mx-auto min-h-[55vh] px-4 py-10 text-foreground">
+      <main className="page min-h-[55vh] text-foreground">
         <div className="mx-auto max-w-xl rounded-2xl bg-card p-8 ring-1 ring-border">
           <h1 className={`${anybody.className} text-2xl font-extrabold`}>
             {tr(
@@ -122,7 +122,7 @@ export default function ListingDetailsPage() {
 
           <Link
             href="/"
-            className="mt-6 inline-flex rounded-lg bg-accent px-5 py-3 font-semibold text-black"
+            className="mt-6 inline-flex rounded-lg bg-accent px-5 py-3 font-semibold text-accent-foreground"
           >
             {tr(
               "Back to listings",
@@ -161,22 +161,22 @@ export default function ListingDetailsPage() {
   ].filter((row): row is { label: string; value: string } => Boolean(row.value));
 
   return (
-    <main className="container mx-auto px-4 py-8 text-foreground">
+    <main className="mx-auto w-full max-w-7xl px-4 pt-6 sm:px-6 md:pt-8 lg:px-8 text-foreground">
       <Link
         href="/"
-        className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <AssetIcon name="arrow-left" size={16} />
         {tr("Back to listings", "Grįžti į skelbimus", "Назад к объявлениям")}
       </Link>
 
-      <div className="grid grid-cols-1 gap-7 lg:grid-cols-12 lg:grid-rows-[auto_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 lg:grid-rows-[auto_1fr]">
         <section className="lg:col-span-7">
           <ListingGallery images={images} title={data.title} />
         </section>
 
-        <aside className="space-y-5 lg:col-span-5 lg:col-start-8 lg:row-span-2 lg:row-start-1">
-          <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
+        <aside className="space-y-6 lg:col-span-5 lg:col-start-8 lg:row-span-2 lg:row-start-1">
+          <div className="rounded-2xl bg-card p-5 shadow-card ring-1 ring-border sm:p-6">
             <h1
               className={`${anybody.className} text-3xl font-extrabold text-foreground`}
             >
@@ -184,14 +184,14 @@ export default function ListingDetailsPage() {
             </h1>
 
             <div
-              className={`${anybody.className} mt-3 text-3xl font-extrabold text-accent`}
+              className={`${anybody.className} mt-2 text-3xl font-extrabold text-accent-ink`}
             >
               {formatPrice(data.price)}
             </div>
 
             <dl className="mt-5 divide-y divide-border text-[15px]">
               {summary.map((row) => (
-                <div key={row.label} className="flex gap-4 py-2">
+                <div key={row.label} className="flex gap-4 py-2.5">
                   <dt className="w-[42%] shrink-0 text-muted-foreground">{row.label}</dt>
                   <dd className="font-semibold text-foreground">{row.value}</dd>
                 </div>
@@ -204,8 +204,8 @@ export default function ListingDetailsPage() {
           <LeasingCalculator price={data.price} year={data.year} />
 
           {data.description && (
-            <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
-              <h2 className="mb-3 text-lg font-bold">
+            <div className="rounded-2xl bg-card p-5 shadow-card ring-1 ring-border sm:p-6">
+              <h2 className="mb-3 text-xl font-bold">
                 {tr("Description", "Aprašymas", "Описание")}
               </h2>
               <p className="whitespace-pre-line text-[15px] leading-relaxed text-muted-foreground">
@@ -215,9 +215,9 @@ export default function ListingDetailsPage() {
           )}
         </aside>
 
-        <section className="space-y-5 lg:col-span-7 lg:col-start-1 lg:row-start-2">
+        <section className="space-y-6 lg:col-span-7 lg:col-start-1 lg:row-start-2">
           {optionGroups.length > 0 && (
-            <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
+            <div className="rounded-2xl bg-card p-5 shadow-card ring-1 ring-border sm:p-6">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-xl font-bold">
                   {tr("Equipment", "Komplektacija", "Комплектация")}
@@ -248,7 +248,7 @@ export default function ListingDetailsPage() {
                     <ul className="space-y-1.5 text-[15px]">
                       {group.options.map((option) => (
                         <li key={option.key} className="flex items-start gap-2">
-                          <AssetIcon name="check" size={16} className="mt-0.5 shrink-0 text-accent" />
+                          <AssetIcon name="check" size={16} className="mt-0.5 shrink-0 text-accent-ink" />
                           <span>{tr(option.en, option.lt, option.ru)}</span>
                         </li>
                       ))}
@@ -260,7 +260,7 @@ export default function ListingDetailsPage() {
           )}
 
           {sections.length > 0 && (
-            <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
+            <div className="rounded-2xl bg-card p-5 shadow-card ring-1 ring-border sm:p-6">
               <h2 className="text-xl font-bold">
                 {tr("Specifications", "Techniniai duomenys", "Характеристики")}
               </h2>

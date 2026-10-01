@@ -401,9 +401,9 @@ export default function RulesPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="container mx-auto max-w-5xl px-4 py-10 md:py-14">
+      <div className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 md:py-14 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-5xl font-extrabold tracking-tight md:text-7xl">
+          <h1 className="page-title">
             {copy.title}
           </h1>
           <p className="mt-4 max-w-3xl text-lg leading-8 text-muted-foreground">
@@ -413,7 +413,7 @@ export default function RulesPage() {
         </div>
 
         <section className="mb-6 rounded-2xl border border-accent/70 bg-card p-6 shadow-sm md:p-8">
-          <h2 className="text-2xl font-bold text-accent">{copy.introTitle}</h2>
+          <h2 className="text-2xl font-bold text-accent-ink">{copy.introTitle}</h2>
           <p className="mt-3 leading-7 text-foreground/90">{copy.intro}</p>
         </section>
 

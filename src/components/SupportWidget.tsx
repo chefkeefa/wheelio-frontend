@@ -179,7 +179,7 @@ export default function SupportWidget() {
         }`}
         aria-hidden={!open}
       >
-        <div className="flex items-center justify-between bg-[#d9a339] px-5 py-4 text-black">
+        <div className="flex items-center justify-between bg-accent px-5 py-4 text-accent-foreground">
           <div>
             <div className="flex items-center gap-2 font-extrabold">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white/70" />
@@ -202,7 +202,7 @@ export default function SupportWidget() {
         <div className="h-[min(350px,40dvh)] min-h-40 space-y-3 overflow-y-auto bg-background/70 p-4">
           <div className="flex justify-start">
             <div className="max-w-[88%] rounded-2xl rounded-bl-md bg-muted px-4 py-3 text-sm leading-relaxed text-foreground">
-              <div className="mb-1 text-[11px] font-bold text-accent">
+              <div className="mb-1 text-[11px] font-bold text-accent-ink">
                 {tr("Support", "Pagalba", "Поддержка")}
               </div>
               {tr(
@@ -223,7 +223,7 @@ export default function SupportWidget() {
                 <div
                   className={`max-w-[88%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                     own
-                      ? "rounded-br-md bg-[#d9a339] text-black"
+                      ? "rounded-br-md bg-accent text-accent-foreground"
                       : "rounded-bl-md bg-muted text-foreground"
                   }`}
                 >
@@ -265,7 +265,7 @@ export default function SupportWidget() {
               type="submit"
               disabled={!chat || loading || !draft.trim()}
               aria-label={tr("Send", "Siųsti", "Отправить")}
-              className="grid h-11 place-items-center rounded-xl bg-[#d9a339] px-4 text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+              className="grid h-11 place-items-center rounded-xl bg-accent px-4 text-accent-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <AssetIcon name="send" size={20} />
             </button>
@@ -276,7 +276,7 @@ export default function SupportWidget() {
           <Link
             href="/help"
             onClick={() => setOpen(false)}
-            className="mt-2 block text-center text-xs font-semibold text-muted-foreground hover:text-accent"
+            className="mt-2 block text-center text-xs font-semibold text-muted-foreground hover:text-accent-ink"
           >
             {tr(
               "Open Help center",
@@ -290,7 +290,7 @@ export default function SupportWidget() {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="pointer-events-auto relative grid h-14 w-14 touch-manipulation place-items-center rounded-full bg-[#d9a339] text-black shadow-xl ring-1 ring-black/10 transition duration-200 hover:scale-105 sm:h-16 sm:w-16"
+        className="pointer-events-auto relative grid h-14 w-14 touch-manipulation place-items-center rounded-full bg-accent text-accent-foreground shadow-xl ring-1 ring-black/10 transition duration-200 hover:scale-105 sm:h-16 sm:w-16"
         aria-label={tr("Open support", "Atidaryti pagalbą", "Открыть поддержку")}
       >
         {open ? <AssetIcon name="close" size={28} /> : <AssetIcon name="support-chat" size={26} />}

@@ -40,8 +40,8 @@ export default function Button({
     "inline-flex touch-manipulation cursor-pointer items-center justify-center gap-2 rounded-lg transition-colors duration-200 select-none active:scale-[0.98]";
   const variants: Record<Variant, string> = {
     // как договорились: серый → при hover оранжевый
-    primary: "bg-[#5f5f5f] font-semibold text-white hover:bg-[#d9a339]",
-    ghost: "bg-transparent font-semibold text-foreground hover:text-accent",
+    primary: "bg-primary font-semibold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground",
+    ghost: "bg-transparent font-semibold text-foreground hover:text-accent-ink",
     link: "bg-transparent font-medium text-[hsl(var(--accent))] hover:underline p-0",
     outline:
       "bg-transparent border border-[hsl(var(--border))] text-foreground hover:bg-muted",

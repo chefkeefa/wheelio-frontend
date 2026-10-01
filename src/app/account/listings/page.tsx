@@ -89,13 +89,13 @@ export default function MyListingsPage() {
 
   return (
     <main className="min-h-[70vh] bg-background text-foreground">
-      <div className="container mx-auto max-w-6xl px-4 py-10">
+      <div className="container mx-auto max-w-6xl px-4 py-10 sm:px-6 md:py-14 lg:px-8">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-extrabold md:text-5xl">{tr("My listings", "Mano skelbimai", "Мои объявления")}</h1>
+            <h1 className="page-title">{tr("My listings", "Mano skelbimai", "Мои объявления")}</h1>
             <p className="mt-2 text-muted-foreground">{tr("Manage the cars you are selling on Wheelio.", "Valdykite Wheelio parduodamus automobilius.", "Управляйте автомобилями, которые вы продаёте на Wheelio.")}</p>
           </div>
-          <Link href="/sell" className="rounded-xl bg-accent px-5 py-3 font-bold text-black transition hover:brightness-95">+ {tr("Sell a car", "Parduoti automobilį", "Продать автомобиль")}</Link>
+          <Link href="/sell" className="rounded-xl bg-accent px-5 py-3 font-bold text-accent-foreground transition hover:brightness-95">+ {tr("Sell a car", "Parduoti automobilį", "Продать автомобиль")}</Link>
         </div>
 
         {error && <div className="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-500">{error}</div>}
@@ -106,7 +106,7 @@ export default function MyListingsPage() {
           <div className="rounded-2xl border border-border bg-card p-10 text-center">
             <h2 className="text-2xl font-bold">{tr("You have no listings yet", "Dar neturite skelbimų", "У вас пока нет объявлений")}</h2>
             <p className="mt-2 text-muted-foreground">{tr("Create your first car listing and it will appear here.", "Sukurkite pirmą automobilio skelbimą ir jis atsiras čia.", "Создайте первое объявление автомобиля, и оно появится здесь.")}</p>
-            <Link href="/sell" className="mt-6 inline-flex rounded-xl bg-accent px-5 py-3 font-bold text-black">{tr("Create listing", "Sukurti skelbimą", "Создать объявление")}</Link>
+            <Link href="/sell" className="mt-6 inline-flex rounded-xl bg-accent px-5 py-3 font-bold text-accent-foreground">{tr("Create listing", "Sukurti skelbimą", "Создать объявление")}</Link>
           </div>
         ) : (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -118,12 +118,12 @@ export default function MyListingsPage() {
                 </div>
                 <div className="p-5">
                   <h2 className="text-xl font-extrabold">{item.title}</h2>
-                  <div className="mt-2 text-xl font-extrabold text-accent">{formatPrice(item.price)}</div>
+                  <div className="mt-2 text-xl font-extrabold text-accent-ink">{formatPrice(item.price)}</div>
                   <div className="mt-2 text-sm text-muted-foreground">{formatMileage(item.mileage)} km{item.createdAt ? ` · ${new Date(item.createdAt).toLocaleDateString(language === "LT" ? "lt-LT" : language === "RU" ? "ru-RU" : "en-GB")}` : ""}</div>
 
                   <div className="mt-5 flex flex-wrap gap-2">
                     {item.status === "ACTIVE" && <Link href={`/listing/${item.id}`} className="rounded-lg border border-border px-4 py-2 text-sm font-bold hover:border-accent">{tr("Open", "Atidaryti", "Открыть")}</Link>}
-                    {item.status === "PENDING_PAYMENT" && <button disabled={busyId === item.id} onClick={() => pay(item.id)} className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-black disabled:opacity-50">{paymentsOff ? tr("Publish", "Paskelbti", "Опубликовать") : tr("Pay & publish", "Apmokėti ir paskelbti", "Оплатить и опубликовать")}</button>}
+                    {item.status === "PENDING_PAYMENT" && <button disabled={busyId === item.id} onClick={() => pay(item.id)} className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground disabled:opacity-50">{paymentsOff ? tr("Publish", "Paskelbti", "Опубликовать") : tr("Pay & publish", "Apmokėti ir paskelbti", "Оплатить и опубликовать")}</button>}
                     {item.status === "ACTIVE" && <button disabled={busyId === item.id} onClick={() => changeStatus(item.id, "SOLD")} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{tr("Mark as sold", "Pažymėti kaip parduotą", "Отметить проданным")}</button>}
                     {(item.status === "ACTIVE" || item.status === "PENDING_PAYMENT") && <button disabled={busyId === item.id} onClick={() => changeStatus(item.id, "CLOSED")} className="rounded-lg border border-border px-4 py-2 text-sm font-bold text-muted-foreground hover:text-foreground disabled:opacity-50">{tr("Take down", "Išimti", "Снять")}</button>}
                     {item.status !== "SOLD" && item.status !== "CLOSED" && <button onClick={() => setEditingId(editingId === item.id ? null : item.id)} className="rounded-lg border border-border px-4 py-2 text-sm font-bold hover:border-accent">{tr("Edit", "Redaguoti", "Редактировать")}</button>}
@@ -150,7 +150,7 @@ function StatusBadge({ status, language, paymentsOff }: { status?: ListingStatus
     ACTIVE: "bg-emerald-600 text-white",
     SOLD: "bg-blue-600 text-white",
     CLOSED: "bg-zinc-700 text-white",
-    PENDING_PAYMENT: "bg-accent text-black",
+    PENDING_PAYMENT: "bg-accent text-accent-foreground",
   };
   const key = status || "CLOSED";
   const label = labels[key] || labels.CLOSED;
@@ -258,13 +258,13 @@ function EditListingPanel({
             </div>
           ))}
         </div>
-        <label className="mt-2 inline-block cursor-pointer text-sm font-semibold text-accent">
+        <label className="mt-2 inline-block cursor-pointer text-sm font-semibold text-accent-ink">
           + {tr("Add photos", "Pridėti nuotraukų", "Добавить фото")}
           <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" disabled={saving} onChange={(e) => { addPhotos(e.target.files); e.target.value = ""; }} />
         </label>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <button disabled={saving} className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-black disabled:opacity-60">
+      <button disabled={saving} className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground disabled:opacity-60">
         {saving ? "…" : tr("Save changes", "Išsaugoti", "Сохранить")}
       </button>
     </form>

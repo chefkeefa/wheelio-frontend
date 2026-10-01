@@ -45,8 +45,8 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="flex min-h-[70vh] items-center justify-center bg-background px-4 py-12 text-foreground">
-      <div className="w-full max-w-xl rounded-2xl border-2 border-accent bg-card p-8">
-        <h1 className="mb-3 text-4xl font-bold">{tr("Reset password", "Atkurti slaptažodį", "Восстановить пароль")}</h1>
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-card sm:p-10">
+        <h1 className="mb-3 text-3xl font-bold tracking-tight md:text-4xl">{tr("Reset password", "Atkurti slaptažodį", "Восстановить пароль")}</h1>
 
         {availability === "loading" && <p className="text-muted-foreground">…</p>}
 
@@ -84,10 +84,10 @@ export default function ForgotPasswordPage() {
               autoComplete="email"
               required
               placeholder="someone@example.com"
-              className="mb-4 h-12 w-full rounded-lg bg-[#cecece] px-4 text-black outline-none focus:ring-2 focus:ring-accent"
+              className="mb-4 h-12 w-full rounded-lg bg-muted px-4 text-foreground ring-1 ring-inset ring-border placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-accent"
             />
             {error && <div className="mb-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-600">{error}</div>}
-            <button disabled={sending || !email.trim()} className="h-12 w-full rounded-lg bg-[#5f5f5f] font-semibold text-white hover:bg-accent disabled:opacity-50">
+            <button disabled={sending || !email.trim()} className="h-12 w-full rounded-lg bg-primary font-semibold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-50">
               {sending ? "…" : tr("Send reset link", "Siųsti atkūrimo nuorodą", "Отправить ссылку")}
             </button>
           </form>
@@ -103,7 +103,7 @@ export default function ForgotPasswordPage() {
           </div>
         )}
 
-        <Link href="/auth/login" className="mt-5 block text-center font-semibold text-foreground hover:text-accent">
+        <Link href="/auth/login" className="mt-5 block text-center font-semibold text-foreground hover:text-accent-ink">
           {tr("Back to login", "Grįžti į prisijungimą", "Вернуться ко входу")}
         </Link>
       </div>

@@ -179,7 +179,7 @@ export default function HomePage() {
   return (
     <div>
       <section className="relative">
-        <div className="relative h-[420px] overflow-hidden rounded-2xl sm:h-[500px] md:h-[600px] md:rounded-none lg:h-[620px]">
+        <div className="relative h-[420px] overflow-hidden rounded-b-[28px] sm:h-[500px] md:h-[600px] md:rounded-none lg:h-[620px]">
           <img
             src="/images/hero.jpg"
             alt="Wheelio"
@@ -187,9 +187,10 @@ export default function HomePage() {
             loading="eager"
           />
 
-          <div className="absolute inset-0 bg-black/30" />
-          <div className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-black/90 via-black/60 to-transparent sm:w-[75%] md:w-[60%]" />
-          <div className="absolute inset-x-0 bottom-0 hidden h-40 bg-gradient-to-t from-black/60 to-transparent md:block" />
+          <div className="absolute inset-0 bg-ink/30" />
+          <div className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-ink/95 via-ink/65 to-transparent sm:w-[75%] md:w-[60%]" />
+          <div className="absolute inset-x-0 bottom-0 hidden h-40 bg-gradient-to-t from-ink/70 to-transparent md:block" />
+          <div className="absolute inset-x-0 bottom-0 hidden h-20 bg-gradient-to-t from-background to-transparent md:block" />
 
           <div className="container relative pt-6 md:pt-24 lg:pt-28">
             <p className="mb-4 hidden items-center gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/80 md:flex">

@@ -40,8 +40,8 @@ export default function FavoritesPage() {
 
   return (
     <main className="min-h-[70vh] bg-background text-foreground">
-      <div className="container mx-auto max-w-6xl px-4 py-10">
-        <h1 className="text-4xl font-extrabold md:text-5xl">{tr("Favorites", "Mėgstami", "Избранное")}</h1>
+      <div className="container mx-auto max-w-6xl px-4 py-10 sm:px-6 md:py-14 lg:px-8">
+        <h1 className="page-title">{tr("Favorites", "Mėgstami", "Избранное")}</h1>
         {error && <div className="mt-5 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-500">{error}</div>}
         {loading ? (
           <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -53,7 +53,7 @@ export default function FavoritesPage() {
             <p className="mt-2 text-muted-foreground">
               {tr("Press “Add to favorites” on a listing to save it here.", "Skelbime paspauskite „Pridėti į mėgstamus“.", "Нажмите «Добавить в избранное» на странице объявления.")}
             </p>
-            <Link href="/" className="mt-6 inline-flex rounded-xl bg-accent px-5 py-3 font-bold text-black">{tr("Browse cars", "Žiūrėti automobilius", "Смотреть автомобили")}</Link>
+            <Link href="/" className="mt-6 inline-flex rounded-xl bg-accent px-5 py-3 font-bold text-accent-foreground">{tr("Browse cars", "Žiūrėti automobilius", "Смотреть автомобили")}</Link>
           </div>
         ) : (
           <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">

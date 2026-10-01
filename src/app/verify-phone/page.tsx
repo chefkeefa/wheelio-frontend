@@ -27,9 +27,9 @@ function VerifyPhonePageInner() {
   }
 
   return (
-    <main className="container min-h-[60vh] py-12 text-foreground">
-      <div className="mx-auto max-w-xl rounded-2xl bg-card p-7 ring-1 ring-border">
-        <h1 className="mb-3 text-4xl font-bold">{off ? tr("Add phone", "Pridėti telefoną", "Добавить телефон") : tr("Verify phone", "Patvirtinti telefoną", "Подтвердить телефон")}</h1>
+    <main className="page min-h-[60vh] text-foreground">
+      <div className="mx-auto max-w-md rounded-2xl bg-card p-6 shadow-card ring-1 ring-border sm:p-10">
+        <h1 className="mb-3 text-3xl font-bold tracking-tight md:text-4xl">{off ? tr("Add phone", "Pridėti telefoną", "Добавить телефон") : tr("Verify phone", "Patvirtinti telefoną", "Подтвердить телефон")}</h1>
         <p className="mb-5 text-muted-foreground">
           {off
             ? tr(

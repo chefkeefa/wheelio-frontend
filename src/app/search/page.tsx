@@ -73,8 +73,8 @@ function SearchInner() {
   };
 
   return (
-    <section className="container space-y-6 py-4 md:py-8">
-      <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-[32px] md:leading-10">
+    <section className="page space-y-8">
+      <h1 className="page-title">
         {tr("Cars for sale", "Parduodami automobiliai", "Автомобили в продаже")}
       </h1>
 

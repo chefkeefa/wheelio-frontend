@@ -106,13 +106,13 @@ export default function ListingActions({ listingId }: { listingId: string }) {
   };
 
   return (
-    <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
+    <div className="rounded-2xl bg-card p-5 shadow-card ring-1 ring-border sm:p-6">
       {contact ? (
         <div className="rounded-lg bg-muted p-4">
           <div className="text-xs text-muted-foreground">{tr("Seller", "Pardavėjas", "Продавец")}</div>
           <div className="mt-1 font-semibold">{contact.name || "—"}</div>
           {contact.phone ? (
-            <a href={`tel:${contact.phone}`} className="mt-2 block text-xl font-extrabold text-accent">
+            <a href={`tel:${contact.phone}`} className="mt-2 block text-xl font-extrabold text-accent-ink">
               {contact.phone}
             </a>
           ) : (
@@ -129,7 +129,7 @@ export default function ListingActions({ listingId }: { listingId: string }) {
         <button
           onClick={showContact}
           disabled={busy === "contact"}
-          className="w-full rounded-lg bg-accent px-5 py-3 font-bold text-black disabled:opacity-60"
+          className="w-full rounded-lg bg-accent px-5 py-3 font-bold text-accent-foreground disabled:opacity-60"
         >
           {user === null
             ? tr("Sign in to contact the seller", "Prisijunkite, kad susisiektumėte", "Войдите, чтобы связаться с продавцом")

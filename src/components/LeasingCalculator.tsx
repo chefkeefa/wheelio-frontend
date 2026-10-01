@@ -27,7 +27,7 @@ export default function LeasingCalculator({ price, year }: { price: number; year
 
   if (!terms.length) {
     return (
-      <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
+      <div className="rounded-2xl bg-card p-5 shadow-card ring-1 ring-border sm:p-6">
         <h2 className="text-lg font-bold">{title}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           {tr(
@@ -46,14 +46,14 @@ export default function LeasingCalculator({ price, year }: { price: number; year
   const estimate = leasingEstimate(price, down, annualRate, effectiveTerm);
 
   return (
-    <div className="rounded-2xl bg-card p-6 ring-1 ring-border">
+    <div className="rounded-2xl bg-card p-5 shadow-card ring-1 ring-border sm:p-6">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-lg font-bold">{title}</h2>
         <span className="text-xs text-muted-foreground">{tr("estimate", "preliminariai", "примерно")}</span>
       </div>
 
       <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-3xl font-extrabold text-accent">{eur(estimate.monthly)}</span>
+        <span className="text-3xl font-extrabold text-accent-ink">{eur(estimate.monthly)}</span>
         <span className="text-sm text-muted-foreground">{tr("/ month", "/ mėn.", "/ мес.")}</span>
       </div>
 
@@ -89,7 +89,7 @@ export default function LeasingCalculator({ price, year }: { price: number; year
                 onClick={() => setTerm(t)}
                 aria-pressed={t === effectiveTerm}
                 className={`rounded-lg px-3 py-1.5 font-semibold ring-1 transition ${
-                  t === effectiveTerm ? "bg-accent text-black ring-accent" : "bg-muted text-foreground ring-border hover:ring-foreground/40"
+                  t === effectiveTerm ? "bg-accent text-accent-foreground ring-accent" : "bg-muted text-foreground ring-border hover:ring-foreground/40"
                 }`}
               >
                 {t} {tr("mo", "mėn.", "мес.")}

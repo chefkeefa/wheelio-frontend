@@ -21,12 +21,12 @@ export default function HelpPage() {
   const [tab, setTab] = useState<"live" | "ticket">("live");
 
   return (
-    <main className="container py-12 text-foreground">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="mb-3 text-5xl font-bold">
+    <div className="page text-foreground">
+      <div className="mx-auto max-w-3xl">
+        <h1 className="page-title">
           {tr("Help & support", "Pagalba", "Помощь и поддержка")}
         </h1>
-        <p className="mb-7 text-muted-foreground">
+        <p className="page-lead">
           {tr(
             "Chat with support in real time or send a ticket if your question is not urgent.",
             "Kalbėkitės su pagalba realiuoju laiku arba išsiųskite užklausą, jei klausimas nėra skubus.",
@@ -34,16 +34,16 @@ export default function HelpPage() {
           )}
         </p>
 
-        <div className="mb-5 flex gap-2 rounded-xl bg-muted p-1">
+        <div className="mb-6 mt-8 flex gap-1 rounded-xl bg-muted p-1">
           <button
             onClick={() => setTab("live")}
-            className={`flex-1 rounded-lg px-4 py-3 font-bold transition ${tab === "live" ? "bg-accent text-black" : "hover:bg-background"}`}
+            className={`flex-1 rounded-lg px-4 py-3 font-bold transition ${tab === "live" ? "bg-accent text-accent-foreground" : "hover:bg-background"}`}
           >
             {tr("Live chat", "Pokalbis gyvai", "Онлайн-чат")}
           </button>
           <button
             onClick={() => setTab("ticket")}
-            className={`flex-1 rounded-lg px-4 py-3 font-bold transition ${tab === "ticket" ? "bg-accent text-black" : "hover:bg-background"}`}
+            className={`flex-1 rounded-lg px-4 py-3 font-bold transition ${tab === "ticket" ? "bg-accent text-accent-foreground" : "hover:bg-background"}`}
           >
             {tr("Send a ticket", "Siųsti užklausą", "Отправить обращение")}
           </button>
@@ -51,7 +51,7 @@ export default function HelpPage() {
 
         {tab === "live" ? <LiveChat tr={tr} /> : <TicketForm tr={tr} />}
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -64,7 +64,7 @@ function LiveChat({ tr }: { tr: (en: string, lt: string, ru: string) => string }
   const [error, setError] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  const input = "h-11 w-full rounded-lg bg-[#cecece] px-3 text-black outline-none focus:ring-2 focus:ring-accent";
+  const input = "h-11 w-full rounded-lg bg-muted px-3 text-foreground ring-1 ring-inset ring-border placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-accent";
 
   useEffect(() => {
     try {
@@ -169,7 +169,7 @@ function LiveChat({ tr }: { tr: (en: string, lt: string, ru: string) => string }
         <input className={input} type="email" placeholder="E-mail" value={identity.email} onChange={(e) => setIdentity({ ...identity, email: e.target.value })} />
         <input className={`${input} md:col-span-2`} placeholder={tr("Phone (optional)", "Telefonas (nebūtina)", "Телефон (необязательно)")} value={identity.phone} onChange={(e) => setIdentity({ ...identity, phone: e.target.value })} />
         {error && <div className="md:col-span-2 text-red-500">{error}</div>}
-        <button disabled={loading} className="md:col-span-2 h-12 rounded-lg bg-[#5f5f5f] font-bold text-white hover:bg-accent disabled:opacity-60">
+        <button disabled={loading} className="md:col-span-2 h-12 rounded-lg bg-primary font-bold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-60">
           {loading ? "…" : tr("Start live chat", "Pradėti pokalbį", "Начать онлайн-чат")}
         </button>
       </form>
@@ -194,7 +194,7 @@ function LiveChat({ tr }: { tr: (en: string, lt: string, ru: string) => string }
           const system = message.sender === "SYSTEM";
           return (
             <div key={message.id} className={`flex ${system ? "justify-center" : own ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${system ? "bg-muted text-muted-foreground" : own ? "bg-accent text-black" : "bg-muted text-foreground"}`}>
+              <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${system ? "bg-muted text-muted-foreground" : own ? "bg-accent text-accent-foreground" : "bg-muted text-foreground"}`}>
                 {!system && <div className="mb-1 text-[11px] font-bold opacity-70">{own ? tr("You", "Jūs", "Вы") : tr("Support", "Pagalba", "Поддержка")}</div>}
                 <div className="whitespace-pre-wrap">{message.message}</div>
               </div>
@@ -212,7 +212,7 @@ function LiveChat({ tr }: { tr: (en: string, lt: string, ru: string) => string }
           placeholder={tr("Write a message…", "Rašykite žinutę…", "Напишите сообщение…")}
           className="h-12 flex-1 rounded-lg border border-border bg-background px-4 outline-none focus:ring-2 focus:ring-accent"
         />
-        <button className="rounded-lg bg-accent px-5 font-bold text-black">{tr("Send", "Siųsti", "Отправить")}</button>
+        <button className="rounded-lg bg-accent px-5 font-bold text-accent-foreground">{tr("Send", "Siųsti", "Отправить")}</button>
       </form>
       {error && <div className="px-4 pb-4 text-sm text-red-500">{error}</div>}
     </div>
@@ -225,7 +225,7 @@ function TicketForm({ tr }: { tr: (en: string, lt: string, ru: string) => string
   const [ticket, setTicket] = useState<number | null>(null);
   const [error, setError] = useState("");
   const set = (k: string, v: string) => setF((x) => ({ ...x, [k]: v }));
-  const input = "h-11 w-full rounded-lg bg-[#cecece] px-3 text-black outline-none focus:ring-2 focus:ring-accent";
+  const input = "h-11 w-full rounded-lg bg-muted px-3 text-foreground ring-1 ring-inset ring-border placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-accent";
 
   async function submit(e: FormEvent) {
     e.preventDefault(); setError(""); setLoading(true);
@@ -251,10 +251,10 @@ function TicketForm({ tr }: { tr: (en: string, lt: string, ru: string) => string
         <option value="technical">{tr("Technical problem", "Techninė problema", "Техническая проблема")}</option>
       </select>
       <input className={`${input} md:col-span-2`} required placeholder={tr("Subject", "Tema", "Тема")} value={f.subject} onChange={(e) => set("subject", e.target.value)} />
-      <textarea className="min-h-40 rounded-lg bg-[#cecece] p-3 text-black md:col-span-2" required maxLength={5000} placeholder={tr("Describe the problem", "Aprašykite problemą", "Опишите проблему")} value={f.message} onChange={(e) => set("message", e.target.value)} />
+      <textarea className="min-h-40 rounded-lg bg-muted p-3 text-foreground ring-1 ring-inset ring-border placeholder:text-muted-foreground md:col-span-2" required maxLength={5000} placeholder={tr("Describe the problem", "Aprašykite problemą", "Опишите проблему")} value={f.message} onChange={(e) => set("message", e.target.value)} />
       {error && <div className="md:col-span-2 text-red-600">{error}</div>}
       {ticket && <div className="md:col-span-2 rounded-lg bg-green-500/10 p-3 text-green-600">{tr("Message sent. Ticket", "Žinutė išsiųsta. Užklausa", "Сообщение отправлено. Обращение")} #{ticket}</div>}
-      <button disabled={loading} className="md:col-span-2 h-12 rounded-lg bg-[#5f5f5f] font-bold text-white hover:bg-accent disabled:opacity-60">{loading ? "…" : tr("Send to support", "Siųsti pagalbai", "Отправить в поддержку")}</button>
+      <button disabled={loading} className="md:col-span-2 h-12 rounded-lg bg-primary font-bold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-60">{loading ? "…" : tr("Send to support", "Siųsti pagalbai", "Отправить в поддержку")}</button>
     </form>
   );
 }
