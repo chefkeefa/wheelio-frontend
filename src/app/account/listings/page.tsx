@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/http";
 import { closeListing, deleteListingImage, editListing, getMyListings, type ListingDetail, type ListingStatus } from "@/lib/listings";
-import { startCheckout, uploadListingImage } from "@/lib/pirkApi";
+import { getPaymentConfig, startCheckout, uploadListingImage } from "@/lib/pirkApi";
 import AssetIcon from "@/components/ui/AssetIcon";
 
 const FALLBACK_IMAGE = "/images/no-photo.svg";
@@ -21,6 +21,7 @@ export default function MyListingsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [paymentsOff, setPaymentsOff] = useState(false);
   const [error, setError] = useState("");
 
   const load = async () => {
@@ -41,6 +42,7 @@ export default function MyListingsPage() {
   };
 
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { getPaymentConfig().then((c) => setPaymentsOff(c.paymentsEnabled === false)).catch(() => {}); }, []);
 
   const changeStatus = async (id: string, status: "SOLD" | "CLOSED") => {
     const question =
@@ -65,6 +67,11 @@ export default function MyListingsPage() {
     setError("");
     try {
       const checkout = await startCheckout(Number(id));
+      if (checkout.promoApplied) {
+        setBusyId(null);
+        await load();
+        return;
+      }
       if (checkout.devMode) {
         window.location.href = `/payment/dev?paymentId=${checkout.paymentId}&listingId=${checkout.listingId}&amount=${checkout.amount}`;
         return;
@@ -107,7 +114,7 @@ export default function MyListingsPage() {
               <article key={item.id} className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
                 <div className="relative h-52 bg-muted">
                   <img src={item.thumbnail || FALLBACK_IMAGE} alt={item.title} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_IMAGE; }} />
-                  <StatusBadge status={item.status} language={language} />
+                  <StatusBadge status={item.status} language={language} paymentsOff={paymentsOff} />
                 </div>
                 <div className="p-5">
                   <h2 className="text-xl font-extrabold">{item.title}</h2>
@@ -116,7 +123,7 @@ export default function MyListingsPage() {
 
                   <div className="mt-5 flex flex-wrap gap-2">
                     {item.status === "ACTIVE" && <Link href={`/listing/${item.id}`} className="rounded-lg border border-border px-4 py-2 text-sm font-bold hover:border-accent">{tr("Open", "Atidaryti", "Открыть")}</Link>}
-                    {item.status === "PENDING_PAYMENT" && <button disabled={busyId === item.id} onClick={() => pay(item.id)} className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-black disabled:opacity-50">{tr("Pay & publish", "Apmokėti ir paskelbti", "Оплатить и опубликовать")}</button>}
+                    {item.status === "PENDING_PAYMENT" && <button disabled={busyId === item.id} onClick={() => pay(item.id)} className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-black disabled:opacity-50">{paymentsOff ? tr("Publish", "Paskelbti", "Опубликовать") : tr("Pay & publish", "Apmokėti ir paskelbti", "Оплатить и опубликовать")}</button>}
                     {item.status === "ACTIVE" && <button disabled={busyId === item.id} onClick={() => changeStatus(item.id, "SOLD")} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{tr("Mark as sold", "Pažymėti kaip parduotą", "Отметить проданным")}</button>}
                     {(item.status === "ACTIVE" || item.status === "PENDING_PAYMENT") && <button disabled={busyId === item.id} onClick={() => changeStatus(item.id, "CLOSED")} className="rounded-lg border border-border px-4 py-2 text-sm font-bold text-muted-foreground hover:text-foreground disabled:opacity-50">{tr("Take down", "Išimti", "Снять")}</button>}
                     {item.status !== "SOLD" && item.status !== "CLOSED" && <button onClick={() => setEditingId(editingId === item.id ? null : item.id)} className="rounded-lg border border-border px-4 py-2 text-sm font-bold hover:border-accent">{tr("Edit", "Redaguoti", "Редактировать")}</button>}
@@ -132,12 +139,12 @@ export default function MyListingsPage() {
   );
 }
 
-function StatusBadge({ status, language }: { status?: ListingStatus; language: string }) {
+function StatusBadge({ status, language, paymentsOff }: { status?: ListingStatus; language: string; paymentsOff?: boolean }) {
   const labels: Record<string, [string, string, string]> = {
     ACTIVE: ["Active", "Aktyvus", "Активно"],
     SOLD: ["Sold", "Parduota", "Продано"],
     CLOSED: ["Closed", "Uždarytas", "Закрыто"],
-    PENDING_PAYMENT: ["Payment required", "Laukia apmokėjimo", "Ожидает оплаты"],
+    PENDING_PAYMENT: paymentsOff ? ["Not published", "Nepaskelbtas", "Не опубликовано"] : ["Payment required", "Laukia apmokėjimo", "Ожидает оплаты"],
   };
   const colors: Record<string, string> = {
     ACTIVE: "bg-emerald-600 text-white",
