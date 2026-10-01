@@ -229,7 +229,7 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
       type="button"
       onClick={submit}
       disabled={searching}
-      className={`flex items-center justify-center gap-2.5 whitespace-nowrap font-extrabold text-black transition active:scale-[0.99] disabled:opacity-60 ${className}`}
+      className={`flex items-center justify-center gap-2.5 whitespace-nowrap font-extrabold text-accent-foreground transition active:scale-[0.99] disabled:opacity-60 ${className}`}
     >
       {showLabel}
     </button>
@@ -254,11 +254,11 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
             {parameterCount > 0 && <Badge value={parameterCount} />}
           </button>
         </div>
-        {searchButton("mt-3 min-h-12 w-full rounded-2xl bg-[#d9a339] px-4 text-sm")}
+        {searchButton("mt-3 min-h-12 w-full rounded-2xl bg-accent px-4 text-sm")}
       </div>
 
       {/* Desktop */}
-      <div className="hidden rounded-2xl bg-[#141517]/95 p-6 text-white shadow-2xl ring-1 ring-white/10 backdrop-blur-md md:block lg:p-7">
+      <div className="hidden rounded-2xl bg-ink/95 p-6 text-white shadow-2xl ring-1 ring-white/10 backdrop-blur-md md:block lg:p-7">
         <div className="mb-5 flex items-center justify-between gap-4">
           <div className="inline-flex items-center gap-2.5 border-b-2 border-accent pb-2 text-sm font-semibold text-white">
             <AssetIcon name="car" size={20} className="text-accent" />
@@ -362,7 +362,7 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
               : undefined
           }
           backLabel={tr("Back", "Atgal", "Назад")}
-          footer={searchButton("min-h-12 w-full rounded-2xl bg-[#d9a339] px-4 text-sm")}
+          footer={searchButton("min-h-12 w-full rounded-2xl bg-accent px-4 text-sm")}
         >
           <div className="px-4 pt-4">
             <input
@@ -370,7 +370,7 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
               onChange={(event) => setPickerSearch(event.target.value)}
               placeholder={tr("Search", "Ieškoti", "Поиск")}
               aria-label={tr("Search", "Ieškoti", "Поиск")}
-              className="h-12 w-full rounded-2xl border border-border bg-muted px-4 text-base text-foreground outline-none placeholder:text-muted-foreground focus:border-[#d9a339]"
+              className="h-12 w-full rounded-2xl border border-border bg-muted px-4 text-base text-foreground outline-none placeholder:text-muted-foreground focus:border-accent"
             />
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-3 pt-2">
@@ -412,7 +412,7 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
       )}
 
       {sheet === "city" && (
-        <SheetFrame title={labels.city} closeLabel={labels.close} onClose={() => setSheet(null)} footer={searchButton("min-h-12 w-full rounded-2xl bg-[#d9a339] px-4 text-sm")}>
+        <SheetFrame title={labels.city} closeLabel={labels.close} onClose={() => setSheet(null)} footer={searchButton("min-h-12 w-full rounded-2xl bg-accent px-4 text-sm")}>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-3 pt-2">
             <PickerRow
               label={labels.anyCity}
@@ -438,13 +438,13 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
       )}
 
       {sheet === "year" && (
-        <SheetFrame title={labels.year} closeLabel={labels.close} onClose={() => setSheet(null)} footer={searchButton("min-h-12 w-full rounded-2xl bg-[#d9a339] px-4 text-sm")}>
+        <SheetFrame title={labels.year} closeLabel={labels.close} onClose={() => setSheet(null)} footer={searchButton("min-h-12 w-full rounded-2xl bg-accent px-4 text-sm")}>
           <div className="px-5 py-6">{yearFields(false)}</div>
         </SheetFrame>
       )}
 
       {sheet === "price" && (
-        <SheetFrame title={`${labels.price}, €`} closeLabel={labels.close} onClose={() => setSheet(null)} footer={searchButton("min-h-12 w-full rounded-2xl bg-[#d9a339] px-4 text-sm")}>
+        <SheetFrame title={`${labels.price}, €`} closeLabel={labels.close} onClose={() => setSheet(null)} footer={searchButton("min-h-12 w-full rounded-2xl bg-accent px-4 text-sm")}>
           <div className="px-5 py-6">{priceFields(false)}</div>
         </SheetFrame>
       )}
@@ -465,7 +465,7 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
                 <AssetIcon name="reset" size={16} />
                 {tr("Reset", "Išvalyti", "Сбросить")}
               </button>
-              {searchButton("min-h-12 flex-1 rounded-2xl bg-[#d9a339] px-4 text-sm")}
+              {searchButton("min-h-12 flex-1 rounded-2xl bg-accent px-4 text-sm")}
             </div>
           }
         >
@@ -594,7 +594,7 @@ function ParameterFields({ filters, set, dark = false }: { filters: CarFilters; 
             type="checkbox"
             checked={filters.withPhoto}
             onChange={(event) => set({ withPhoto: event.target.checked })}
-            className="h-5 w-5 shrink-0 cursor-pointer rounded accent-[#d9a339]"
+            className="h-5 w-5 shrink-0 cursor-pointer rounded accent-accent"
           />
           {tr("With photos only", "Tik su nuotraukomis", "Только с фото")}
         </label>
@@ -627,7 +627,7 @@ function RangeSelects({
   const above = (a: string, b: string) => a !== "" && b !== "" && n(a) > n(b);
   const cls = dark
     ? "h-8 min-w-0 flex-1 cursor-pointer appearance-none rounded-md bg-transparent text-sm text-white/80 outline-none focus:text-white"
-    : `${compact ? "h-12" : "h-14"} min-w-0 flex-1 cursor-pointer appearance-none rounded-xl border border-border bg-muted px-4 text-center ${compact ? "text-sm" : "text-lg"} font-semibold text-foreground outline-none focus:border-[#d9a339]`;
+    : `${compact ? "h-12" : "h-14"} min-w-0 flex-1 cursor-pointer appearance-none rounded-xl border border-border bg-muted px-4 text-center ${compact ? "text-sm" : "text-lg"} font-semibold text-foreground outline-none focus:border-accent`;
   const optionCls = dark ? "bg-white text-black" : undefined;
   if (dark) {
     return (
@@ -718,7 +718,7 @@ function RangeInputs({
   const show = (value: string) => (value ? Number(value).toLocaleString("lt-LT") : "");
   const cls = dark
     ? "h-8 w-full min-w-0 bg-transparent text-sm text-white outline-none placeholder:text-white/55"
-    : "h-14 w-full min-w-0 rounded-xl border border-border bg-muted px-4 text-lg font-semibold text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground focus:border-[#d9a339]";
+    : "h-14 w-full min-w-0 rounded-xl border border-border bg-muted px-4 text-lg font-semibold text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground focus:border-accent";
   return (
     <div className={`flex items-center ${dark ? "gap-1.5" : "gap-3"}`}>
       <input inputMode="numeric" aria-label={`${fromLabel}, ${suffix}`} placeholder={fromLabel} value={show(min)} onChange={(e) => onChange(digits(e.target.value), max)} className={cls} />
@@ -742,7 +742,7 @@ function Segmented({ label, value, onChange, options, dark = false }: { label: s
               aria-pressed={active}
               onClick={() => onChange(o.value)}
               className={`min-h-10 min-w-0 flex-1 truncate rounded-lg px-1 text-[13px] font-semibold transition ${
-                active ? "bg-accent text-black shadow-sm" : dark ? "text-white/80 hover:text-white" : "text-foreground"
+                active ? "bg-accent text-accent-foreground shadow-sm" : dark ? "text-white/80 hover:text-white" : "text-foreground"
               }`}
             >
               {o.label}
@@ -789,7 +789,7 @@ function SelectField({ label, value, options, onChange, dark = false }: { label:
           value={value}
           onChange={(event) => onChange(event.target.value)}
           className={`h-12 w-full cursor-pointer appearance-none rounded-xl px-4 pr-10 text-sm font-semibold outline-none ${
-            dark ? "bg-white/[0.06] text-white ring-1 ring-white/10 focus:ring-accent" : "border border-border bg-muted text-foreground focus:border-[#d9a339]"
+            dark ? "bg-white/[0.06] text-white ring-1 ring-white/10 focus:ring-accent" : "border border-border bg-muted text-foreground focus:border-accent"
           }`}
         >
           {options.map((o) => (
@@ -832,7 +832,7 @@ function MobileCell({ label, value, onClick, className = "" }: { label: string; 
 }
 
 function Badge({ value }: { value: number }) {
-  return <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-xs font-extrabold text-black">{value}</span>;
+  return <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-xs font-extrabold text-accent-foreground">{value}</span>;
 }
 
 function PickerRow({ label, selected, onClick, chevron = false }: { label: string; selected: boolean; onClick: () => void; chevron?: boolean }) {
@@ -840,7 +840,7 @@ function PickerRow({ label, selected, onClick, chevron = false }: { label: strin
     <button
       type="button"
       onClick={onClick}
-      className={`flex min-h-12 w-full items-center justify-between gap-3 border-b border-border/70 px-3 text-left text-sm font-semibold ${selected ? "text-[#a56d00] dark:text-[#d9a339]" : "text-foreground"}`}
+      className={`flex min-h-12 w-full items-center justify-between gap-3 border-b border-border/70 px-3 text-left text-sm font-semibold ${selected ? "text-accent-ink dark:text-accent" : "text-foreground"}`}
     >
       <span className="truncate">{label}</span>
       {selected ? <AssetIcon name="check" size={18} className="shrink-0" /> : chevron ? <AssetIcon name="chevron-right" size={16} className="shrink-0 text-muted-foreground" /> : null}

@@ -88,7 +88,7 @@ export default function SellDraftCard({ className = "" }: { className?: string }
           <button type="button" onClick={remove} aria-label={tr("Delete draft", "Ištrinti juodraštį", "Удалить черновик")} className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:text-red-600">
             <AssetIcon name="trash" size={18} />
           </button>
-          <Link href="/sell" className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-accent px-5 font-bold text-black transition hover:brightness-110 sm:flex-none">
+          <Link href="/sell" className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-accent px-5 font-bold text-accent-foreground transition hover:brightness-110 sm:flex-none">
             {tr("Continue", "Tęsti", "Продолжить")}
             <AssetIcon name="arrow-right" size={18} />
           </Link>

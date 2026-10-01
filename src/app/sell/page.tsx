@@ -441,7 +441,7 @@ function formatEUR(n: number) {
 const FIELD =
   "w-full rounded-xl border border-border bg-muted px-4 text-[15px] font-medium text-foreground outline-none transition placeholder:font-normal placeholder:text-muted-foreground/70 focus:border-accent focus:bg-card disabled:cursor-not-allowed disabled:opacity-60";
 const PRIMARY_BUTTON =
-  "inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-accent px-6 text-[15px] font-bold text-black transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-accent px-6 text-[15px] font-bold text-accent-foreground transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60";
 const SECONDARY_BUTTON =
   "inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-border px-5 text-[15px] font-semibold text-foreground transition hover:border-accent disabled:cursor-not-allowed disabled:opacity-60";
 
@@ -509,7 +509,7 @@ function ToggleChip({ on, children, onClick }: { on: boolean; children: React.Re
         on ? "border-accent bg-accent/10 text-foreground" : "border-border text-muted-foreground hover:text-foreground"
       )}
     >
-      <AssetIcon name={on ? "check" : "plus"} size={15} className={on ? "text-accent" : ""} />
+      <AssetIcon name={on ? "check" : "plus"} size={15} className={on ? "text-accent-ink" : ""} />
       {children}
     </button>
   );
@@ -1311,8 +1311,8 @@ export default function SellPage() {
             className="absolute inset-0 h-full w-full object-cover object-[72%_center]"
             loading="eager"
           />
-          <div className="absolute inset-0 bg-black/35" />
-          <div className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-black/90 via-black/60 to-transparent sm:w-[75%] md:w-[60%]" />
+          <div className="absolute inset-0 bg-ink/35" />
+          <div className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-ink/95 via-ink/65 to-transparent sm:w-[75%] md:w-[60%]" />
 
           <div className="container relative pt-8 md:pt-16">
             <p className="mb-3 hidden items-center gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/80 md:flex">
@@ -1376,7 +1376,7 @@ export default function SellPage() {
                       <span
                         className={cx(
                           "flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold",
-                          active ? "bg-accent text-black" : item.done ? "bg-foreground text-background" : "bg-muted text-muted-foreground ring-1 ring-border"
+                          active ? "bg-accent text-accent-foreground" : item.done ? "bg-foreground text-background" : "bg-muted text-muted-foreground ring-1 ring-border"
                         )}
                       >
                         {item.done && !active ? <AssetIcon name="check" size={14} /> : n}
@@ -1564,7 +1564,7 @@ export default function SellPage() {
                             <div className="relative aspect-[4/3] bg-muted">
                               <img src={photoUrl(f)} alt={f.name} className="absolute inset-0 h-full w-full object-cover" />
                               {index === 0 && (
-                                <span className="absolute left-2 top-2 rounded-md bg-accent px-2 py-0.5 text-[11px] font-bold text-black">
+                                <span className="absolute left-2 top-2 rounded-md bg-accent px-2 py-0.5 text-[11px] font-bold text-accent-foreground">
                                   {tr("Cover", "Viršelis", "Обложка")}
                                 </span>
                               )}
@@ -1672,7 +1672,7 @@ export default function SellPage() {
                         </span>
                         <button
                           type="button"
-                          className="font-semibold text-accent hover:underline"
+                          className="font-semibold text-accent-ink hover:underline"
                           onClick={() => setDraft((d) => ({ ...d, features: [...new Set([...featureKeys(d.features), ...factoryOptions.keys])] }))}
                         >
                           {tr("Tick factory equipment", "Pažymėti gamyklinę", "Отметить заводскую")}
@@ -1694,7 +1694,7 @@ export default function SellPage() {
                             >
                               <span>
                                 {tr(group.en, group.lt, group.ru)}
-                                {count > 0 && <span className="ml-2 rounded-full bg-accent/15 px-2 py-0.5 text-xs text-accent">{count}</span>}
+                                {count > 0 && <span className="ml-2 rounded-full bg-accent/15 px-2 py-0.5 text-xs text-accent-ink">{count}</span>}
                               </span>
                               <AssetIcon name="chevron-down" size={16} className={cx("text-muted-foreground transition", open && "rotate-180")} />
                             </button>

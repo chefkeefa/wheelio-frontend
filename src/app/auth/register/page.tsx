@@ -50,10 +50,10 @@ export default function RegisterPage() {
     }
   }
 
-  const input = "h-11 w-full rounded-lg bg-[#cecece] px-3 text-black outline-none focus:ring-2 focus:ring-accent";
+  const input = "h-11 w-full rounded-lg bg-muted px-3 text-foreground ring-1 ring-inset ring-border placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-accent";
   return (
     <main className="bg-background px-4 py-10 text-foreground">
-      <div className="mx-auto max-w-3xl rounded-2xl border-2 border-accent bg-card p-7">
+      <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card shadow-card p-7">
         <h1 className="mb-6 text-center text-5xl font-bold">{tr("Create account", "Sukurti paskyrą", "Создать аккаунт")}</h1>
         <form onSubmit={submit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field label="E-mail">
@@ -104,7 +104,7 @@ export default function RegisterPage() {
             )}
           </p>
           {error && <div className="rounded-lg bg-red-500/10 p-3 text-red-600 md:col-span-2">{error}</div>}
-          <button disabled={loading || (!token && !off)} className="h-12 rounded-lg bg-[#5f5f5f] font-bold text-white hover:bg-accent disabled:opacity-50 md:col-span-2">
+          <button disabled={loading || (!token && !off)} className="h-12 rounded-lg bg-primary font-bold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-50 md:col-span-2">
             {loading ? "…" : tr("Create account", "Sukurti paskyrą", "Создать аккаунт")}
           </button>
         </form>
@@ -124,7 +124,7 @@ export default function RegisterPage() {
             "Для аккаунтов Google телефон подтверждается позже, перед публикацией объявления."
           )}
         </p>
-        <Link href="/auth/login" className="mt-5 block text-center font-semibold hover:text-accent">
+        <Link href="/auth/login" className="mt-5 block text-center font-semibold hover:text-accent-ink">
           {tr("Already have an account?", "Jau turite paskyrą?", "Уже есть аккаунт?")}
         </Link>
       </div>

@@ -30,12 +30,12 @@ export default function FilterDropdown({ label, value, options, onChange, classN
           onChange={(event) => onChange(event.target.value)}
           className={[
             anybody.className,
-            "min-h-11 w-full touch-manipulation appearance-none rounded-xl border border-border bg-[#D9D9D9] px-4 py-2.5 pr-10 text-base outline-none transition-colors focus:border-accent",
-            isAny ? "font-normal text-[#7b7b7b]" : "font-bold text-black",
+            "min-h-11 w-full touch-manipulation appearance-none rounded-xl border border-border bg-muted px-4 py-2.5 pr-10 text-base outline-none transition-colors focus:border-accent",
+            isAny ? "font-normal text-muted-foreground" : "font-bold text-foreground",
           ].join(" ")}
         >
           {options.map((option) => (
-            <option key={option} value={option} className="bg-white font-medium text-black">
+            <option key={option} value={option} className="bg-card font-medium text-foreground">
               {option}
             </option>
           ))}
@@ -44,7 +44,7 @@ export default function FilterDropdown({ label, value, options, onChange, classN
         <AssetIcon
           name="chevron-down"
           size={18}
-          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-black/60"
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
         />
       </div>
     </label>

@@ -413,7 +413,7 @@ export default function RulesPage() {
         </div>
 
         <section className="mb-6 rounded-2xl border border-accent/70 bg-card p-6 shadow-sm md:p-8">
-          <h2 className="text-2xl font-bold text-accent">{copy.introTitle}</h2>
+          <h2 className="text-2xl font-bold text-accent-ink">{copy.introTitle}</h2>
           <p className="mt-3 leading-7 text-foreground/90">{copy.intro}</p>
         </section>
 

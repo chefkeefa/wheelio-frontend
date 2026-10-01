@@ -122,7 +122,7 @@ export default function ListingDetailsPage() {
 
           <Link
             href="/"
-            className="mt-6 inline-flex rounded-lg bg-accent px-5 py-3 font-semibold text-black"
+            className="mt-6 inline-flex rounded-lg bg-accent px-5 py-3 font-semibold text-accent-foreground"
           >
             {tr(
               "Back to listings",
@@ -184,7 +184,7 @@ export default function ListingDetailsPage() {
             </h1>
 
             <div
-              className={`${anybody.className} mt-3 text-3xl font-extrabold text-accent`}
+              className={`${anybody.className} mt-3 text-3xl font-extrabold text-accent-ink`}
             >
               {formatPrice(data.price)}
             </div>
@@ -248,7 +248,7 @@ export default function ListingDetailsPage() {
                     <ul className="space-y-1.5 text-[15px]">
                       {group.options.map((option) => (
                         <li key={option.key} className="flex items-start gap-2">
-                          <AssetIcon name="check" size={16} className="mt-0.5 shrink-0 text-accent" />
+                          <AssetIcon name="check" size={16} className="mt-0.5 shrink-0 text-accent-ink" />
                           <span>{tr(option.en, option.lt, option.ru)}</span>
                         </li>
                       ))}

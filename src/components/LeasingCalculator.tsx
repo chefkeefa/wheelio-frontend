@@ -53,7 +53,7 @@ export default function LeasingCalculator({ price, year }: { price: number; year
       </div>
 
       <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-3xl font-extrabold text-accent">{eur(estimate.monthly)}</span>
+        <span className="text-3xl font-extrabold text-accent-ink">{eur(estimate.monthly)}</span>
         <span className="text-sm text-muted-foreground">{tr("/ month", "/ mėn.", "/ мес.")}</span>
       </div>
 
@@ -89,7 +89,7 @@ export default function LeasingCalculator({ price, year }: { price: number; year
                 onClick={() => setTerm(t)}
                 aria-pressed={t === effectiveTerm}
                 className={`rounded-lg px-3 py-1.5 font-semibold ring-1 transition ${
-                  t === effectiveTerm ? "bg-accent text-black ring-accent" : "bg-muted text-foreground ring-border hover:ring-foreground/40"
+                  t === effectiveTerm ? "bg-accent text-accent-foreground ring-accent" : "bg-muted text-foreground ring-border hover:ring-foreground/40"
                 }`}
               >
                 {t} {tr("mo", "mėn.", "мес.")}

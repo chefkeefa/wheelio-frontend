@@ -61,7 +61,7 @@ export default function ProfilePage() {
                 <label className="block text-sm font-semibold">{tr("Last name", "Pavardė", "Фамилия")}<input required value={surname} onChange={(e) => setSurname(e.target.value)} className="mt-1 h-11 w-full rounded-lg border border-border bg-background px-3" /></label>
                 <label className="block text-sm font-semibold">{tr("City", "Miestas", "Город")}<input value={city} onChange={(e) => setCity(e.target.value)} className="mt-1 h-11 w-full rounded-lg border border-border bg-background px-3" /></label>
                 {message && <p className="text-sm text-emerald-700">{message}</p>}{error && <p className="text-sm text-red-600">{error}</p>}
-                <button disabled={saving} className="rounded-lg bg-accent px-4 py-2 font-bold text-black disabled:opacity-60">{saving ? "…" : tr("Save changes", "Išsaugoti", "Сохранить")}</button>
+                <button disabled={saving} className="rounded-lg bg-accent px-4 py-2 font-bold text-accent-foreground disabled:opacity-60">{saving ? "…" : tr("Save changes", "Išsaugoti", "Сохранить")}</button>
               </form>
               <Info label="E-mail" value={user.email} />
             </section>
@@ -71,7 +71,7 @@ export default function ProfilePage() {
               {phoneOff ? (
                 <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-muted p-4">
                   <div className="font-bold">{user.phone ? tr("Change phone number", "Keisti telefono numerį", "Изменить номер телефона") : tr("Add a phone number to publish listings", "Pridėkite telefoną, kad galėtumėte skelbti", "Добавьте телефон, чтобы публиковать объявления")}</div>
-                  <Link href="/verify-phone?return=/account/profile" className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-black">{user.phone ? tr("Change", "Keisti", "Изменить") : tr("Add", "Pridėti", "Добавить")}</Link>
+                  <Link href="/verify-phone?return=/account/profile" className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground">{user.phone ? tr("Change", "Keisti", "Изменить") : tr("Add", "Pridėti", "Добавить")}</Link>
                 </div>
               ) : (
               <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-muted p-4">
@@ -79,7 +79,7 @@ export default function ProfilePage() {
                   <div className="font-bold">{tr("Phone verification", "Telefono patvirtinimas", "Подтверждение телефона")}</div>
                   <div className={`mt-1 text-sm font-semibold ${user.phoneVerified ? "text-emerald-600" : "text-amber-600"}`}>{user.phoneVerified ? tr("Verified", "Patvirtintas", "Подтверждён") : tr("Not verified", "Nepatvirtintas", "Не подтверждён")}</div>
                 </div>
-                {!user.phoneVerified && <Link href="/verify-phone?return=/account/profile" className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-black">{tr("Verify", "Patvirtinti", "Подтвердить")}</Link>}
+                {!user.phoneVerified && <Link href="/verify-phone?return=/account/profile" className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground">{tr("Verify", "Patvirtinti", "Подтвердить")}</Link>}
               </div>
               )}
             </section>
@@ -161,7 +161,7 @@ function CredentialsSection({
             <label className="block text-sm font-semibold">{tr("Current password", "Dabartinis slaptažodis", "Текущий пароль")}<input type="password" required autoComplete="current-password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} className={input} /></label>
             <label className="block text-sm font-semibold">{tr("New password", "Naujas slaptažodis", "Новый пароль")}<input type="password" required minLength={8} autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={input} /></label>
             <label className="block text-sm font-semibold">{tr("Repeat new password", "Pakartokite naują slaptažodį", "Повторите новый пароль")}<input type="password" required minLength={8} autoComplete="new-password" value={repeatPassword} onChange={(e) => setRepeatPassword(e.target.value)} className={input} /></label>
-            <button disabled={busy === "password"} className="rounded-lg bg-accent px-4 py-2 font-bold text-black disabled:opacity-60">{busy === "password" ? "…" : tr("Change password", "Keisti slaptažodį", "Сменить пароль")}</button>
+            <button disabled={busy === "password"} className="rounded-lg bg-accent px-4 py-2 font-bold text-accent-foreground disabled:opacity-60">{busy === "password" ? "…" : tr("Change password", "Keisti slaptažodį", "Сменить пароль")}</button>
           </form>
         ) : (
           <p className="text-sm text-muted-foreground">{tr("You sign in with Google, so there is no password to change.", "Jungiatės per Google, todėl slaptažodžio keisti nereikia.", "Вы входите через Google, поэтому пароль менять не нужно.")}</p>
@@ -170,7 +170,7 @@ function CredentialsSection({
           <div className="font-semibold">{tr("Change e-mail", "Keisti el. paštą", "Сменить e-mail")}</div>
           <label className="block text-sm font-semibold">{tr("New e-mail", "Naujas el. paštas", "Новый e-mail")}<input type="email" required maxLength={190} autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={input} /></label>
           {hasPassword && <label className="block text-sm font-semibold">{tr("Current password", "Dabartinis slaptažodis", "Текущий пароль")}<input type="password" required autoComplete="current-password" value={emailPassword} onChange={(e) => setEmailPassword(e.target.value)} className={input} /></label>}
-          <button disabled={busy === "email"} className="rounded-lg bg-accent px-4 py-2 font-bold text-black disabled:opacity-60">{busy === "email" ? "…" : tr("Change e-mail", "Keisti el. paštą", "Сменить e-mail")}</button>
+          <button disabled={busy === "email"} className="rounded-lg bg-accent px-4 py-2 font-bold text-accent-foreground disabled:opacity-60">{busy === "email" ? "…" : tr("Change e-mail", "Keisti el. paštą", "Сменить e-mail")}</button>
         </form>
       </div>
       {message && <p className="mt-4 text-sm text-emerald-700">{message}</p>}

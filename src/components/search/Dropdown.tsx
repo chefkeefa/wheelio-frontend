@@ -161,7 +161,7 @@ export default function Dropdown({
             ref={popoverRef}
             onKeyDown={onKeyDown}
             style={{ top: position.top, left: position.left, width: position.width, maxHeight: position.maxHeight }}
-            className="fixed z-[120] flex flex-col overflow-hidden rounded-2xl bg-[#1d1f23] text-white shadow-[0_18px_48px_rgba(0,0,0,0.45)] ring-1 ring-white/10"
+            className="fixed z-[120] flex flex-col overflow-hidden rounded-2xl bg-ink-raised text-white shadow-[0_18px_48px_rgba(0,0,0,0.45)] ring-1 ring-white/10"
           >
             {searchable && (
               <div className="border-b border-white/10 p-2">

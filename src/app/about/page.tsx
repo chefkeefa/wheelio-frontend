@@ -76,8 +76,8 @@ export default function AboutPage() {
           {copy.title}
         </h1>
 
-        <section className="w-full max-w-[974px] bg-card rounded-2xl border-2 border-[#d9a339] p-8 md:p-12 mb-8">
-          <h2 className="text-[48px] font-bold text-[#d9a339] mb-6 leading-[50px] text-center">
+        <section className="w-full max-w-[974px] bg-card rounded-2xl border border-border shadow-card p-8 md:p-12 mb-8">
+          <h2 className="text-[48px] font-bold text-accent-ink mb-6 leading-[50px] text-center">
             {copy.who}
           </h2>
 
@@ -109,14 +109,14 @@ export default function AboutPage() {
         <div className="flex flex-col sm:flex-row gap-4">
           <Link
             href="/"
-            className="inline-flex items-center justify-center px-8 h-[60px] bg-[#d9a339] border-2 border-[#d9a339] rounded-lg text-[20px] font-bold text-white hover:opacity-90 transition-opacity"
+            className="inline-flex items-center justify-center px-8 h-[60px] bg-accent border-2 border-accent rounded-lg text-[20px] font-bold text-accent-foreground hover:opacity-90 transition-opacity"
           >
             {copy.browse}
           </Link>
 
           <Link
             href="/sell"
-            className="inline-flex items-center justify-center px-8 h-[60px] bg-card border-2 border-[#d9a339] rounded-lg text-[20px] font-bold text-foreground hover:bg-[#d9a339] hover:text-white transition-colors"
+            className="inline-flex items-center justify-center px-8 h-[60px] bg-card border-2 border-accent rounded-lg text-[20px] font-bold text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
           >
             {copy.sell}
           </Link>

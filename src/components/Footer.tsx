@@ -12,7 +12,7 @@ export default function Footer() {
   }[language];
 
   return (
-    <footer className="mt-16 border-t border-accent bg-card text-foreground">
+    <footer className="mt-16 border-t border-border bg-card text-foreground">
       <div className="container py-8">
         <div className="flex flex-wrap justify-center gap-8">
           <Link href="/about" className="text-lg font-medium text-foreground/70 transition-colors hover:text-foreground">

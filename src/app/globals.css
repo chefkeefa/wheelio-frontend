@@ -3,17 +3,24 @@
 @tailwind utilities;
 
 :root {
-  --bg: 0 0% 81%;
-  --fg: 0 0% 6%;
+  /* Wheelio palette "Graphite & Saffron": warm graphite neutrals around the
+     logo saffron (#F6A316). Values are HSL triplets for hsl(var(--x) / a). */
+  --bg: 40 23% 96%;
+  --fg: 30 12% 9%;
   --card: 0 0% 100%;
-  --border: 240 6% 90%;
-  --muted: 220 14% 96%;
-  --muted-fg: 215 16% 42%;
-  --primary: 0 0% 7%;
-  --primary-fg: 0 0% 100%;
-  --ring: 0 0% 0%;
-  --accent: 42 66% 54%;
-  --accent-fg: 0 0% 0%;
+  --border: 35 14% 87%;
+  --muted: 38 20% 92%;
+  --muted-fg: 30 7% 38%;
+  --primary: 30 12% 9%;
+  --primary-fg: 40 23% 97%;
+  --ring: 37 92% 53%;
+  --accent: 37 92% 53%;
+  --accent-fg: 30 30% 8%;
+  /* Saffron dark enough for text and thin lines on light surfaces. */
+  --accent-ink: 32 92% 35%;
+  /* Always-dark surfaces (hero search panel, dark dropdowns), same in both themes. */
+  --ink: 30 10% 8%;
+  --ink-raised: 30 8% 12%;
 
   /* Compatibility aliases for older components that reference these names directly. */
   --foreground: var(--fg);
@@ -21,17 +28,20 @@
 }
 
 .dark {
-  --bg: 0 0% 6%;
-  --fg: 0 0% 96%;
-  --card: 0 0% 11%;
-  --border: 240 6% 22%;
-  --muted: 240 6% 14%;
-  --muted-fg: 240 5% 68%;
-  --primary: 0 0% 94%;
-  --primary-fg: 0 0% 7%;
-  --ring: 0 0% 100%;
-  --accent: 42 66% 54%;
-  --accent-fg: 0 0% 0%;
+  --bg: 30 8% 6%;
+  --fg: 40 20% 94%;
+  --card: 30 6% 9.5%;
+  --border: 30 6% 18%;
+  --muted: 30 6% 13%;
+  --muted-fg: 35 8% 63%;
+  --primary: 40 20% 94%;
+  --primary-fg: 30 12% 9%;
+  --ring: 37 92% 53%;
+  --accent: 37 92% 53%;
+  --accent-fg: 30 30% 8%;
+  --accent-ink: 38 95% 60%;
+  --ink: 30 10% 8%;
+  --ink-raised: 30 8% 12%;
 }
 
 html { color-scheme: light; }
@@ -64,7 +74,7 @@ body {
 }
 
 .btn {
-  @apply inline-flex items-center justify-center rounded-2xl px-4 py-2 bg-black text-white hover:opacity-90 active:opacity-80;
+  @apply inline-flex items-center justify-center rounded-2xl px-4 py-2 bg-primary text-primary-foreground hover:opacity-90 active:opacity-80;
 }
 .btn-outline {
   @apply inline-flex items-center justify-center rounded-2xl px-4 py-2 border border-border text-foreground hover:bg-muted;

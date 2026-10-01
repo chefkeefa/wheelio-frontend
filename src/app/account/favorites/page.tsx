@@ -53,7 +53,7 @@ export default function FavoritesPage() {
             <p className="mt-2 text-muted-foreground">
               {tr("Press “Add to favorites” on a listing to save it here.", "Skelbime paspauskite „Pridėti į mėgstamus“.", "Нажмите «Добавить в избранное» на странице объявления.")}
             </p>
-            <Link href="/" className="mt-6 inline-flex rounded-xl bg-accent px-5 py-3 font-bold text-black">{tr("Browse cars", "Žiūrėti automobilius", "Смотреть автомобили")}</Link>
+            <Link href="/" className="mt-6 inline-flex rounded-xl bg-accent px-5 py-3 font-bold text-accent-foreground">{tr("Browse cars", "Žiūrėti automobilius", "Смотреть автомобили")}</Link>
           </div>
         ) : (
           <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">

@@ -41,7 +41,7 @@ export default function PhoneVerificationBox({ phone, onPhoneChange, onVerified,
     return () => clearTimeout(timer);
   }, [cooldown]);
 
-  const input = inputClassName || "h-12 w-full rounded-lg bg-[#cecece] px-4 text-black outline-none focus:ring-2 focus:ring-accent";
+  const input = inputClassName || "h-12 w-full rounded-lg bg-muted px-4 text-foreground ring-1 ring-inset ring-border placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-accent";
   const channels = config?.channels || [];
 
   async function send(channel: VerificationChannel) {
@@ -110,7 +110,7 @@ export default function PhoneVerificationBox({ phone, onPhoneChange, onVerified,
             onChange={(e) => onPhoneChange(e.target.value)}
           />
           {saveWhenOff && (
-            <button type="button" disabled={checking || verified || !phone.trim()} onClick={saveTyped} className="min-h-11 rounded-lg bg-[#5f5f5f] px-5 font-bold text-white hover:bg-accent disabled:opacity-50">
+            <button type="button" disabled={checking || verified || !phone.trim()} onClick={saveTyped} className="min-h-11 rounded-lg bg-primary px-5 font-bold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-50">
               {checking ? "…" : tr("Save", "Išsaugoti", "Сохранить")}
             </button>
           )}
@@ -178,7 +178,7 @@ export default function PhoneVerificationBox({ phone, onPhoneChange, onVerified,
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
           />
-          <button type="button" disabled={checking || code.length !== 6} onClick={check} className="min-h-11 rounded-lg bg-[#5f5f5f] px-5 font-bold text-white hover:bg-accent disabled:opacity-50">
+          <button type="button" disabled={checking || code.length !== 6} onClick={check} className="min-h-11 rounded-lg bg-primary px-5 font-bold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-50">
             {checking ? "…" : tr("Verify", "Patvirtinti", "Подтвердить")}
           </button>
         </div>
