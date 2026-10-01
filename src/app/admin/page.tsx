@@ -16,6 +16,7 @@ import {
   setAdminListingStatus,
   setComplaintStatus,
   setUserDisabled,
+  setUserSupportRole,
   type AdminComplaint,
   type AdminListing,
   type AdminStats,
@@ -208,6 +209,24 @@ export default function AdminPage() {
                       >
                         {Number(u.disabled) ? tr("Unblock", "Atblokuoti", "Разблокировать") : tr("Block", "Blokuoti", "Заблокировать")}
                       </button>
+                      {(() => {
+                        const support = !!u.roles?.some((r) => r.toUpperCase() === "SUPPORT");
+                        return (
+                          <button
+                            disabled={busy}
+                            title={tr("Access to the support desk without admin rights", "Prieiga prie pagalbos centro be administratoriaus teisių", "Доступ к панели поддержки без прав администратора")}
+                            onClick={() => {
+                              const q = support
+                                ? tr("Remove support desk access?", "Atimti prieigą prie pagalbos centro?", "Убрать доступ к поддержке?")
+                                : tr("Give this user support desk access?", "Suteikti prieigą prie pagalbos centro?", "Дать доступ к панели поддержки?");
+                              if (window.confirm(q)) run(() => setUserSupportRole(u.id, !support));
+                            }}
+                            className={`ml-2 rounded border px-3 py-1 font-semibold ${support ? "border-accent bg-accent/15" : "border-border"}`}
+                          >
+                            {support ? tr("Support ✓", "Pagalba ✓", "Поддержка ✓") : tr("Make support", "Skirti pagalbai", "Сделать поддержкой")}
+                          </button>
+                        );
+                      })()}
                     </td>
                   </tr>
                 ))}
