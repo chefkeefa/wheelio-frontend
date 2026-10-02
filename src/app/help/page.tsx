@@ -78,20 +78,6 @@ function LiveChat({ tr }: { tr: (en: string, lt: string, ru: string) => string }
     let source: EventSource | null = null;
     let cancelled = false;
 
-    getLiveSupportMessages(chat.id, chat.token)
-      .then((history) => {
-        if (!cancelled) setMessages(history);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          localStorage.removeItem("wheelio-live-support"); localStorage.removeItem("pirkauto-live-support");
-          setChat(null);
-        }
-      });
-
-    source = new EventSource(liveSupportStreamUrl(chat.id, chat.token), {
-      withCredentials: true,
-    });
     const onMessage = (event: MessageEvent) => {
       try {
         const incoming = JSON.parse(event.data) as LiveSupportMessage;
@@ -102,10 +88,23 @@ function LiveChat({ tr }: { tr: (en: string, lt: string, ru: string) => string }
         );
       } catch {}
     };
-    source.addEventListener("message", onMessage as EventListener);
-    source.onerror = () => {
-      // Browser automatically reconnects SSE. Do not replace the chat with an error screen.
-    };
+    // Loading the history also gives the browser the chat cookie the stream needs, so the stream opens after it.
+    getLiveSupportMessages(chat.id, chat.token)
+      .then((history) => {
+        if (cancelled) return;
+        setMessages(history);
+        source = new EventSource(liveSupportStreamUrl(chat.id), { withCredentials: true });
+        source.addEventListener("message", onMessage as EventListener);
+        source.onerror = () => {
+          // Browser automatically reconnects SSE. Do not replace the chat with an error screen.
+        };
+      })
+      .catch(() => {
+        if (!cancelled) {
+          localStorage.removeItem("wheelio-live-support"); localStorage.removeItem("pirkauto-live-support");
+          setChat(null);
+        }
+      });
 
     return () => {
       cancelled = true;

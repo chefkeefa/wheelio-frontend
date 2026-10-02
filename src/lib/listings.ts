@@ -2,7 +2,7 @@ import { ApiError, buildUrl, fetchJson } from "@/lib/http";
 import { resolveApiAsset } from "@/lib/config";
 import type { CarSpecs } from "@/lib/carSpecs";
 
-export type ListingStatus = "ACTIVE" | "SOLD" | "CLOSED" | "PENDING_PAYMENT";
+export type ListingStatus = "ACTIVE" | "SOLD" | "CLOSED" | "PENDING_PAYMENT" | "PENDING_REVIEW" | "REJECTED";
 
 export type Listing = {
   id: string;
@@ -92,7 +92,9 @@ function normalizeListing(x: RawListing, fallbackId?: number): Listing {
       x?.status === "ACTIVE" ||
       x?.status === "SOLD" ||
       x?.status === "CLOSED" ||
-      x?.status === "PENDING_PAYMENT"
+      x?.status === "PENDING_PAYMENT" ||
+      x?.status === "PENDING_REVIEW" ||
+      x?.status === "REJECTED"
         ? x.status
         : undefined,
     mark: typeof x?.mark === "string" ? x.mark : undefined,
