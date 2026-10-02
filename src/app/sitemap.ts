@@ -6,7 +6,7 @@ import { getSitemapListings } from "@/lib/seo";
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pages: MetadataRoute.Sitemap = ["/", "/search/", "/sell/", "/about/", "/rules/", "/help/"].map((path) => ({
+  const pages: MetadataRoute.Sitemap = ["/", "/search/", "/sell/", "/about/", "/contacts/", "/rules/", "/privacy/", "/help/"].map((path) => ({
     url: `${SITE_URL}${path}`,
     changeFrequency: path === "/" || path === "/search/" ? "hourly" : "monthly",
     priority: path === "/" ? 1 : 0.5,

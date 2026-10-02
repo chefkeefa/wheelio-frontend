@@ -195,7 +195,7 @@ export default function HomePage() {
           <div className="container relative pt-6 md:pt-24 lg:pt-28">
             <p className="mb-4 hidden items-center gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/80 md:flex">
               <span className="h-px w-8 bg-white/70" />
-              {tr("Thousands of listings in one place", "Tūkstančiai skelbimų vienoje vietoje", "Тысячи объявлений в одном месте")}
+              {tr("Car listings in Lithuania", "Automobilių skelbimai Lietuvoje", "Автообъявления в Литве")}
             </p>
             <h1 className="max-w-[640px] text-3xl font-bold leading-[1.08] tracking-tight text-white sm:text-5xl md:text-6xl">
               {tr("Buy or sell a car", "Pirk ar parduok automobilį", "Купи или продай автомобиль")}{" "}
@@ -203,9 +203,9 @@ export default function HomePage() {
             </h1>
             <p className="mt-5 hidden max-w-[440px] text-base leading-7 text-white/80 md:block md:text-lg">
               {tr(
-                "A reliable platform for buying and selling cars in Lithuania and Europe.",
-                "Patikima platforma automobiliams pirkti ir parduoti Lietuvoje ir Europoje.",
-                "Надёжная платформа для покупки и продажи автомобилей в Литве и Европе."
+                "Search by make, year, price and city, or post your own car in a few minutes.",
+                "Ieškokite pagal markę, metus, kainą ir miestą arba įdėkite savo automobilio skelbimą per kelias minutes.",
+                "Ищите по марке, году, цене и городу или разместите свой автомобиль за несколько минут."
               )}
             </p>
           </div>
@@ -231,12 +231,12 @@ export default function HomePage() {
               <h2 className="text-2xl font-bold tracking-tight text-foreground md:text-[32px] md:leading-10">
                 {searched
                   ? tr("Search results", "Paieškos rezultatai", "Результаты поиска")
-                  : tr("Popular listings", "Populiarūs skelbimai", "Популярные объявления")}
+                  : tr("Latest listings", "Naujausi skelbimai", "Новые объявления")}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground md:text-base">
                 {searched
                   ? tr("Listings matching your filters", "Skelbimai pagal jūsų filtrus", "Объявления по вашим фильтрам")
-                  : tr("Current offers from verified sellers", "Aktualūs pasiūlymai iš patikrintų pardavėjų", "Актуальные предложения от проверенных продавцов")}
+                  : tr("Recently posted cars across Lithuania", "Neseniai įdėti automobiliai visoje Lietuvoje", "Недавно добавленные автомобили по всей Литве")}
               </p>
             </div>
             <Link
@@ -277,6 +277,7 @@ export default function HomePage() {
                   onToggleFavorite={() => toggleFavorite(item.id)}
                 />
               ))}
+              {!searched && items.length < 4 && <SellPromoCard />}
             </div>
           )}
 
@@ -288,7 +289,93 @@ export default function HomePage() {
             </div>
           )}
         </div>
+
+        <SafetySection />
       </section>
+    </div>
+  );
+}
+
+/** Fills the grid while there are only a few listings, so the page does not look abandoned. */
+function SellPromoCard() {
+  const { tr } = useLanguage();
+  return (
+    <Link
+      href="/sell"
+      className="flex min-h-[320px] flex-col items-start justify-end rounded-2xl border border-dashed border-border bg-card p-6 transition hover:border-accent"
+    >
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-accent-foreground">
+        <AssetIcon name="plus" size={22} />
+      </span>
+      <p className="mt-5 text-lg font-bold text-foreground">{tr("Selling a car?", "Parduodate automobilį?", "Продаёте автомобиль?")}</p>
+      <p className="mt-1 text-sm leading-6 text-muted-foreground">
+        {tr(
+          "Add photos, price and city, and buyers will contact you directly.",
+          "Įkelkite nuotraukas, nurodykite kainą ir miestą, o pirkėjai susisieks su jumis tiesiogiai.",
+          "Добавьте фото, цену и город, и покупатели свяжутся с вами напрямую."
+        )}
+      </p>
+      <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-accent-ink">
+        {tr("Post a listing", "Įdėti skelbimą", "Разместить объявление")}
+        <AssetIcon name="arrow-right" size={16} />
+      </span>
+    </Link>
+  );
+}
+
+function SafetySection() {
+  const { tr } = useLanguage();
+  const tips = [
+    {
+      icon: "eye" as const,
+      title: tr("See the car first", "Pirmiausia apžiūrėkite automobilį", "Сначала осмотрите машину"),
+      text: tr(
+        "Meet the seller, check the documents and the VIN, and take a test drive before paying.",
+        "Susitikite su pardavėju, patikrinkite dokumentus ir VIN, išbandykite automobilį prieš mokėdami.",
+        "Встретьтесь с продавцом, проверьте документы и VIN, сделайте тест-драйв до оплаты."
+      ),
+    },
+    {
+      icon: "alert-circle" as const,
+      title: tr("No advance payments", "Jokių avansų", "Никаких предоплат"),
+      text: tr(
+        "Do not send a deposit for a car you have not seen, and do not pay through links sent in messages.",
+        "Nesiųskite avanso už nematytą automobilį ir nemokėkite per žinutėse atsiųstas nuorodas.",
+        "Не переводите задаток за машину, которую не видели, и не платите по ссылкам из сообщений."
+      ),
+    },
+    {
+      icon: "shield" as const,
+      title: tr("We never ask for codes", "Mes niekada neprašome kodų", "Мы никогда не просим коды"),
+      text: tr(
+        "Wheelio never asks for card details, passwords or SMS codes. Report suspicious listings to support.",
+        "Wheelio niekada neprašo kortelės duomenų, slaptažodžių ar SMS kodų. Apie įtartinus skelbimus praneškite pagalbai.",
+        "Wheelio никогда не просит данные карты, пароли или SMS-коды. О подозрительных объявлениях сообщайте в поддержку."
+      ),
+    },
+  ];
+
+  return (
+    <div className="mt-16 rounded-[28px] border border-border bg-card p-6 md:mt-24 md:p-10">
+      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <h2 className="text-2xl font-bold tracking-tight text-foreground md:text-[32px] md:leading-10">
+          {tr("Buy safely", "Pirkite saugiai", "Покупайте безопасно")}
+        </h2>
+        <Link href="/contacts" className="text-sm font-semibold text-accent-ink hover:underline">
+          {tr("Report a listing", "Pranešti apie skelbimą", "Пожаловаться на объявление")}
+        </Link>
+      </div>
+      <div className="mt-6 grid gap-6 md:grid-cols-3">
+        {tips.map((tip) => (
+          <div key={tip.title}>
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/15 text-accent-ink">
+              <AssetIcon name={tip.icon} size={22} />
+            </span>
+            <p className="mt-4 font-semibold text-foreground">{tip.title}</p>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">{tip.text}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
