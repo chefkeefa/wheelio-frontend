@@ -7,6 +7,7 @@ import { anybody } from "@/lib/fonts";
 import { getListingById, type ListingDetail } from "@/lib/listings";
 import { useLanguage } from "@/context/LanguageContext";
 import ListingActions from "@/components/ListingActions";
+import ListingReviewBar from "@/components/ListingReviewBar";
 import AssetIcon from "@/components/ui/AssetIcon";
 import ListingGallery from "@/components/ListingGallery";
 import LeasingCalculator from "@/components/LeasingCalculator";
@@ -168,6 +169,14 @@ export default function ListingDetailsPage() {
         <AssetIcon name="arrow-left" size={16} />
         {tr("Back to listings", "Grįžti į skelbimus", "Назад к объявлениям")}
       </Link>
+
+      {data.status && data.status !== "ACTIVE" && (
+        <ListingReviewBar
+          listingId={data.id}
+          status={data.status}
+          onStatusChange={(status) => setData((d) => (d ? { ...d, status } : d))}
+        />
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 lg:grid-rows-[auto_1fr]">
         <section className="lg:col-span-7">
