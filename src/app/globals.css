@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root {
+  /* Inter from @fontsource-variable/inter (see app/layout.tsx). */
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   /* Wheelio palette "Graphite & Amber": warm graphite neutrals around the
      logo amber (#F58905). Values are HSL triplets for hsl(var(--x) / a). */
   --bg: 40 23% 96%;
@@ -108,4 +110,9 @@ textarea,
     min-height: 44px;
     font-size: 16px;
   }
+}
+
+/* Anybody from @fontsource/anybody (see app/layout.tsx and lib/fonts.ts). */
+.font-anybody {
+  font-family: "Anybody", ui-sans-serif, system-ui, sans-serif;
 }

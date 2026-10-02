@@ -1,12 +1,6 @@
 // src/lib/fonts.ts
-import { Anybody } from "next/font/google";
-
 /**
- * Единый инстанс шрифта Anybody.
- * Подключаем веса 700 (bold) и 800 (extrabold), display: swap.
+ * Anybody 700/800 for prices and headings. The font files come from @fontsource/anybody (imported in
+ * app/layout.tsx), so the build does not download anything from Google Fonts.
  */
-export const anybody = Anybody({
-  subsets: ["latin", "latin-ext"],
-  weight: ["700", "800"],
-  display: "swap",
-});
+export const anybody = { className: "font-anybody" };
