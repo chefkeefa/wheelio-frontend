@@ -239,7 +239,8 @@ export async function sendSupportTicket(payload: {
 
 // paymentsEnabled is absent on older backends; only an explicit false means "publish for free".
 export type PaymentConfig = { publicationPrice: number; currency: string; devMode: boolean; paymentsEnabled?: boolean };
-export type Checkout = { paymentId: number | null; listingId: number; amount: number; currency: string; paymentUrl?: string | null; devMode: boolean; promoApplied?: boolean; paymentsEnabled?: boolean };
+// status: ACTIVE, or PENDING_REVIEW when the backend has LISTING_MODERATION_ENABLED=true.
+export type Checkout = { paymentId: number | null; listingId: number; amount: number; currency: string; paymentUrl?: string | null; devMode: boolean; promoApplied?: boolean; paymentsEnabled?: boolean; status?: string };
 export type PaymentInfo = { id: number; listingId: number; amount: number; currency: string; status: string; listingStatus: string };
 
 export function getPaymentConfig() {
@@ -403,21 +404,27 @@ export function startLiveSupport(payload: { name?: string; email?: string; phone
   });
 }
 
+// The guest chat token goes in a header, not the URL, so it does not end up in server or proxy logs.
+const supportTokenHeaders = (token?: string): Record<string, string> => (token ? { "X-Support-Token": token } : {});
+
 export function getLiveSupportMessages(id: number, token?: string) {
-  return fetchJson<LiveSupportMessage[]>(
-    `/support/live/${id}/messages${token ? `?token=${encodeURIComponent(token)}` : ""}`
-  );
+  return fetchJson<LiveSupportMessage[]>(`/support/live/${id}/messages`, { headers: supportTokenHeaders(token) });
 }
 
 export function sendLiveSupportMessage(id: number, message: string, token?: string) {
-  return fetchJson<LiveSupportMessage>(
-    `/support/live/${id}/messages${token ? `?token=${encodeURIComponent(token)}` : ""}`,
-    { method: "POST", body: JSON.stringify({ message }) }
-  );
+  return fetchJson<LiveSupportMessage>(`/support/live/${id}/messages`, {
+    method: "POST",
+    headers: supportTokenHeaders(token),
+    body: JSON.stringify({ message }),
+  });
 }
 
-export function liveSupportStreamUrl(id: number, token?: string) {
-  return buildUrl(`/support/live/${id}/stream`, token ? { token } : undefined);
+/**
+ * EventSource cannot send headers: the API authorises the stream with the HttpOnly chat cookie it sets when
+ * the chat starts or its history is loaded, so open the stream after getLiveSupportMessages succeeds.
+ */
+export function liveSupportStreamUrl(id: number) {
+  return buildUrl(`/support/live/${id}/stream`);
 }
 
 export function listSupportConversations(page = 0, size = 50) {

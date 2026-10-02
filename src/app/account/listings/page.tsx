@@ -145,12 +145,16 @@ function StatusBadge({ status, language, paymentsOff }: { status?: ListingStatus
     SOLD: ["Sold", "Parduota", "Продано"],
     CLOSED: ["Closed", "Uždarytas", "Закрыто"],
     PENDING_PAYMENT: paymentsOff ? ["Not published", "Nepaskelbtas", "Не опубликовано"] : ["Payment required", "Laukia apmokėjimo", "Ожидает оплаты"],
+    PENDING_REVIEW: ["Under review", "Tikrinamas", "На проверке"],
+    REJECTED: ["Rejected", "Atmestas", "Отклонено"],
   };
   const colors: Record<string, string> = {
     ACTIVE: "bg-emerald-600 text-white",
     SOLD: "bg-blue-600 text-white",
     CLOSED: "bg-zinc-700 text-white",
     PENDING_PAYMENT: "bg-accent text-accent-foreground",
+    PENDING_REVIEW: "bg-amber-500 text-white",
+    REJECTED: "bg-red-600 text-white",
   };
   const key = status || "CLOSED";
   const label = labels[key] || labels.CLOSED;

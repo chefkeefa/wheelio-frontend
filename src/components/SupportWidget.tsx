@@ -96,24 +96,6 @@ export default function SupportWidget() {
     let source: EventSource | null = null;
     let cancelled = false;
 
-    getLiveSupportMessages(chat.id, chat.token)
-      .then((history) => {
-        if (!cancelled) {
-          setMessages(history.filter((item) => item.sender !== "SYSTEM"));
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          localStorage.removeItem("wheelio-live-support"); localStorage.removeItem("pirkauto-live-support");
-          setChat(null);
-          setMessages([]);
-        }
-      });
-
-    source = new EventSource(liveSupportStreamUrl(chat.id, chat.token), {
-      withCredentials: true,
-    });
-
     const onMessage = (event: MessageEvent) => {
       try {
         const incoming = JSON.parse(event.data) as LiveSupportMessage;
@@ -131,7 +113,21 @@ export default function SupportWidget() {
       } catch {}
     };
 
-    source.addEventListener("message", onMessage as EventListener);
+    // Loading the history also gives the browser the chat cookie the stream needs, so the stream opens after it.
+    getLiveSupportMessages(chat.id, chat.token)
+      .then((history) => {
+        if (cancelled) return;
+        setMessages(history.filter((item) => item.sender !== "SYSTEM"));
+        source = new EventSource(liveSupportStreamUrl(chat.id), { withCredentials: true });
+        source.addEventListener("message", onMessage as EventListener);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          localStorage.removeItem("wheelio-live-support"); localStorage.removeItem("pirkauto-live-support");
+          setChat(null);
+          setMessages([]);
+        }
+      });
 
     return () => {
       cancelled = true;
