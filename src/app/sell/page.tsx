@@ -587,6 +587,7 @@ export default function SellPage() {
   const [promoValid, setPromoValid] = useState(false);
   const [promoChecking, setPromoChecking] = useState(false);
   const [publishedListingId, setPublishedListingId] = useState<number | null>(null);
+  const [publishedForReview, setPublishedForReview] = useState(false);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -1186,6 +1187,7 @@ export default function SellPage() {
       const checkout = await startCheckout(created.id, normalizedPromo || undefined);
       if (checkout.promoApplied) {
         clearDraft();
+        setPublishedForReview(checkout.status === "PENDING_REVIEW");
         setPublishedListingId(checkout.listingId);
         return;
       }
@@ -1995,8 +1997,14 @@ export default function SellPage() {
                       {publishError && <StatusNote type="error" className="mt-4">{publishError}</StatusNote>}
                       {publishedListingId && (
                         <StatusNote type="success" className="mt-4">
-                          <span className="font-semibold">{paymentsOff ? tr("Your listing is published!", "Skelbimas paskelbtas!", "Объявление опубликовано!") : tr("Your listing is published for free!", "Skelbimas paskelbtas nemokamai!", "Объявление опубликовано бесплатно!")}</span>{" "}
-                          <a className="underline" href={`/listing/${publishedListingId}`}>{tr("Open listing", "Atidaryti skelbimą", "Открыть объявление")}</a>
+                          {publishedForReview ? (
+                            <span className="font-semibold">{tr("Your listing was sent for review. It will appear on the site once a moderator approves it.", "Skelbimas išsiųstas patikrinti. Jis atsiras svetainėje, kai moderatorius jį patvirtins.", "Объявление отправлено на проверку. Оно появится на сайте после одобрения модератором.")}</span>
+                          ) : (
+                            <>
+                              <span className="font-semibold">{paymentsOff ? tr("Your listing is published!", "Skelbimas paskelbtas!", "Объявление опубликовано!") : tr("Your listing is published for free!", "Skelbimas paskelbtas nemokamai!", "Объявление опубликовано бесплатно!")}</span>{" "}
+                              <a className="underline" href={`/listing/${publishedListingId}`}>{tr("Open listing", "Atidaryti skelbimą", "Открыть объявление")}</a>
+                            </>
+                          )}
                         </StatusNote>
                       )}
 

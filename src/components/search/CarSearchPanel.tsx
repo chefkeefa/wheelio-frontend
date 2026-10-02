@@ -491,6 +491,7 @@ function ParameterFields({ filters, set, dark = false }: { filters: CarFilters; 
     { value: "PETROL", label: tr("Petrol", "Benzinas", "Бензин") },
     { value: "DIESEL", label: tr("Diesel", "Dyzelinas", "Дизель") },
     { value: "GAS", label: tr("Gas", "Dujos", "Газ") },
+    { value: "HYBRID", label: tr("Hybrid", "Hibridas", "Гибрид") },
     { value: "ELECTRO", label: tr("Electric", "Elektra", "Электро") },
   ];
   const bodyOptions: Option[] = [
@@ -501,7 +502,8 @@ function ParameterFields({ filters, set, dark = false }: { filters: CarFilters; 
     { value: "suv", label: "SUV" },
     { value: "coupe", label: tr("Sports / coupe", "Sportinis / kupė", "Спорт / купе") },
     { value: "cabriolet", label: tr("Cabriolet", "Kabrioletas", "Кабриолет") },
-    { value: "small", label: tr("Small car", "Mažas automobilis", "Малый автомобиль") },
+    { value: "minivan", label: tr("Minivan / van", "Vienatūris / furgonas", "Минивэн / фургон") },
+    { value: "pickup", label: tr("Pickup", "Pikapas", "Пикап") },
   ];
   const doorOptions: Option[] = [
     { value: "", label: any },
