@@ -29,12 +29,6 @@ async function getJson<T>(path: string, revalidate: number): Promise<T | null> {
   }
 }
 
-export async function getSeoListing(id: string): Promise<SeoListing | null> {
-  if (!/^\d+$/.test(id)) return null;
-  const data = await getJson<SeoListing>(`/public/listings/${id}`, 300);
-  return data && typeof data === "object" && data.id ? { ...data, thumbnail: resolveApiAsset(data.thumbnail) ?? null } : null;
-}
-
 /** Active listings for sitemap.xml (the API returns at most 100 per request). */
 export async function getSitemapListings(max = 5000): Promise<SeoListing[]> {
   const all: SeoListing[] = [];
@@ -46,3 +40,42 @@ export async function getSitemapListings(max = 5000): Promise<SeoListing[]> {
   }
   return all;
 }
+
+export type SeoListingDetail = SeoListing & {
+  images?: string[] | null;
+  city?: string | null;
+  status?: string | null;
+  fuel?: string | null;
+  transmission?: string | null;
+};
+
+export async function getSeoListingDetail(id: string): Promise<SeoListingDetail | null> {
+  if (!/^\d+$/.test(id)) return null;
+  const data = await getJson<SeoListingDetail>(`/public/listings/${id}`, 300);
+  if (!data || typeof data !== "object" || !data.id) return null;
+  return {
+    ...data,
+    thumbnail: resolveApiAsset(data.thumbnail) ?? null,
+    images: Array.isArray(data.images) ? data.images.map((i) => resolveApiAsset(i)).filter((i): i is string => !!i) : null,
+  };
+}
+
+/** Site-wide search texts. Lithuanian first: wheelio.lt is indexed in Lithuanian. */
+export const SITE_NAME = "Wheelio";
+export const SITE_TITLE = "Wheelio – automobilių skelbimai: pirkite ir parduokite automobilį";
+export const SITE_DESCRIPTION =
+  "Wheelio automobilių skelbimai Lietuvoje ir Baltijos šalyse. Naudoti ir nauji automobiliai: ieškokite pagal markę, modelį, metus, kainą ir miestą arba įdėkite savo automobilio skelbimą.";
+export const SITE_KEYWORDS = [
+  "wheelio",
+  "wheelio.lt",
+  "automobilių skelbimai",
+  "automobiliu skelbimai",
+  "auto skelbimai",
+  "naudoti automobiliai",
+  "automobiliai pardavimui",
+  "parduoti automobilį",
+  "pirkti automobilį",
+  "automobilių turgus",
+  "skelbimai Lietuvoje",
+];
+export const DEFAULT_OG_IMAGE = "/images/hero.jpg";

@@ -105,9 +105,9 @@ function htmlLang(language: Language) {
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  // EN is used on the server and for the first browser render.
-  // The saved language is restored only after hydration, avoiding mismatch errors.
-  const [language, setLanguageState] = useState<Language>("EN");
+  // LT (the site's main market, and what search engines index) is used on the server and for the
+  // first browser render. The saved language is restored only after hydration, avoiding mismatch errors.
+  const [language, setLanguageState] = useState<Language>("LT");
 
   useEffect(() => {
     const saved = (localStorage.getItem("wheelio-language") ?? localStorage.getItem("pirkauto-language"));
