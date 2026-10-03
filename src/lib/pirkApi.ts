@@ -238,7 +238,7 @@ export async function sendSupportTicket(payload: {
 }
 
 // paymentsEnabled is absent on older backends; only an explicit false means "publish for free".
-export type PaymentConfig = { publicationPrice: number; currency: string; devMode: boolean; paymentsEnabled?: boolean };
+export type PaymentConfig = { publicationPrice: number; currency: string; devMode: boolean; paymentsEnabled?: boolean; moderationEnabled?: boolean };
 // status: ACTIVE, or PENDING_REVIEW when the backend has LISTING_MODERATION_ENABLED=true.
 export type Checkout = { paymentId: number | null; listingId: number; amount: number; currency: string; paymentUrl?: string | null; devMode: boolean; promoApplied?: boolean; paymentsEnabled?: boolean; status?: string };
 export type PaymentInfo = { id: number; listingId: number; amount: number; currency: string; status: string; listingStatus: string };

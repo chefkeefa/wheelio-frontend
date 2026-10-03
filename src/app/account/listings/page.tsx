@@ -22,6 +22,7 @@ export default function MyListingsPage() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [paymentsOff, setPaymentsOff] = useState(false);
+  const [moderationOn, setModerationOn] = useState(false);
   const [error, setError] = useState("");
 
   const load = async () => {
@@ -42,7 +43,7 @@ export default function MyListingsPage() {
   };
 
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { getPaymentConfig().then((c) => setPaymentsOff(c.paymentsEnabled === false)).catch(() => {}); }, []);
+  useEffect(() => { getPaymentConfig().then((c) => { setPaymentsOff(c.paymentsEnabled === false); setModerationOn(c.moderationEnabled === true); }).catch(() => {}); }, []);
 
   const changeStatus = async (id: string, status: "SOLD" | "CLOSED") => {
     const question =
@@ -128,7 +129,7 @@ export default function MyListingsPage() {
                     {(item.status === "ACTIVE" || item.status === "PENDING_PAYMENT") && <button disabled={busyId === item.id} onClick={() => changeStatus(item.id, "CLOSED")} className="rounded-lg border border-border px-4 py-2 text-sm font-bold text-muted-foreground hover:text-foreground disabled:opacity-50">{tr("Take down", "Išimti", "Снять")}</button>}
                     {item.status !== "SOLD" && item.status !== "CLOSED" && <button onClick={() => setEditingId(editingId === item.id ? null : item.id)} className="rounded-lg border border-border px-4 py-2 text-sm font-bold hover:border-accent">{tr("Edit", "Redaguoti", "Редактировать")}</button>}
                   </div>
-                  {editingId === item.id && <EditListingPanel item={item} tr={tr} onDone={async () => { setEditingId(null); await load(); }} onReload={load} />}
+                  {editingId === item.id && <EditListingPanel item={item} tr={tr} moderationOn={moderationOn} onDone={async () => { setEditingId(null); await load(); }} onReload={load} />}
                 </div>
               </article>
             ))}
@@ -174,10 +175,12 @@ const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 function EditListingPanel({
   item,
   tr,
+  moderationOn,
   onDone,
   onReload,
 }: {
   item: ListingDetail;
+  moderationOn: boolean;
   tr: (en: string, lt: string, ru: string) => string;
   onDone: () => Promise<void>;
   onReload: () => Promise<void>;
@@ -289,6 +292,15 @@ function EditListingPanel({
           <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" disabled={saving} onChange={(e) => { addPhotos(e.target.files); e.target.value = ""; }} />
         </label>
       </div>
+      {moderationOn && item.status === "ACTIVE" && (
+        <p className="text-sm text-muted-foreground">
+          {tr(
+            "A new description or new photos are checked again: the listing is hidden until a moderator approves it.",
+            "Naujas aprašymas ar naujos nuotraukos tikrinami iš naujo: skelbimas paslepiamas, kol moderatorius jį patvirtins.",
+            "Новое описание или новые фото проверяются заново: объявление скрыто, пока модератор его не одобрит."
+          )}
+        </p>
+      )}
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button disabled={saving} className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground disabled:opacity-60">
         {saving ? "…" : tr("Save changes", "Išsaugoti", "Сохранить")}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { googleLoginUrl, login } from "@/lib/pirkApi";
+import { safeReturnPath } from "@/lib/safeReturn";
 
 function LoginInner() {
   const { tr } = useLanguage();
@@ -25,9 +26,7 @@ function LoginInner() {
     e.preventDefault(); setError(""); setLoading(true);
     try {
       await login(email, password);
-      const target = search.get("return") || "/";
-      // Relative paths only: "//host" would be an open redirect.
-      router.replace(target.startsWith("/") && !target.startsWith("//") && !target.startsWith("/\\") ? target : "/");
+      router.replace(safeReturnPath(search.get("return")));
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : tr("Login failed", "Prisijungti nepavyko", "Не удалось войти"));

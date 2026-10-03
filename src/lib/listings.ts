@@ -204,7 +204,8 @@ export async function closeListing(id: string, sold: boolean) {
 }
 
 export async function editListing(id: string, changes: { price?: number; description?: string }) {
-  return fetchJson<{ success: boolean }>(`${PRIVATE}/${encodeURIComponent(id)}/edit`, {
+  // status: PENDING_REVIEW when moderation is on and the text of an approved listing changed.
+  return fetchJson<{ success: boolean; status?: string }>(`${PRIVATE}/${encodeURIComponent(id)}/edit`, {
     method: "POST",
     body: JSON.stringify(changes),
   });
