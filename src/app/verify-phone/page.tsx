@@ -6,11 +6,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import PhoneVerificationBox from "@/components/PhoneVerificationBox";
 import { attachVerifiedPhone } from "@/lib/pirkApi";
 import { usePhoneVerificationConfig, verificationOff } from "@/lib/usePhoneVerification";
+import { safeReturnPath } from "@/lib/safeReturn";
 
-/** Only same-site relative paths are accepted as a return target (no open redirects). */
-function safeReturnPath(value: string | null) {
-  return value && value.startsWith("/") && !value.startsWith("//") && !value.startsWith("/\\") ? value : "/";
-}
 
 function VerifyPhonePageInner() {
   const { tr } = useLanguage();
