@@ -100,7 +100,7 @@ export default function Header() {
       <div className="container relative flex h-16 items-center justify-between sm:h-20">
         <Link href="/" className="flex shrink-0 items-center">
           <Image
-            src="/images/wheeliologo.svg"
+            src="/images/wheeliologo-light.svg"
             alt="Wheelio"
             width={594}
             height={119}

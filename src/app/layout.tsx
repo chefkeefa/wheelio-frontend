@@ -55,7 +55,7 @@ const siteJsonLd = {
       "@id": `${SITE_URL}/#organization`,
       name: SITE_NAME,
       url: `${SITE_URL}/`,
-      logo: `${SITE_URL}/images/wheeliologo.svg`,
+      logo: `${SITE_URL}/images/wheeliologo-light.svg`,
       areaServed: ["LT", "LV", "EE"],
     },
   ],
