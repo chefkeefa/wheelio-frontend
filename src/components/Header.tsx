@@ -102,10 +102,18 @@ export default function Header() {
           <Image
             src="/images/wheeliologo.svg"
             alt="Wheelio"
-            width={168}
-            height={35}
+            width={594}
+            height={119}
             priority
-            className="h-auto w-[132px] sm:w-[152px]"
+            className="h-auto w-[104px] dark:hidden sm:w-[120px]"
+          />
+          <Image
+            src="/images/wheeliologo-dark.svg"
+            alt="Wheelio"
+            width={594}
+            height={119}
+            priority
+            className="hidden h-auto w-[104px] dark:block sm:w-[120px]"
           />
         </Link>
 

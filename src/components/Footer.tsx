@@ -46,7 +46,8 @@ export default function Footer() {
       <div className="container grid grid-cols-2 gap-x-6 gap-y-10 py-10 text-sm md:grid-cols-[1.4fr_1fr_1fr_1.2fr] md:py-14">
         <div className="col-span-2 max-w-xs md:col-span-1">
           <Link href="/" aria-label="Wheelio">
-            <img src="/images/wheeliologo.svg" alt="Wheelio" width={120} height={25} className="h-6 w-auto" />
+            <img src="/images/wheeliologo.svg" alt="Wheelio" width={100} height={20} className="h-5 w-auto dark:hidden" />
+            <img src="/images/wheeliologo-dark.svg" alt="Wheelio" width={100} height={20} className="hidden h-5 w-auto dark:block" />
           </Link>
           <p className="mt-4 leading-6 text-muted-foreground">
             {tr(
