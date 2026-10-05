@@ -111,6 +111,32 @@ export type AdminUser = {
   registrationDate: string | null;
   roles?: string[];
 };
+export type ModerationFlag =
+  | "NEW_ACCOUNT"
+  | "EMAIL_NOT_VERIFIED"
+  | "PHONE_NOT_VERIFIED"
+  | "PHONE_SHARED"
+  | "PREVIOUSLY_REJECTED"
+  | "OPEN_COMPLAINTS"
+  | "NO_PHOTOS"
+  | "CONTACTS_IN_TEXT"
+  | "MANY_NEW_LISTINGS"
+  | "OWNER_BLOCKED";
+/** What the moderator should look at before approving a listing (computed by the backend). */
+export type ModerationSignals = {
+  ownerEmail: string | null;
+  accountAgeDays: number | null;
+  emailVerified: boolean | null;
+  phoneVerified: boolean;
+  accountsWithSamePhone: number;
+  ownerListings: number;
+  ownerRejected: number;
+  ownerListingsLastDay: number;
+  openComplaints: number;
+  photos: number;
+  contactsInText: boolean;
+  flags: ModerationFlag[];
+};
 export type AdminListing = {
   id: number;
   user: { id: number; name: string; surname: string } | null;
@@ -119,6 +145,8 @@ export type AdminListing = {
   price: number;
   description: string | null;
   createdAt: string | null;
+  /** Missing on backends older than the moderation signals. */
+  moderation?: ModerationSignals | null;
 };
 export type AdminComplaint = {
   id: number;
@@ -144,8 +172,63 @@ export type AdminConfigDiagnostics = {
   paymentsEnabled: boolean;
   photoProcessing: boolean;
   photoClassification: boolean;
+  /** The fields below are missing on older backends. */
+  schema?: {
+    checked: boolean;
+    error?: string;
+    pending: { version: string; missing: string[] }[];
+    problems: string[];
+    autoApply: boolean;
+    lastAutoApply: { at: string; applied: string[]; failed: string | null } | null;
+  };
+  backups?: AdminBackupStatus;
+  errorAlerts?: boolean;
   warnings: string[];
 };
+export type AdminBackupStatus = {
+  enabled: boolean;
+  dir: string | null;
+  keepDays: number;
+  latest: { name: string; size: number; createdAt: string } | null;
+  files: number;
+  lastError: string | null;
+  running: boolean;
+};
+export type AdminRecentErrors = {
+  since: string;
+  total: number;
+  alerts: boolean;
+  recent: { at: string; source: "api" | "process" | "frontend"; where: string; message: string; stack: string | null; count: number }[];
+};
+export function getAdminRecentErrors() {
+  return fetchJson<AdminRecentErrors>("/admin/diagnostics/errors");
+}
+/** Adds the tables, columns and indexes the database still lacks (never changes existing data). */
+export function applyMigrations() {
+  return fetchJson<{ applied: string[]; failed: string | null }>("/admin/diagnostics/schema/apply", { method: "POST", timeoutMs: 120000 });
+}
+export function runBackup() {
+  return fetchJson<{ file: { name: string; size: number } }>("/admin/backups/run", { method: "POST", timeoutMs: 300000 });
+}
+
+const reportedErrors = new Set<string>();
+/** Sends a page crash to the backend for the admin panel. Never throws; each error is sent once per page load. */
+export function reportClientError(error: { message?: string; stack?: string; digest?: string }) {
+  const message = String(error?.message || "Unknown error").slice(0, 1000);
+  const key = `${message}|${error?.digest || ""}`;
+  if (reportedErrors.has(key) || reportedErrors.size >= 10) return;
+  reportedErrors.add(key);
+  fetchJson("/client-errors", {
+    method: "POST",
+    timeoutMs: 5000,
+    body: JSON.stringify({
+      message,
+      stack: error?.stack ? String(error.stack).slice(0, 4000) : undefined,
+      digest: error?.digest ? String(error.digest).slice(0, 100) : undefined,
+      url: typeof window !== "undefined" ? window.location.pathname.slice(0, 500) : undefined,
+    }),
+  }).catch(() => undefined);
+}
 export function getAdminConfigDiagnostics() {
   return fetchJson<AdminConfigDiagnostics>("/admin/diagnostics/config");
 }
@@ -163,8 +246,10 @@ export function eraseUser(id: number) {
 export function setUserSupportRole(id: number, enabled: boolean) {
   return fetchJson<{ id: number; roles: string[] }>(`/admin/users/${id}/support`, { method: "POST", body: JSON.stringify({ enabled }) });
 }
-export function listAdminListings(page = 0, size = 50) {
-  return fetchJson<Paged<AdminListing>>(`/admin/listings?page=${page}&size=${size}`);
+/** status = "" for all listings, "PENDING_REVIEW" for the moderation queue. */
+export function listAdminListings(page = 0, size = 50, status = "") {
+  const filter = status ? `&status=${encodeURIComponent(status)}` : "";
+  return fetchJson<Paged<AdminListing>>(`/admin/listings?page=${page}&size=${size}${filter}`);
 }
 export function setAdminListingStatus(id: number, status: string) {
   return fetchJson<{ success: boolean }>(`/admin/listings/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
