@@ -16,6 +16,10 @@ export interface ListingDraft {
   // Шаг 3 — состояние и комплектация
   mileage: string;
   owners: string;
+  /** Regitra owner declaration code (SDK). */
+  sdk: string;
+  /** Imported car not registered in Lithuania yet: no SDK. */
+  notRegisteredInLt: boolean;
   hasServiceBook: boolean;
   nextServiceDate: string; // ISO yyyy-mm-dd
   condition: "clean" | "minor" | "damaged" | "needs_repair";
@@ -49,6 +53,8 @@ const EMPTY_DRAFT: ListingDraft = {
   photoNames: [],
   mileage: "",
   owners: "",
+  sdk: "",
+  notRegisteredInLt: false,
   hasServiceBook: false,
   nextServiceDate: "",
   condition: "clean",
@@ -93,6 +99,8 @@ function sanitizeDraft(input: unknown): ListingDraft {
 
     mileage: String(i.mileage ?? EMPTY_DRAFT.mileage),
     owners: String(i.owners ?? EMPTY_DRAFT.owners),
+    sdk: String(i.sdk ?? EMPTY_DRAFT.sdk),
+    notRegisteredInLt: Boolean(i.notRegisteredInLt ?? EMPTY_DRAFT.notRegisteredInLt),
     hasServiceBook: Boolean(i.hasServiceBook ?? EMPTY_DRAFT.hasServiceBook),
     nextServiceDate: String(i.nextServiceDate ?? EMPTY_DRAFT.nextServiceDate),
     condition: ((): ListingDraft["condition"] => {

@@ -21,6 +21,10 @@ export type Listing = {
   transmission?: string;
   fuel?: string;
   city?: string;
+  /** Regitra owner declaration code; null when not given. */
+  sdk?: string | null;
+  /** false: the seller said the car is not registered in Lithuania (no SDK yet). */
+  ltRegistered?: boolean | null;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -105,6 +109,8 @@ function normalizeListing(x: RawListing, fallbackId?: number): Listing {
     transmission: typeof x?.transmission === "string" && x.transmission ? x.transmission : undefined,
     fuel: typeof x?.fuel === "string" && x.fuel ? x.fuel : undefined,
     city: typeof x?.city === "string" && x.city ? x.city : undefined,
+    sdk: typeof x?.sdk === "string" && x.sdk ? x.sdk : null,
+    ltRegistered: typeof x?.ltRegistered === "boolean" ? x.ltRegistered : null,
     createdAt: typeof x?.createdAt === "string" ? x.createdAt : undefined,
     updatedAt: typeof x?.updatedAt === "string" ? x.updatedAt : undefined,
   };
@@ -203,7 +209,10 @@ export async function closeListing(id: string, sold: boolean) {
   });
 }
 
-export async function editListing(id: string, changes: { price?: number; description?: string }) {
+export async function editListing(
+  id: string,
+  changes: { price?: number; description?: string; sdk?: string; ltRegistered?: boolean }
+) {
   // status: PENDING_REVIEW when moderation is on and the text of an approved listing changed.
   return fetchJson<{ success: boolean; status?: string }>(`${PRIVATE}/${encodeURIComponent(id)}/edit`, {
     method: "POST",

@@ -121,7 +121,8 @@ export type ModerationFlag =
   | "NO_PHOTOS"
   | "CONTACTS_IN_TEXT"
   | "MANY_NEW_LISTINGS"
-  | "OWNER_BLOCKED";
+  | "OWNER_BLOCKED"
+  | "NO_SDK";
 /** What the moderator should look at before approving a listing (computed by the backend). */
 export type ModerationSignals = {
   ownerEmail: string | null;
@@ -428,6 +429,9 @@ export type ListingCreatePayload = {
   city?: string;
   /** Equipment option keys (see lib/carOptions). */
   options?: string[];
+  /** Regitra owner declaration code, required unless ltRegistered is false. */
+  sdk?: string;
+  ltRegistered?: boolean;
 };
 
 /** Factory equipment of a catalog modification, used to pre-fill the seller's list. */

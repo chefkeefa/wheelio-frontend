@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { anybody } from "@/lib/fonts";
 import { getListingById, type ListingDetail } from "@/lib/listings";
 import { useLanguage } from "@/context/LanguageContext";
+import { SDK_CHECK_URL } from "@/lib/sdk";
 import ListingActions from "@/components/ListingActions";
 import ListingReviewBar from "@/components/ListingReviewBar";
 import AssetIcon from "@/components/ui/AssetIcon";
@@ -158,6 +159,10 @@ export default function ListingDetailsPage() {
     { label: tr("Model", "Modelis", "Модель"), value: data.model ?? null },
     { label: tr("Version", "Modifikacija", "Модификация"), value: specs?.modification ?? null },
     { label: tr("City", "Miestas", "Город"), value: data.city ?? null },
+    {
+      label: "SDK",
+      value: data.sdk ?? (data.ltRegistered === false ? tr("Not registered in Lithuania", "Neregistruotas Lietuvoje", "Не зарегистрирован в Литве") : null),
+    },
   ].filter((row): row is { label: string; value: string } => Boolean(row.value));
 
   return (
@@ -205,6 +210,16 @@ export default function ListingDetailsPage() {
                 </div>
               ))}
             </dl>
+            {data.sdk && (
+              <a
+                href={SDK_CHECK_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-ink underline"
+              >
+                {tr("Check the car in eRegitra with the SDK and VIN", "Patikrinkite automobilį eRegitroje pagal SDK ir VIN", "Проверить машину в eRegitra по SDK и VIN")}
+              </a>
+            )}
           </div>
 
           <ListingActions listingId={data.id} />
