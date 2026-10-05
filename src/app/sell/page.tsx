@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { normalizeSdk } from "@/lib/sdk";
 import { BACKEND_ORIGIN } from "@/lib/config";
 import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/http";
@@ -399,6 +400,8 @@ const INITIAL: ListingDraft = {
   photoNames: [],
   mileage: "",
   owners: "",
+  sdk: "",
+  notRegisteredInLt: false,
   hasServiceBook: false,
   nextServiceDate: "",
   condition: "clean",
@@ -1156,6 +1159,18 @@ export default function SellPage() {
       return;
     }
 
+    if (!draft.notRegisteredInLt && !normalizeSdk(draft.sdk)) {
+      setPublishError(
+        tr(
+          "Enter the SDK (8 characters from Regitra): the law requires it in a car sale ad.",
+          "Įveskite SDK (8 simbolių Regitros kodą): įstatymas reikalauja jį nurodyti pardavimo skelbime.",
+          "Укажите SDK (8 символов из Regitra): закон требует его в объявлении о продаже."
+        )
+      );
+      setStep(3);
+      return;
+    }
+
     if (!draft.city.trim()) {
       setPublishError(tr("Choose the city where the car is.", "Pasirinkite miestą, kuriame yra automobilis.", "Выберите город, где находится автомобиль."));
       return;
@@ -1190,6 +1205,7 @@ export default function SellPage() {
         description: draft.description.trim(),
         details: { year, mileage: Number.isFinite(mileage) ? mileage : 0 },
         city: draft.city.trim() || undefined,
+        ...(draft.notRegisteredInLt ? { ltRegistered: false } : { sdk: normalizeSdk(draft.sdk) ?? "", ltRegistered: true }),
         options: [...featureKeys(draft.features).filter((key) => key !== "service-book"), ...(draft.hasServiceBook ? ["service-book"] : [])],
       });
 
@@ -1261,6 +1277,7 @@ export default function SellPage() {
     { label: tr("Make, model and year", "Markė, modelis ir metai", "Марка, модель и год"), done: Boolean(draft.mark && draft.model && draft.year), step: 1 },
     { label: tr("Engine / configuration", "Variklis / komplektacija", "Двигатель / комплектация"), done: Boolean(engineOptions.some((option) => option.value === draft.engine)), step: 1 },
     { label: tr("Description", "Aprašymas", "Описание"), done: Boolean(draft.description.trim()), step: 3 },
+    { label: "SDK", done: draft.notRegisteredInLt || Boolean(normalizeSdk(draft.sdk)), step: 3 },
     { label: tr("Price", "Kaina", "Цена"), done: Boolean(Number(draft.price) > 0), step: 4 },
   ];
   const requirementsLeft = requirements.filter((item) => !item.done).length;
@@ -1672,6 +1689,35 @@ export default function SellPage() {
                     </div>
                   </div>
 
+                  <div className="mt-5 rounded-xl border border-border p-4">
+                    <L htmlFor="sell-sdk">{tr("SDK (owner declaration code)", "SDK (savininko deklaravimo kodas)", "SDK (код декларации владельца)")}</L>
+                    <Input
+                      id="sell-sdk"
+                      autoComplete="off"
+                      maxLength={9}
+                      placeholder="ABCDEFGH"
+                      disabled={draft.notRegisteredInLt}
+                      value={draft.notRegisteredInLt ? "" : draft.sdk}
+                      onChange={(e) => setDraft({ ...draft, sdk: e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "") })}
+                    />
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                      {tr(
+                        "Lithuanian law requires the SDK in every sale ad of a car registered in Lithuania. You get it free in eRegitra or at a Regitra office; buyers use it to check the car.",
+                        "Lietuvos įstatymai reikalauja SDK nurodyti kiekviename Lietuvoje registruoto automobilio pardavimo skelbime. Jį nemokamai gausite eRegitroje arba Regitros skyriuje; pirkėjai pagal jį tikrina automobilį.",
+                        "По закону Литвы SDK обязателен в каждом объявлении о продаже машины, зарегистрированной в Литве. Его можно бесплатно получить в eRegitra или в отделении Regitra; покупатели проверяют по нему машину."
+                      )}{" "}
+                      <a href="https://www.eregitra.lt" target="_blank" rel="noopener noreferrer" className="underline">eregitra.lt</a>
+                    </p>
+                    {draft.sdk && !draft.notRegisteredInLt && !normalizeSdk(draft.sdk) && (
+                      <p className="mt-1 text-xs text-red-600">{tr("The SDK has 8 letters or digits.", "SDK sudaro 8 raidės ar skaitmenys.", "SDK состоит из 8 букв или цифр.")}</p>
+                    )}
+                    <div className="mt-3">
+                      <CheckRow id="sell-not-lt" checked={draft.notRegisteredInLt} onChange={(value) => setDraft({ ...draft, notRegisteredInLt: value })}>
+                        {tr("The car is not registered in Lithuania yet (imported)", "Automobilis dar neregistruotas Lietuvoje (įvežtas)", "Машина ещё не зарегистрирована в Литве (ввезена)")}
+                      </CheckRow>
+                    </div>
+                  </div>
+
                   <div className="mt-4">
                     <CheckRow id="service-book" checked={draft.hasServiceBook} onChange={(value) => setDraft({ ...draft, hasServiceBook: value })}>
                       {tr("Has service book / docs", "Yra serviso knygelė / dokumentai", "Есть сервисная книжка / документы")}
@@ -1932,6 +1978,7 @@ export default function SellPage() {
                         {[
                           [tr("Engine", "Variklis", "Двигатель"), draft.engine || "—"],
                           [tr("Mileage", "Rida", "Пробег"), draft.mileage ? `${Number(draft.mileage).toLocaleString("lt-LT")} km` : "—"],
+                          ["SDK", draft.notRegisteredInLt ? tr("Not registered in Lithuania", "Neregistruotas Lietuvoje", "Не зарегистрирован в Литве") : normalizeSdk(draft.sdk) || "—"],
                           [tr("Condition", "Būklė", "Состояние"), conditionOptions.find((option) => option.value === draft.condition)?.title || "—"],
                           [tr("Equipment", "Komplektacija", "Комплектация"), chosenOptions.size ? tr(`${chosenOptions.size} options`, `${chosenOptions.size} pasirinkimai`, `${chosenOptions.size} опций`) : "—"],
                           [tr("City/Area", "Miestas / rajonas", "Город / район"), [draft.city, draft.area].filter(Boolean).join(", ") || "—"],

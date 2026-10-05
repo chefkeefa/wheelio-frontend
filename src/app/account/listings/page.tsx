@@ -9,6 +9,7 @@ import { ApiError } from "@/lib/http";
 import { closeListing, deleteListingImage, editListing, setListingCover, getMyListings, type ListingDetail, type ListingStatus } from "@/lib/listings";
 import { completeDevPayment, getMyModerationDecisions, getPaymentConfig, isEmailNotVerifiedError, startCheckout, uploadListingImage, type ModerationDecision } from "@/lib/pirkApi";
 import AssetIcon from "@/components/ui/AssetIcon";
+import { normalizeSdk } from "@/lib/sdk";
 
 const FALLBACK_IMAGE = "/images/no-photo.svg";
 
@@ -220,6 +221,8 @@ function EditListingPanel({
 }) {
   const [price, setPrice] = useState(String(item.price || ""));
   const [description, setDescription] = useState(item.description || "");
+  const [sdk, setSdk] = useState(item.sdk || "");
+  const [notLt, setNotLt] = useState(item.ltRegistered === false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const images = item.images || [];
@@ -235,10 +238,15 @@ function EditListingPanel({
       setError(tr("Description is required", "Aprašymas privalomas", "Описание обязательно"));
       return;
     }
+    const code = normalizeSdk(sdk);
+    if (!notLt && !code) {
+      setError(tr("Enter the SDK: 8 letters or digits from Regitra.", "Įveskite SDK: 8 Regitros raidės ar skaitmenys.", "Укажите SDK: 8 букв или цифр из Regitra."));
+      return;
+    }
     setSaving(true);
     setError("");
     try {
-      await editListing(item.id, { price: value, description: description.trim() });
+      await editListing(item.id, { price: value, description: description.trim(), ...(notLt ? { ltRegistered: false } : { sdk: code!, ltRegistered: true }) });
       await onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : tr("Could not save", "Nepavyko išsaugoti", "Не удалось сохранить"));
@@ -300,6 +308,14 @@ function EditListingPanel({
       <label className="block text-sm font-semibold">
         {tr("Description", "Aprašymas", "Описание")}
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={10000} rows={5} className="mt-1 w-full rounded-lg border border-border bg-background p-3" />
+      </label>
+      <label className="block text-sm font-semibold">
+        {tr("SDK (Regitra owner declaration code)", "SDK (savininko deklaravimo kodas)", "SDK (код декларации владельца)")}
+        <input value={notLt ? "" : sdk} disabled={notLt} maxLength={9} placeholder="ABCDEFGH" onChange={(e) => setSdk(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ""))} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 disabled:opacity-60" />
+      </label>
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={notLt} onChange={(e) => setNotLt(e.target.checked)} className="h-4 w-4" />
+        {tr("Not registered in Lithuania yet (imported)", "Dar neregistruotas Lietuvoje (įvežtas)", "Ещё не зарегистрирован в Литве (ввезён)")}
       </label>
       <div>
         <div className="text-sm font-semibold">{tr("Photos", "Nuotraukos", "Фото")}</div>

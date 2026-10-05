@@ -475,6 +475,7 @@ const FLAG_LABELS: Record<ModerationFlag, [string, string, string]> = {
   CONTACTS_IN_TEXT: ["Contacts or links in text", "Kontaktai ar nuorodos tekste", "Контакты или ссылки в тексте"],
   MANY_NEW_LISTINGS: ["Many listings in a day", "Daug skelbimų per dieną", "Много объявлений за день"],
   OWNER_BLOCKED: ["Seller blocked", "Pardavėjas užblokuotas", "Продавец заблокирован"],
+  NO_SDK: ["No SDK (required by law)", "Nėra SDK (privaloma)", "Нет SDK (обязателен)"],
 };
 
 function ModerationCell({ m }: { m?: ModerationSignals | null }) {
