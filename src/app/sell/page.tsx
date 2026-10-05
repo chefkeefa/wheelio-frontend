@@ -1124,9 +1124,9 @@ export default function SellPage() {
 
   // Create a PENDING_PAYMENT listing, upload photos, then start checkout.
   const EMAIL_FIRST = tr(
-    "Confirm your e-mail first: open the link we sent you, or request a new one in Profile. Then publish again.",
-    "Pirmiausia patvirtinkite el. paštą: atidarykite atsiųstą nuorodą arba užsisakykite naują profilyje. Tada skelbkite dar kartą.",
-    "Сначала подтвердите e-mail: откройте ссылку из письма или запросите новую в профиле. Затем опубликуйте снова."
+    "Confirm your e-mail first: we have sent a link to your address. Open it, then publish again. No e-mail? Check spam or request a new link in Profile.",
+    "Pirmiausia patvirtinkite el. paštą: išsiuntėme nuorodą jūsų adresu. Atidarykite ją ir skelbkite dar kartą. Negavote? Patikrinkite šlamštą arba užsisakykite naują nuorodą profilyje.",
+    "Сначала подтвердите e-mail: мы отправили ссылку на ваш адрес. Откройте её и опубликуйте снова. Письма нет? Проверьте спам или запросите новую ссылку в профиле."
   );
 
   const publish = async () => {

@@ -128,6 +128,19 @@ export const ADMIN_LISTING_STATUSES = ["ACTIVE", "PENDING_PAYMENT", "PENDING_REV
 export function getAdminStats() {
   return fetchJson<AdminStats>("/admin/stats");
 }
+/** What protects the site right now (moderation, phone and e-mail confirmation), as the running API sees it. */
+export type AdminConfigDiagnostics = {
+  listingModeration: boolean;
+  phoneVerification: boolean;
+  emailVerification: { enabled: boolean; required: boolean };
+  paymentsEnabled: boolean;
+  photoProcessing: boolean;
+  photoClassification: boolean;
+  warnings: string[];
+};
+export function getAdminConfigDiagnostics() {
+  return fetchJson<AdminConfigDiagnostics>("/admin/diagnostics/config");
+}
 export function listAdminUsers(page = 0, size = 50) {
   return fetchJson<Paged<AdminUser>>(`/admin/users?page=${page}&size=${size}`);
 }
@@ -198,8 +211,11 @@ export type PasswordResetConfig = { enabled: boolean };
 export function getEmailVerificationConfig() {
   return fetchJson<{ enabled: boolean; required: boolean }>("/auth/email/config");
 }
-export function requestEmailVerification() {
-  return fetchJson<{ sent: boolean; alreadyVerified: boolean }>("/auth/email/verify/request", { method: "POST" });
+/** ifNoneRecent: send nothing when a link already went out within the last hour. */
+export function requestEmailVerification(ifNoneRecent = false) {
+  return fetchJson<{ sent: boolean; alreadyVerified: boolean }>(`/auth/email/verify/request${ifNoneRecent ? "?ifNoneRecent=1" : ""}`, {
+    method: "POST",
+  });
 }
 export function confirmEmailVerification(token: string) {
   return fetchJson<{ success: boolean; purpose: "VERIFY" | "CHANGE"; email: string; signedOut: boolean }>("/auth/email/verify/confirm", {
@@ -208,10 +224,18 @@ export function confirmEmailVerification(token: string) {
   });
 }
 
-/** true when the backend requires a confirmed e-mail to publish and this user has not confirmed it yet. */
+/**
+ * true when the backend requires a confirmed e-mail to publish and this user has not confirmed it yet. Then a
+ * link is sent unless one went out within the last hour (accounts created before confirmation never got one).
+ */
 export async function emailBlocksPublishing(): Promise<boolean> {
   const [config, user] = await Promise.all([getEmailVerificationConfig().catch(() => null), me().catch(() => null)]);
-  return Boolean(config?.required) && user?.emailVerified === false;
+  const blocked = Boolean(config?.required) && user?.emailVerified === false;
+  if (blocked) await requestEmailVerification(true).catch(() => undefined);
+  return blocked;
+}
+export function isLoginLockedError(e: unknown) {
+  return e instanceof ApiError && e.status === 429 && (e.details as { code?: string } | undefined)?.code === "LOGIN_LOCKED";
 }
 export function isEmailNotVerifiedError(e: unknown) {
   return e instanceof ApiError && e.status === 403 && (e.details as { code?: string } | undefined)?.code === "EMAIL_NOT_VERIFIED";

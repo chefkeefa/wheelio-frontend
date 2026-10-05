@@ -4,7 +4,7 @@ import { FormEvent, Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
-import { googleLoginUrl, login } from "@/lib/pirkApi";
+import { googleLoginUrl, isLoginLockedError, login } from "@/lib/pirkApi";
 import { safeReturnPath } from "@/lib/safeReturn";
 
 function LoginInner() {
@@ -29,7 +29,13 @@ function LoginInner() {
       router.replace(safeReturnPath(search.get("return")));
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : tr("Login failed", "Prisijungti nepavyko", "Не удалось войти"));
+      if (isLoginLockedError(e))
+        setError(tr(
+          "Too many wrong passwords were entered for this account. To sign in from this device, reset your password (Forgot password?) or continue with Google.",
+          "Šiai paskyrai įvesta per daug neteisingų slaptažodžių. Norėdami prisijungti šiame įrenginyje, atkurkite slaptažodį (Pamiršote slaptažodį?) arba tęskite su Google.",
+          "Для этого аккаунта введено слишком много неверных паролей. Чтобы войти с этого устройства, восстановите пароль («Забыли пароль?») или войдите через Google."
+        ));
+      else setError(e instanceof Error ? e.message : tr("Login failed", "Prisijungti nepavyko", "Не удалось войти"));
     } finally { setLoading(false); }
   };
 
