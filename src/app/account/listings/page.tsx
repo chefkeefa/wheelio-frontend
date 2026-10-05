@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/http";
 import { closeListing, deleteListingImage, editListing, setListingCover, getMyListings, type ListingDetail, type ListingStatus } from "@/lib/listings";
-import { completeDevPayment, getPaymentConfig, isEmailNotVerifiedError, startCheckout, uploadListingImage } from "@/lib/pirkApi";
+import { completeDevPayment, getMyModerationDecisions, getPaymentConfig, isEmailNotVerifiedError, startCheckout, uploadListingImage, type ModerationDecision } from "@/lib/pirkApi";
 import AssetIcon from "@/components/ui/AssetIcon";
 
 const FALLBACK_IMAGE = "/images/no-photo.svg";
@@ -24,6 +24,7 @@ export default function MyListingsPage() {
   const [paymentsOff, setPaymentsOff] = useState(false);
   const [moderationOn, setModerationOn] = useState(false);
   const [error, setError] = useState("");
+  const [decisions, setDecisions] = useState<ModerationDecision[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -43,6 +44,8 @@ export default function MyListingsPage() {
   };
 
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Statements of reasons (DSA Art. 17) for rejected listings; older backends simply return none.
+  useEffect(() => { getMyModerationDecisions().then(setDecisions).catch(() => setDecisions([])); }, []);
   useEffect(() => { getPaymentConfig().then((c) => { setPaymentsOff(c.paymentsEnabled === false); setModerationOn(c.moderationEnabled === true); }).catch(() => {}); }, []);
 
   const changeStatus = async (id: string, status: "SOLD" | "CLOSED") => {
@@ -130,6 +133,8 @@ export default function MyListingsPage() {
                   <div className="mt-2 text-xl font-extrabold text-accent-ink">{formatPrice(item.price)}</div>
                   <div className="mt-2 text-sm text-muted-foreground">{formatMileage(item.mileage)} km{item.createdAt ? ` · ${new Date(item.createdAt).toLocaleDateString(language === "LT" ? "lt-LT" : language === "RU" ? "ru-RU" : "en-GB")}` : ""}</div>
 
+                  {item.status === "REJECTED" && <RejectionReason decision={decisions.find((d) => String(d.listingId) === String(item.id))} tr={tr} />}
+
                   <div className="mt-5 flex flex-wrap gap-2">
                     {item.status === "ACTIVE" && <Link href={`/listing/${item.id}`} className="rounded-lg border border-border px-4 py-2 text-sm font-bold hover:border-accent">{tr("Open", "Atidaryti", "Открыть")}</Link>}
                     {item.status === "PENDING_PAYMENT" && <button disabled={busyId === item.id} onClick={() => pay(item.id)} className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground disabled:opacity-50">{paymentsOff ? tr("Publish", "Paskelbti", "Опубликовать") : tr("Pay & publish", "Apmokėti ir paskelbti", "Оплатить и опубликовать")}</button>}
@@ -145,6 +150,26 @@ export default function MyListingsPage() {
         )}
       </div>
     </main>
+  );
+}
+
+function RejectionReason({ decision, tr }: { decision?: ModerationDecision; tr: (en: string, lt: string, ru: string) => string }) {
+  return (
+    <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm leading-6">
+      <p className="font-semibold">{tr("Why it was rejected", "Kodėl atmestas", "Почему отклонено")}</p>
+      {decision ? (
+        <>
+          <p className="mt-1 whitespace-pre-line">{decision.explanation}</p>
+          {decision.ruleRef && <p className="mt-1 text-muted-foreground">{decision.ruleRef}</p>}
+        </>
+      ) : (
+        <p className="mt-1 text-muted-foreground">{tr("The reason was sent to you by e-mail.", "Priežastis išsiųsta jums el. paštu.", "Причина отправлена вам по e-mail.")}</p>
+      )}
+      <p className="mt-2 text-muted-foreground">
+        {tr("Disagree? ", "Nesutinkate? ", "Не согласны? ")}
+        <Link href="/dsa#redress" className="underline">{tr("How to contest", "Kaip ginčyti", "Как обжаловать")}</Link>
+      </p>
+    </div>
   );
 }
 

@@ -28,6 +28,8 @@ export default function Footer() {
         { href: "/help", label: tr("Help center", "Pagalbos centras", "Центр помощи") },
         { href: "/rules", label: tr("Rules", "Taisyklės", "Правила") },
         { href: "/privacy", label: tr("Privacy policy", "Privatumo politika", "Политика конфиденциальности") },
+        { href: "/dsa", label: tr("Digital Services Act", "Skaitmeninių paslaugų aktas", "Акт о цифровых услугах") },
+        { href: "/report", label: tr("Report illegal content", "Pranešti apie neteisėtą turinį", "Сообщить о незаконном контенте") },
       ],
     },
   ];

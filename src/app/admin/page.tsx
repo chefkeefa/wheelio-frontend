@@ -18,6 +18,9 @@ import {
   type ModerationSignals,
   isAdminUser,
   listAdminComplaints,
+  listDsaNotices,
+  decideDsaNotice,
+  type DsaNotice,
   listAdminListings,
   listAdminUsers,
   me,
@@ -34,7 +37,7 @@ import {
 } from "@/lib/pirkApi";
 import AssetIcon from "@/components/ui/AssetIcon";
 
-type Tab = "listings" | "complaints" | "users" | "diagnostics";
+type Tab = "listings" | "dsa" | "complaints" | "users" | "diagnostics";
 const PAGE_SIZE = 50;
 
 export default function AdminPage() {
@@ -46,6 +49,7 @@ export default function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [listings, setListings] = useState<Paged<AdminListing> | null>(null);
   const [complaints, setComplaints] = useState<Paged<AdminComplaint> | null>(null);
+  const [dsaNotices, setDsaNotices] = useState<Paged<DsaNotice> | null>(null);
   const [users, setUsers] = useState<Paged<AdminUser> | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -70,6 +74,7 @@ export default function AdminPage() {
       setStats(await getAdminStats());
       if (tab === "listings") setListings(await listAdminListings(page, PAGE_SIZE, statusFilter));
       if (tab === "complaints") setComplaints(await listAdminComplaints(page, PAGE_SIZE));
+      if (tab === "dsa") setDsaNotices(await listDsaNotices(page, PAGE_SIZE));
       if (tab === "users") setUsers(await listAdminUsers(page, PAGE_SIZE));
       if (tab === "diagnostics") {
         setDiagnostics(await getAdminConfigDiagnostics().catch(() => null));
@@ -105,6 +110,43 @@ export default function AdminPage() {
     }
   };
 
+  /**
+   * DSA Art. 17: every rejection, takedown or block is e-mailed to the user with a reason.
+   * Returns null when the admin cancels.
+   */
+  const askReason = (what: string) => {
+    const reason = window.prompt(
+      `${what}\n\n${tr(
+        "Reason for the user (facts and which rule is broken). It is e-mailed to them.",
+        "Priežastis naudotojui (faktai ir kuri taisyklė pažeista). Ji bus išsiųsta el. paštu.",
+        "Причина для пользователя (факты и какое правило нарушено). Она будет отправлена по e-mail."
+      )}`
+    );
+    if (reason === null) return null;
+    return reason.trim();
+  };
+  const rejectListing = (id: number) => {
+    const reason = askReason(tr("Reject this listing?", "Atmesti šį skelbimą?", "Отклонить объявление?"));
+    if (reason !== null) run(() => setAdminListingStatus(id, "REJECTED", reason));
+  };
+  const decideNotice = (n: DsaNotice, action: "REMOVE" | "NO_ACTION", ground: "TERMS" | "ILLEGAL" = "TERMS") => {
+    const what =
+      action === "NO_ACTION"
+        ? tr("Keep the content (no violation)?", "Palikti turinį (pažeidimo nėra)?", "Оставить контент (нарушения нет)?")
+        : ground === "ILLEGAL"
+          ? tr("Take the listing down as illegal?", "Pašalinti skelbimą kaip neteisėtą?", "Снять объявление как незаконное?")
+          : tr("Take the listing down for breaking the rules?", "Pašalinti skelbimą dėl taisyklių pažeidimo?", "Снять объявление за нарушение правил?");
+    const reason = window.prompt(
+      `${what}\n\n${tr(
+        "Explanation (at least 10 characters). The reporter and, if removed, the seller receive it by e-mail.",
+        "Paaiškinimas (ne trumpesnis nei 10 simbolių). Jį el. paštu gaus pranešėjas, o pašalinus ir pardavėjas.",
+        "Пояснение (не короче 10 символов). Его получит заявитель, а при снятии и продавец."
+      )}`
+    );
+    if (reason === null) return;
+    run(() => decideDsaNotice(n.id, action, reason.trim(), ground));
+  };
+
   if (allowed === null) return <main className="container mx-auto min-h-[60vh] px-4 py-10">…</main>;
   if (!allowed)
     return (
@@ -114,9 +156,10 @@ export default function AdminPage() {
       </main>
     );
 
-  const current = tab === "listings" ? listings : tab === "complaints" ? complaints : tab === "users" ? users : null;
+  const current = tab === "listings" ? listings : tab === "dsa" ? dsaNotices : tab === "complaints" ? complaints : tab === "users" ? users : null;
   const tabs: [Tab, string][] = [
     ["listings", tr("Listings", "Skelbimai", "Объявления")],
+    ["dsa", tr("Illegal content reports", "Pranešimai (SPA)", "Жалобы (DSA)")],
     ["complaints", tr("Complaints", "Skundai", "Жалобы")],
     ["users", tr("Users", "Naudotojai", "Пользователи")],
     ["diagnostics", tr("Diagnostics", "Diagnostika", "Диагностика")],
@@ -205,7 +248,7 @@ export default function AdminPage() {
                           </button>
                           <button
                             disabled={busy}
-                            onClick={() => { if (window.confirm(tr("Reject this listing?", "Atmesti šį skelbimą?", "Отклонить объявление?"))) run(() => setAdminListingStatus(l.id, "REJECTED")); }}
+                            onClick={() => rejectListing(l.id)}
                             className="rounded border border-red-500/50 px-3 py-1 font-semibold text-red-600"
                           >
                             {tr("Reject", "Atmesti", "Отклонить")}
@@ -215,11 +258,59 @@ export default function AdminPage() {
                       <select
                         value={l.status}
                         disabled={busy}
-                        onChange={(e) => run(() => setAdminListingStatus(l.id, e.target.value))}
+                        onChange={(e) => (e.target.value === "REJECTED" ? rejectListing(l.id) : run(() => setAdminListingStatus(l.id, e.target.value)))}
                         className="rounded border border-border bg-background px-2 py-1"
                       >
                         {ADMIN_LISTING_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {tab === "dsa" && dsaNotices && (
+            <table className="w-full text-sm">
+              <thead><tr className="text-left text-muted-foreground"><th className="p-2">ID</th><th className="p-2">{tr("Content", "Turinys", "Контент")}</th><th className="p-2">{tr("Reporter", "Pranešėjas", "Заявитель")}</th><th className="p-2">{tr("Explanation", "Paaiškinimas", "Пояснение")}</th><th className="p-2">{tr("Decision", "Sprendimas", "Решение")}</th></tr></thead>
+              <tbody>
+                {dsaNotices.content.length === 0 && (
+                  <tr><td colSpan={5} className="p-4 text-muted-foreground">{tr("No reports.", "Pranešimų nėra.", "Жалоб нет.")}</td></tr>
+                )}
+                {dsaNotices.content.map((n) => (
+                  <tr key={n.id} className="border-t border-border align-top">
+                    <td className="p-2">{n.id}<div className="text-xs text-muted-foreground">{new Date(n.createdAt).toLocaleString()}</div></td>
+                    <td className="p-2">
+                      {n.listingId ? <Link href={`/listing/${n.listingId}`} className="underline">{tr("Listing", "Skelbimas", "Объявление")} #{n.listingId}</Link> : <span className="break-all">{n.contentUrl}</span>}
+                      <div className="text-xs font-semibold">{n.category}</div>
+                    </td>
+                    <td className="p-2">{n.reporterName || "—"}<div className="text-xs text-muted-foreground">{n.reporterEmail || tr("anonymous", "anonimiškai", "анонимно")}</div></td>
+                    <td className="max-w-md whitespace-pre-line p-2">{n.explanation}</td>
+                    <td className="p-2">
+                      {n.status === "RECEIVED" ? (
+                        <div className="flex flex-col gap-2">
+                          {n.listingId && (
+                            <>
+                              <button disabled={busy} onClick={() => decideNotice(n, "REMOVE", "TERMS")} className="rounded border border-red-500/50 px-3 py-1 font-semibold text-red-600">
+                                {tr("Remove: breaks rules", "Pašalinti: pažeidžia taisykles", "Снять: нарушает правила")}
+                              </button>
+                              <button disabled={busy} onClick={() => decideNotice(n, "REMOVE", "ILLEGAL")} className="rounded border border-red-500/50 px-3 py-1 font-semibold text-red-600">
+                                {tr("Remove: illegal", "Pašalinti: neteisėta", "Снять: незаконно")}
+                              </button>
+                            </>
+                          )}
+                          <button disabled={busy} onClick={() => decideNotice(n, "NO_ACTION")} className="rounded border border-border px-3 py-1 font-semibold">
+                            {tr("No action", "Nesiimti veiksmų", "Без действий")}
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className={`font-semibold ${n.status === "ACTION_TAKEN" ? "text-red-600" : "text-muted-foreground"}`}>
+                            {n.status === "ACTION_TAKEN" ? tr("Removed", "Pašalinta", "Снято") : tr("No action", "Veiksmų nesiimta", "Без действий")}
+                          </span>
+                          {n.decisionNote && <div className="mt-1 max-w-xs whitespace-pre-line text-xs text-muted-foreground">{n.decisionNote}</div>}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -279,7 +370,12 @@ export default function AdminPage() {
                                 "Заблокировать пользователя? Его объявления будут сняты, а сессии завершены. После разблокировки объявления вернутся."
                               )
                             : tr("Unblock this user?", "Atblokuoti naudotoją?", "Разблокировать пользователя?");
-                          if (window.confirm(q)) run(() => setUserDisabled(u.id, disable));
+                          if (!disable) {
+                            if (window.confirm(q)) run(() => setUserDisabled(u.id, false));
+                            return;
+                          }
+                          const reason = askReason(q);
+                          if (reason !== null) run(() => setUserDisabled(u.id, true, reason));
                         }}
                         className="rounded border border-border px-3 py-1 font-semibold"
                       >

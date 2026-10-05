@@ -89,10 +89,75 @@ export function removeFavorite(listingId: string | number) {
   return fetchJson<{ success: boolean }>(`/favorites/${encodeURIComponent(String(listingId))}`, { method: "DELETE" });
 }
 
-export function reportListing(listingId: string | number, description: string) {
-  return fetchJson<{ id: number; status: string }>("/complaints/create", {
+// ---- Digital Services Act (Skaitmeninių paslaugų aktas) ----
+export const DSA_NOTICE_CATEGORIES = [
+  "SCAM_FRAUD",
+  "STOLEN_VEHICLE",
+  "MISLEADING_INFO",
+  "INTELLECTUAL_PROPERTY",
+  "PERSONAL_DATA",
+  "ILLEGAL_GOODS",
+  "HATE_OR_VIOLENCE",
+  "CHILD_ABUSE",
+  "OTHER",
+] as const;
+export type DsaNoticeCategory = (typeof DSA_NOTICE_CATEGORIES)[number];
+export type DsaNoticeInput = {
+  url: string;
+  listingId?: number;
+  category: DsaNoticeCategory;
+  explanation: string;
+  name: string;
+  email: string;
+  goodFaith: boolean;
+};
+export type DsaNotice = {
+  id: number;
+  listingId: number | null;
+  contentUrl: string;
+  category: DsaNoticeCategory;
+  explanation: string;
+  reporterName: string | null;
+  reporterEmail: string | null;
+  goodFaith: boolean;
+  status: "RECEIVED" | "ACTION_TAKEN" | "NO_ACTION";
+  decisionNote: string | null;
+  decidedAt: string | null;
+  createdAt: string;
+};
+export type ModerationDecision = {
+  id: number;
+  listingId: number | null;
+  restriction: "LISTING_REJECTED" | "LISTING_REMOVED" | "ACCOUNT_SUSPENDED";
+  ground: "TERMS" | "ILLEGAL";
+  ruleRef: string | null;
+  explanation: string;
+  noticeId: number | null;
+  automated: boolean;
+  createdAt: string;
+};
+
+/** Notice of illegal content (DSA Art. 16): anyone can send one, signed in or not. */
+export function sendDsaNotice(input: DsaNoticeInput) {
+  return fetchJson<{ id: number; status: string; receivedAt: string }>("/dsa/notices", { method: "POST", body: JSON.stringify(input) });
+}
+/** Statements of reasons about the signed-in user's listings (DSA Art. 17). Older backends: none. */
+export async function getMyModerationDecisions(): Promise<ModerationDecision[]> {
+  try {
+    return await fetchJson<ModerationDecision[]>("/dsa/decisions/mine");
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return [];
+    throw e;
+  }
+}
+export function listDsaNotices(page = 0, size = 50, status = "") {
+  const filter = status ? `&status=${encodeURIComponent(status)}` : "";
+  return fetchJson<Paged<DsaNotice>>(`/admin/dsa/notices?page=${page}&size=${size}${filter}`);
+}
+export function decideDsaNotice(id: number, action: "REMOVE" | "NO_ACTION", explanation: string, ground: "TERMS" | "ILLEGAL" = "TERMS") {
+  return fetchJson<{ success: boolean; status: string }>(`/admin/dsa/notices/${id}/decision`, {
     method: "POST",
-    body: JSON.stringify({ type: "LISTING", target: Number(listingId), description }),
+    body: JSON.stringify({ action, explanation, ground }),
   });
 }
 
@@ -235,8 +300,11 @@ export function getAdminConfigDiagnostics() {
 export function listAdminUsers(page = 0, size = 50) {
   return fetchJson<Paged<AdminUser>>(`/admin/users?page=${page}&size=${size}`);
 }
-export function setUserDisabled(id: number, disabled: boolean) {
-  return fetchJson<{ success: boolean }>(`/users/${id}/edit`, { method: "POST", body: JSON.stringify({ disabled: disabled ? 1 : 0 }) });
+export function setUserDisabled(id: number, disabled: boolean, reason?: string) {
+  return fetchJson<{ success: boolean }>(`/users/${id}/edit`, {
+    method: "POST",
+    body: JSON.stringify(reason ? { disabled: disabled ? 1 : 0, reason } : { disabled: disabled ? 1 : 0 }),
+  });
 }
 /** Gives or removes support desk access (the SUPPORT role) without admin rights. */
 /** Erases the user's personal data and listings (GDPR request). Cannot be undone. */
@@ -251,8 +319,12 @@ export function listAdminListings(page = 0, size = 50, status = "") {
   const filter = status ? `&status=${encodeURIComponent(status)}` : "";
   return fetchJson<Paged<AdminListing>>(`/admin/listings?page=${page}&size=${size}${filter}`);
 }
-export function setAdminListingStatus(id: number, status: string) {
-  return fetchJson<{ success: boolean }>(`/admin/listings/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
+/** reason: the statement of reasons e-mailed to the owner when a listing is rejected (DSA Art. 17). */
+export function setAdminListingStatus(id: number, status: string, reason?: string) {
+  return fetchJson<{ success: boolean }>(`/admin/listings/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify(reason ? { status, reason } : { status }),
+  });
 }
 export function listAdminComplaints(page = 0, size = 50) {
   return fetchJson<Paged<AdminComplaint>>(`/admin/complaints?page=${page}&size=${size}`);
