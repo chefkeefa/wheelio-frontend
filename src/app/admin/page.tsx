@@ -9,7 +9,13 @@ import {
   ADMIN_LISTING_STATUSES,
   getAdminStats,
   getAdminConfigDiagnostics,
+  getAdminRecentErrors,
+  applyMigrations,
+  runBackup,
   type AdminConfigDiagnostics,
+  type AdminRecentErrors,
+  type ModerationFlag,
+  type ModerationSignals,
   isAdminUser,
   listAdminComplaints,
   listAdminListings,
@@ -28,7 +34,7 @@ import {
 } from "@/lib/pirkApi";
 import AssetIcon from "@/components/ui/AssetIcon";
 
-type Tab = "listings" | "complaints" | "users";
+type Tab = "listings" | "complaints" | "users" | "diagnostics";
 const PAGE_SIZE = 50;
 
 export default function AdminPage() {
@@ -44,6 +50,9 @@ export default function AdminPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [diagnostics, setDiagnostics] = useState<AdminConfigDiagnostics | null>(null);
+  const [recentErrors, setRecentErrors] = useState<AdminRecentErrors | null>(null);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     me()
@@ -59,15 +68,19 @@ export default function AdminPage() {
     setError("");
     try {
       setStats(await getAdminStats());
-      if (tab === "listings") setListings(await listAdminListings(page, PAGE_SIZE));
+      if (tab === "listings") setListings(await listAdminListings(page, PAGE_SIZE, statusFilter));
       if (tab === "complaints") setComplaints(await listAdminComplaints(page, PAGE_SIZE));
       if (tab === "users") setUsers(await listAdminUsers(page, PAGE_SIZE));
+      if (tab === "diagnostics") {
+        setDiagnostics(await getAdminConfigDiagnostics().catch(() => null));
+        setRecentErrors(await getAdminRecentErrors().catch(() => null));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
     } finally {
       setBusy(false);
     }
-  }, [tab, page]);
+  }, [tab, page, statusFilter]);
 
   useEffect(() => {
     if (allowed) load();
@@ -78,11 +91,13 @@ export default function AdminPage() {
     if (allowed) getAdminConfigDiagnostics().then(setDiagnostics).catch(() => setDiagnostics(null));
   }, [allowed]);
 
-  const run = async (action: () => Promise<unknown>) => {
+  const run = async (action: () => Promise<unknown>, done?: string) => {
     setBusy(true);
     setError("");
+    setNotice("");
     try {
       await action();
+      if (done) setNotice(done);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
@@ -99,11 +114,12 @@ export default function AdminPage() {
       </main>
     );
 
-  const current = tab === "listings" ? listings : tab === "complaints" ? complaints : users;
+  const current = tab === "listings" ? listings : tab === "complaints" ? complaints : tab === "users" ? users : null;
   const tabs: [Tab, string][] = [
     ["listings", tr("Listings", "Skelbimai", "Объявления")],
     ["complaints", tr("Complaints", "Skundai", "Жалобы")],
     ["users", tr("Users", "Naudotojai", "Пользователи")],
+    ["diagnostics", tr("Diagnostics", "Diagnostika", "Диагностика")],
   ];
 
   return (
@@ -149,19 +165,53 @@ export default function AdminPage() {
         </div>
 
         {error && <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-500">{error}</div>}
+        {notice && <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-700 dark:text-emerald-400">{notice}</div>}
+
+        {tab === "listings" && (
+          <label className="mt-4 flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">{tr("Show", "Rodyti", "Показать")}</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}
+              className="rounded border border-border bg-background px-2 py-1"
+            >
+              <option value="">{tr("All listings", "Visi skelbimai", "Все объявления")}</option>
+              <option value="PENDING_REVIEW">{tr("Waiting for review", "Laukia patikros", "Ждут проверки")}</option>
+              {ADMIN_LISTING_STATUSES.filter((x) => x !== "PENDING_REVIEW").map((x) => <option key={x} value={x}>{x}</option>)}
+            </select>
+          </label>
+        )}
 
         <div className={`mt-4 overflow-x-auto ${busy ? "opacity-60" : ""}`}>
           {tab === "listings" && listings && (
             <table className="w-full text-sm">
-              <thead><tr className="text-left text-muted-foreground"><th className="p-2">ID</th><th className="p-2">{tr("Car", "Automobilis", "Авто")}</th><th className="p-2">{tr("Seller", "Pardavėjas", "Продавец")}</th><th className="p-2">{tr("Price", "Kaina", "Цена")}</th><th className="p-2">{tr("Status", "Būsena", "Статус")}</th></tr></thead>
+              <thead><tr className="text-left text-muted-foreground"><th className="p-2">ID</th><th className="p-2">{tr("Car", "Automobilis", "Авто")}</th><th className="p-2">{tr("Seller", "Pardavėjas", "Продавец")}</th><th className="p-2">{tr("Price", "Kaina", "Цена")}</th><th className="p-2">{tr("Checks", "Patikra", "Проверка")}</th><th className="p-2">{tr("Status", "Būsena", "Статус")}</th></tr></thead>
               <tbody>
+                {listings.content.length === 0 && (
+                  <tr><td colSpan={6} className="p-4 text-muted-foreground">{tr("Nothing here.", "Nieko nėra.", "Здесь пусто.")}</td></tr>
+                )}
                 {listings.content.map((l) => (
-                  <tr key={l.id} className="border-t border-border">
+                  <tr key={l.id} className="border-t border-border align-top">
                     <td className="p-2"><Link href={`/listing/${l.id}`} className="underline">{l.id}</Link></td>
                     <td className="p-2">{[l.car?.mark?.name, l.car?.model?.name].filter(Boolean).join(" ") || "—"}</td>
                     <td className="p-2">{l.user ? `${l.user.name || ""} ${l.user.surname || ""}`.trim() || `#${l.user.id}` : "—"}</td>
                     <td className="p-2">{l.price} €</td>
+                    <td className="p-2"><ModerationCell m={l.moderation} /></td>
                     <td className="p-2">
+                      {l.status === "PENDING_REVIEW" && (
+                        <div className="mb-2 flex gap-2">
+                          <button disabled={busy} onClick={() => run(() => setAdminListingStatus(l.id, "ACTIVE"))} className="rounded bg-emerald-600 px-3 py-1 font-semibold text-white">
+                            {tr("Approve", "Patvirtinti", "Одобрить")}
+                          </button>
+                          <button
+                            disabled={busy}
+                            onClick={() => { if (window.confirm(tr("Reject this listing?", "Atmesti šį skelbimą?", "Отклонить объявление?"))) run(() => setAdminListingStatus(l.id, "REJECTED")); }}
+                            className="rounded border border-red-500/50 px-3 py-1 font-semibold text-red-600"
+                          >
+                            {tr("Reject", "Atmesti", "Отклонить")}
+                          </button>
+                        </div>
+                      )}
                       <select
                         value={l.status}
                         disabled={busy}
@@ -280,7 +330,24 @@ export default function AdminPage() {
           )}
         </div>
 
-        {current && current.totalPages > 1 && (
+        {tab === "diagnostics" && (
+          <DiagnosticsPanel
+            diagnostics={diagnostics}
+            errors={recentErrors}
+            busy={busy}
+            onApplyMigrations={() =>
+              run(async () => {
+                const r = await applyMigrations();
+                if (r.failed) throw new Error(r.failed);
+              }, tr("Migrations applied.", "Migracijos pritaikytos.", "Миграции применены."))
+            }
+            onBackup={() =>
+              run(() => runBackup(), tr("Backup created.", "Atsarginė kopija sukurta.", "Резервная копия создана."))
+            }
+          />
+        )}
+
+        {current && tab !== "diagnostics" && current.totalPages > 1 && (
           <div className="mt-4 flex items-center gap-3">
             <button disabled={page === 0 || busy} onClick={() => setPage(page - 1)} aria-label="Previous page" className="rounded border border-border px-3 py-1 disabled:opacity-40"><AssetIcon name="chevron-left" size={16} /></button>
             <span className="text-sm">{page + 1} / {current.totalPages}</span>
@@ -297,6 +364,181 @@ function Stat({ label, value }: { label: string; value: number }) {
     <div className="rounded-xl bg-card p-4 ring-1 ring-border">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="mt-1 text-2xl font-extrabold">{value}</div>
+    </div>
+  );
+}
+
+const FLAG_LABELS: Record<ModerationFlag, [string, string, string]> = {
+  NEW_ACCOUNT: ["New account", "Nauja paskyra", "Новый аккаунт"],
+  EMAIL_NOT_VERIFIED: ["E-mail not confirmed", "El. paštas nepatvirtintas", "E-mail не подтверждён"],
+  PHONE_NOT_VERIFIED: ["Phone not confirmed", "Telefonas nepatvirtintas", "Телефон не подтверждён"],
+  PHONE_SHARED: ["Phone used by another account", "Telefonas naudojamas kitoje paskyroje", "Телефон есть у другого аккаунта"],
+  PREVIOUSLY_REJECTED: ["Had rejected listings", "Buvo atmestų skelbimų", "Были отклонённые объявления"],
+  OPEN_COMPLAINTS: ["Open complaints", "Neišspręsti skundai", "Открытые жалобы"],
+  NO_PHOTOS: ["No photos", "Nėra nuotraukų", "Нет фото"],
+  CONTACTS_IN_TEXT: ["Contacts or links in text", "Kontaktai ar nuorodos tekste", "Контакты или ссылки в тексте"],
+  MANY_NEW_LISTINGS: ["Many listings in a day", "Daug skelbimų per dieną", "Много объявлений за день"],
+  OWNER_BLOCKED: ["Seller blocked", "Pardavėjas užblokuotas", "Продавец заблокирован"],
+};
+
+function ModerationCell({ m }: { m?: ModerationSignals | null }) {
+  const { tr } = useLanguage();
+  if (!m) return <span className="text-muted-foreground">—</span>;
+  const age =
+    m.accountAgeDays === null
+      ? null
+      : m.accountAgeDays === 0
+        ? tr("registered today", "užsiregistravo šiandien", "зарегистрирован сегодня")
+        : tr(`account ${m.accountAgeDays} d.`, `paskyrai ${m.accountAgeDays} d.`, `аккаунту ${m.accountAgeDays} дн.`);
+  return (
+    <div className="min-w-[180px] space-y-1">
+      {m.flags.length === 0 ? (
+        <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
+          <AssetIcon name="check" size={14} />
+          {tr("No warning signs", "Įspėjimų nėra", "Тревожных признаков нет")}
+        </span>
+      ) : (
+        <div className="flex flex-wrap gap-1">
+          {m.flags.map((f) => (
+            <span key={f} className="rounded bg-amber-500/15 px-1.5 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-300">
+              {FLAG_LABELS[f] ? tr(...FLAG_LABELS[f]) : f}
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="text-xs text-muted-foreground">
+        {[m.ownerEmail, age, tr(`${m.photos} photos`, `${m.photos} nuotr.`, `${m.photos} фото`), tr(`${m.ownerListings} listings`, `${m.ownerListings} skelb.`, `${m.ownerListings} объявл.`)]
+          .filter(Boolean)
+          .join(" · ")}
+      </div>
+    </div>
+  );
+}
+
+function formatSize(bytes: number) {
+  return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+function DiagnosticsPanel({
+  diagnostics,
+  errors,
+  busy,
+  onApplyMigrations,
+  onBackup,
+}: {
+  diagnostics: AdminConfigDiagnostics | null;
+  errors: AdminRecentErrors | null;
+  busy: boolean;
+  onApplyMigrations: () => void;
+  onBackup: () => void;
+}) {
+  const { tr } = useLanguage();
+  if (!diagnostics) return <p className="mt-4 text-muted-foreground">{tr("Diagnostics are not available on this API version.", "Šioje API versijoje diagnostikos nėra.", "В этой версии API нет диагностики.")}</p>;
+  const schema = diagnostics.schema;
+  const backups = diagnostics.backups;
+  const yesNo = (v: boolean) => (v ? tr("on", "įjungta", "вкл.") : tr("off", "išjungta", "выкл."));
+  return (
+    <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <section className="rounded-xl bg-card p-4 ring-1 ring-border">
+        <h2 className="text-lg font-bold">{tr("Protection", "Apsauga", "Защита")}</h2>
+        <ul className="mt-2 space-y-1 text-sm">
+          <li>{tr("Listing moderation", "Skelbimų moderavimas", "Модерация объявлений")}: <b>{yesNo(diagnostics.listingModeration)}</b></li>
+          <li>{tr("E-mail confirmation", "El. pašto patvirtinimas", "Подтверждение e-mail")}: <b>{yesNo(diagnostics.emailVerification.enabled)}</b></li>
+          <li>{tr("SMS phone confirmation", "Telefono patvirtinimas SMS", "Подтверждение телефона по SMS")}: <b>{yesNo(diagnostics.phoneVerification)}</b></li>
+          <li>{tr("Photo processing", "Nuotraukų apdorojimas", "Обработка фото")}: <b>{yesNo(diagnostics.photoProcessing)}</b></li>
+          {diagnostics.errorAlerts !== undefined && (
+            <li>{tr("Error alerts by e-mail", "Klaidų pranešimai el. paštu", "Оповещения об ошибках на e-mail")}: <b>{yesNo(diagnostics.errorAlerts)}</b></li>
+          )}
+        </ul>
+      </section>
+
+      {schema && (
+        <section className="rounded-xl bg-card p-4 ring-1 ring-border">
+          <h2 className="text-lg font-bold">{tr("Database", "Duomenų bazė", "База данных")}</h2>
+          {!schema.checked ? (
+            <p className="mt-2 text-sm text-red-600">{schema.error}</p>
+          ) : schema.pending.length === 0 && schema.problems.length === 0 ? (
+            <p className="mt-2 text-sm text-emerald-700 dark:text-emerald-400">{tr("All migrations are applied.", "Visos migracijos pritaikytos.", "Все миграции применены.")}</p>
+          ) : (
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+              {schema.pending.map((p) => <li key={p.version}><b>{p.version}</b>: {p.missing.join(", ")}</li>)}
+              {schema.problems.map((p) => <li key={p} className="text-red-600">{p}</li>)}
+            </ul>
+          )}
+          <p className="mt-2 text-xs text-muted-foreground">
+            {schema.autoApply
+              ? tr("Missing tables are added automatically when the API starts.", "Trūkstamos lentelės pridedamos automatiškai paleidžiant API.", "Недостающие таблицы добавляются автоматически при запуске API.")
+              : tr("Automatic migrations are off (MIGRATIONS_AUTO_APPLY).", "Automatinės migracijos išjungtos (MIGRATIONS_AUTO_APPLY).", "Автоматические миграции выключены (MIGRATIONS_AUTO_APPLY).")}
+          </p>
+          {schema.pending.length > 0 && (
+            <button
+              disabled={busy}
+              onClick={() => {
+                if (window.confirm(tr("Add the missing tables and indexes? Existing data is not changed.", "Pridėti trūkstamas lenteles ir indeksus? Esami duomenys nekeičiami.", "Добавить недостающие таблицы и индексы? Существующие данные не меняются.")))
+                  onApplyMigrations();
+              }}
+              className="mt-3 rounded-lg bg-accent px-4 py-2 font-semibold text-accent-foreground"
+            >
+              {tr("Apply migrations", "Pritaikyti migracijas", "Применить миграции")}
+            </button>
+          )}
+        </section>
+      )}
+
+      {backups && (
+        <section className="rounded-xl bg-card p-4 ring-1 ring-border">
+          <h2 className="text-lg font-bold">{tr("Backups", "Atsarginės kopijos", "Резервные копии")}</h2>
+          {!backups.enabled ? (
+            <p className="mt-2 text-sm">{tr("Off: set BACKUP_DIR on the server (a folder outside public_html).", "Išjungta: serveryje nustatykite BACKUP_DIR (aplanką už public_html ribų).", "Выключены: задайте BACKUP_DIR на сервере (папку вне public_html).")}</p>
+          ) : (
+            <ul className="mt-2 space-y-1 text-sm">
+              <li>
+                {tr("Latest", "Naujausia", "Последняя")}:{" "}
+                <b>{backups.latest ? `${new Date(backups.latest.createdAt).toLocaleString()} (${formatSize(backups.latest.size)})` : tr("none yet", "dar nėra", "пока нет")}</b>
+              </li>
+              <li>{tr("Files kept", "Saugoma failų", "Хранится файлов")}: {backups.files} ({tr(`${backups.keepDays} days`, `${backups.keepDays} d.`, `${backups.keepDays} дн.`)})</li>
+              <li className="break-all text-xs text-muted-foreground">{backups.dir}</li>
+              {backups.lastError && <li className="text-red-600">{backups.lastError}</li>}
+            </ul>
+          )}
+          {backups.enabled && (
+            <button disabled={busy || backups.running} onClick={onBackup} className="mt-3 rounded-lg border border-border px-4 py-2 font-semibold hover:border-accent">
+              {tr("Back up now", "Sukurti kopiją dabar", "Сделать копию сейчас")}
+            </button>
+          )}
+        </section>
+      )}
+
+      {errors && (
+        <section className="rounded-xl bg-card p-4 ring-1 ring-border lg:col-span-2">
+          <h2 className="text-lg font-bold">
+            {tr("Recent errors", "Naujausios klaidos", "Последние ошибки")} <span className="text-sm font-normal text-muted-foreground">({tr("since", "nuo", "с")} {new Date(errors.since).toLocaleString()}: {errors.total})</span>
+          </h2>
+          {errors.recent.length === 0 ? (
+            <p className="mt-2 text-sm text-emerald-700 dark:text-emerald-400">{tr("No errors.", "Klaidų nėra.", "Ошибок нет.")}</p>
+          ) : (
+            <ul className="mt-2 space-y-2 text-sm">
+              {errors.recent.map((e) => (
+                <li key={`${e.source}${e.where}${e.message}`} className="rounded-lg border border-border p-2">
+                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    <span>{new Date(e.at).toLocaleString()}</span>
+                    <span className="font-semibold">{e.source === "frontend" ? tr("website", "svetainė", "сайт") : "API"}</span>
+                    <span>{e.where}</span>
+                    {e.count > 1 && <span>×{e.count}</span>}
+                  </div>
+                  <div className="mt-1 break-words font-mono text-xs">{e.message}</div>
+                  {e.stack && (
+                    <details className="mt-1">
+                      <summary className="cursor-pointer text-xs text-muted-foreground">{tr("Details", "Daugiau", "Подробнее")}</summary>
+                      <pre className="mt-1 overflow-x-auto whitespace-pre-wrap text-xs">{e.stack}</pre>
+                    </details>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
     </div>
   );
 }
