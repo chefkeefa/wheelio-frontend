@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import SellDraftCard from "@/components/SellDraftCard";
 import { ApiError } from "@/lib/http";
-import { changeEmail, changePassword, me, requestEmailVerification, updateProfile, type AuthUser } from "@/lib/pirkApi";
+import { changeEmail, changePassword, deleteOwnAccount, isAdminUser, me, requestEmailVerification, updateProfile, type AuthUser } from "@/lib/pirkApi";
 import { usePhoneVerificationConfig, verificationOff } from "@/lib/usePhoneVerification";
 
 export default function ProfilePage() {
@@ -88,6 +88,7 @@ export default function ProfilePage() {
             <Link href="/account/favorites" className="rounded-2xl border border-border bg-card p-6 transition hover:border-accent"><div className="text-xl font-bold">{tr("Favorites", "Mėgstami", "Избранное")}</div><p className="mt-2 text-muted-foreground">{tr("Cars you saved.", "Išsaugoti automobiliai.", "Сохранённые автомобили.")}</p></Link>
             <Link href="/account/listings" className="rounded-2xl border border-border bg-card p-6 transition hover:border-accent"><div className="text-xl font-bold">{tr("My listings", "Mano skelbimai", "Мои объявления")}</div><p className="mt-2 text-muted-foreground">{tr("View and manage the cars you are selling.", "Peržiūrėkite ir valdykite parduodamus automobilius.", "Просматривайте и управляйте продаваемыми автомобилями.")}</p></Link>
             <Link href="/help" className="rounded-2xl border border-border bg-card p-6 transition hover:border-accent"><div className="text-xl font-bold">{tr("Help & support", "Pagalba", "Помощь и поддержка")}</div><p className="mt-2 text-muted-foreground">{tr("Open live support or send a support request.", "Atidarykite tiesioginę pagalbą arba siųskite užklausą.", "Откройте онлайн-поддержку или отправьте обращение.")}</p></Link>
+            {!isAdminUser(user) && <DeleteAccountSection user={user} tr={tr} />}
           </div>
         )}
       </div>
@@ -123,6 +124,56 @@ function EmailStatus({ verified, tr }: { verified: boolean | null | undefined; t
 
 function Info({ label, value }: { label: string; value: string }) {
   return <div className="mt-4 border-b border-border pb-3"><div className="text-xs font-semibold text-muted-foreground">{label}</div><div className="mt-1 font-semibold">{value}</div></div>;
+}
+
+/** GDPR self-service: erases the account, its listings and personal data after typing the e-mail (and password). */
+function DeleteAccountSection({ user, tr }: { user: AuthUser; tr: (en: string, lt: string, ru: string) => string }) {
+  const hasPassword = (user.authProvider || "PASSWORD").toUpperCase() !== "GOOGLE";
+  const [open, setOpen] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true); setError("");
+    try {
+      await deleteOwnAccount(confirmEmail.trim(), hasPassword ? password : undefined);
+      window.location.href = "/";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tr("Could not delete the account.", "Nepavyko ištrinti paskyros.", "Не удалось удалить аккаунт."));
+      setBusy(false);
+    }
+  };
+  return (
+    <section className="rounded-2xl border border-red-500/30 bg-card p-6 md:col-span-2">
+      <h2 className="text-xl font-bold">{tr("Delete account", "Ištrinti paskyrą", "Удалить аккаунт")}</h2>
+      <p className="mt-2 text-sm text-muted-foreground">{tr(
+        "Your listings, photos and personal data are deleted for good. This cannot be undone.",
+        "Jūsų skelbimai, nuotraukos ir asmens duomenys bus ištrinti visam laikui. To atšaukti negalima.",
+        "Ваши объявления, фото и личные данные будут удалены навсегда. Отменить это нельзя."
+      )}</p>
+      {!open ? (
+        <button type="button" onClick={() => setOpen(true)} className="mt-4 rounded-lg border border-red-500/50 px-4 py-2 font-semibold text-red-600">{tr("Delete my account", "Ištrinti mano paskyrą", "Удалить мой аккаунт")}</button>
+      ) : (
+        <form onSubmit={submit} className="mt-4 grid gap-3 md:max-w-md">
+          <label className="block text-sm font-semibold">{tr("Type your e-mail to confirm", "Įveskite savo el. paštą patvirtinimui", "Введите свой e-mail для подтверждения")}
+            <input type="email" required value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} placeholder={user.email} className="mt-1 h-11 w-full rounded-lg bg-muted px-3 ring-1 ring-inset ring-border outline-none focus:ring-2 focus:ring-accent" />
+          </label>
+          {hasPassword && (
+            <label className="block text-sm font-semibold">{tr("Password", "Slaptažodis", "Пароль")}
+              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 h-11 w-full rounded-lg bg-muted px-3 ring-1 ring-inset ring-border outline-none focus:ring-2 focus:ring-accent" />
+            </label>
+          )}
+          {error && <div className="rounded-lg bg-red-500/10 p-3 text-sm text-red-600">{error}</div>}
+          <div className="flex gap-3">
+            <button disabled={busy || confirmEmail.trim().toLowerCase() !== String(user.email).toLowerCase()} className="rounded-lg bg-red-600 px-4 py-2 font-bold text-white disabled:opacity-50">{busy ? "…" : tr("Delete for good", "Ištrinti visam laikui", "Удалить навсегда")}</button>
+            <button type="button" onClick={() => { setOpen(false); setError(""); }} className="rounded-lg border border-border px-4 py-2 font-semibold">{tr("Cancel", "Atšaukti", "Отмена")}</button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
 }
 
 function CredentialsSection({

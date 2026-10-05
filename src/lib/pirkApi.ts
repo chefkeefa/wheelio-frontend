@@ -39,6 +39,14 @@ export async function me() {
   return fetchJson<AuthUser>("/auth/me");
 }
 
+/** Erases the signed-in user's account and personal data (GDPR). Cannot be undone. */
+export function deleteOwnAccount(confirmEmail: string, password?: string) {
+  return fetchJson<{ success: boolean }>("/account/delete", {
+    method: "POST",
+    body: JSON.stringify(password ? { confirmEmail, password } : { confirmEmail }),
+  });
+}
+
 export async function logout() {
   return fetchJson<void>("/auth/logout", { method: "POST" });
 }

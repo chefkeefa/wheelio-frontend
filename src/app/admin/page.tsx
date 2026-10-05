@@ -224,9 +224,9 @@ export default function AdminPage() {
                           const disable = !Number(u.disabled);
                           const q = disable
                             ? tr(
-                                "Block this user? Their listings will be taken down and they will be signed out. Unblocking does not bring the listings back: re-activate them one by one in Listings.",
-                                "Užblokuoti naudotoją? Jo skelbimai bus pašalinti, o jis atjungtas. Atblokavus skelbimai negrįžta: juos aktyvuokite po vieną skiltyje „Skelbimai“.",
-                                "Заблокировать пользователя? Его объявления будут сняты, а сессии завершены. После разблокировки объявления не вернутся: включите их по одному во вкладке «Объявления»."
+                                "Block this user? Their listings will be taken down and they will be signed out. Unblocking brings the listings back.",
+                                "Užblokuoti naudotoją? Jo skelbimai bus pašalinti, o jis atjungtas. Atblokavus skelbimai grįš.",
+                                "Заблокировать пользователя? Его объявления будут сняты, а сессии завершены. После разблокировки объявления вернутся."
                               )
                             : tr("Unblock this user?", "Atblokuoti naudotoją?", "Разблокировать пользователя?");
                           if (window.confirm(q)) run(() => setUserDisabled(u.id, disable));
