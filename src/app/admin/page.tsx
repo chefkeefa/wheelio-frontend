@@ -8,6 +8,8 @@ import { ApiError } from "@/lib/http";
 import {
   ADMIN_LISTING_STATUSES,
   getAdminStats,
+  getAdminConfigDiagnostics,
+  type AdminConfigDiagnostics,
   isAdminUser,
   listAdminComplaints,
   listAdminListings,
@@ -41,6 +43,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState<Paged<AdminUser> | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [diagnostics, setDiagnostics] = useState<AdminConfigDiagnostics | null>(null);
 
   useEffect(() => {
     me()
@@ -69,6 +72,11 @@ export default function AdminPage() {
   useEffect(() => {
     if (allowed) load();
   }, [allowed, load]);
+
+  // Older backends have no diagnostics endpoint: the warning block is simply not shown.
+  useEffect(() => {
+    if (allowed) getAdminConfigDiagnostics().then(setDiagnostics).catch(() => setDiagnostics(null));
+  }, [allowed]);
 
   const run = async (action: () => Promise<unknown>) => {
     setBusy(true);
@@ -105,6 +113,19 @@ export default function AdminPage() {
           <h1 className="text-4xl font-extrabold">{tr("Administration", "Administravimas", "Администрирование")}</h1>
           <Link href="/admin/support" className="rounded-lg border border-border px-4 py-2 font-semibold hover:border-accent">{tr("Support desk", "Pagalbos centras", "Поддержка")}</Link>
         </div>
+
+        {diagnostics && diagnostics.warnings.length > 0 && (
+          <div className="mt-6 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4" role="status">
+            <div className="font-bold text-amber-700 dark:text-amber-400">
+              {tr("Site protection settings need attention", "Svetainės apsaugos nustatymus reikia patikrinti", "Проверьте настройки защиты сайта")}
+            </div>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+              {diagnostics.warnings.map((w) => (
+                <li key={w}>{w}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {stats && (
           <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -203,9 +224,9 @@ export default function AdminPage() {
                           const disable = !Number(u.disabled);
                           const q = disable
                             ? tr(
-                                "Block this user? Their listings will be taken down and they will be signed out.",
-                                "Užblokuoti naudotoją? Jo skelbimai bus pašalinti, o jis atjungtas.",
-                                "Заблокировать пользователя? Его объявления будут сняты, а сессии завершены."
+                                "Block this user? Their listings will be taken down and they will be signed out. Unblocking does not bring the listings back: re-activate them one by one in Listings.",
+                                "Užblokuoti naudotoją? Jo skelbimai bus pašalinti, o jis atjungtas. Atblokavus skelbimai negrįžta: juos aktyvuokite po vieną skiltyje „Skelbimai“.",
+                                "Заблокировать пользователя? Его объявления будут сняты, а сессии завершены. После разблокировки объявления не вернутся: включите их по одному во вкладке «Объявления»."
                               )
                             : tr("Unblock this user?", "Atblokuoti naudotoją?", "Разблокировать пользователя?");
                           if (window.confirm(q)) run(() => setUserDisabled(u.id, disable));
