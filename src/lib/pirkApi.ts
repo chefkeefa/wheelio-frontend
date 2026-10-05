@@ -1,4 +1,4 @@
-import { apiFetch, buildUrl, fetchJson, toApiError } from "@/lib/http";
+import { ApiError, apiFetch, buildUrl, fetchJson, toApiError } from "@/lib/http";
 
 export type AuthUser = {
   id: number;
@@ -12,6 +12,8 @@ export type AuthUser = {
   authProvider?: string;
   /** Returned by newer backends; used to show the admin panel. */
   roles?: string[];
+  /** true/false; null while e-mail confirmation is off on the backend. */
+  emailVerified?: boolean | null;
 };
 
 export function isAdminUser(user: AuthUser | null | undefined) {
@@ -56,8 +58,9 @@ export async function changePassword(oldPassword: string, newPassword: string) {
   });
 }
 
+/** pending: the new address applies only after the link sent to it is opened. */
 export async function changeEmail(email: string, password?: string) {
-  return fetchJson<{ success: boolean }>("/users/change/email", {
+  return fetchJson<{ success: boolean; pending?: boolean; email?: string }>("/users/change/email", {
     method: "POST",
     body: JSON.stringify(password ? { email, password } : { email }),
   });
@@ -132,6 +135,10 @@ export function setUserDisabled(id: number, disabled: boolean) {
   return fetchJson<{ success: boolean }>(`/users/${id}/edit`, { method: "POST", body: JSON.stringify({ disabled: disabled ? 1 : 0 }) });
 }
 /** Gives or removes support desk access (the SUPPORT role) without admin rights. */
+/** Erases the user's personal data and listings (GDPR request). Cannot be undone. */
+export function eraseUser(id: number) {
+  return fetchJson<{ success: boolean; listingsDeleted: number; paidListingsAnonymized: number }>(`/admin/users/${id}/erase`, { method: "POST" });
+}
 export function setUserSupportRole(id: number, enabled: boolean) {
   return fetchJson<{ id: number; roles: string[] }>(`/admin/users/${id}/support`, { method: "POST", body: JSON.stringify({ enabled }) });
 }
@@ -186,6 +193,29 @@ export async function updateProfile(payload: { name: string; surname: string; ci
 }
 
 export type PasswordResetConfig = { enabled: boolean };
+
+// ---- E-mail confirmation ----
+export function getEmailVerificationConfig() {
+  return fetchJson<{ enabled: boolean; required: boolean }>("/auth/email/config");
+}
+export function requestEmailVerification() {
+  return fetchJson<{ sent: boolean; alreadyVerified: boolean }>("/auth/email/verify/request", { method: "POST" });
+}
+export function confirmEmailVerification(token: string) {
+  return fetchJson<{ success: boolean; purpose: "VERIFY" | "CHANGE"; email: string; signedOut: boolean }>("/auth/email/verify/confirm", {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
+}
+
+/** true when the backend requires a confirmed e-mail to publish and this user has not confirmed it yet. */
+export async function emailBlocksPublishing(): Promise<boolean> {
+  const [config, user] = await Promise.all([getEmailVerificationConfig().catch(() => null), me().catch(() => null)]);
+  return Boolean(config?.required) && user?.emailVerified === false;
+}
+export function isEmailNotVerifiedError(e: unknown) {
+  return e instanceof ApiError && e.status === 403 && (e.details as { code?: string } | undefined)?.code === "EMAIL_NOT_VERIFIED";
+}
 
 /** Password reset is available only when the backend has e-mail delivery configured. */
 export function getPasswordResetConfig() {

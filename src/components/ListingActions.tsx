@@ -160,7 +160,7 @@ export default function ListingActions({ listingId }: { listingId: string }) {
             <textarea
               value={reportText}
               onChange={(e) => setReportText(e.target.value)}
-              maxLength={2000}
+              maxLength={255}
               required
               rows={3}
               placeholder={tr("What is wrong with this listing?", "Kas negerai su šiuo skelbimu?", "Что не так с объявлением?")}

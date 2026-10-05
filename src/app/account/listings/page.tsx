@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/http";
 import { closeListing, deleteListingImage, editListing, setListingCover, getMyListings, type ListingDetail, type ListingStatus } from "@/lib/listings";
-import { getPaymentConfig, startCheckout, uploadListingImage } from "@/lib/pirkApi";
+import { completeDevPayment, getPaymentConfig, isEmailNotVerifiedError, startCheckout, uploadListingImage } from "@/lib/pirkApi";
 import AssetIcon from "@/components/ui/AssetIcon";
 
 const FALLBACK_IMAGE = "/images/no-photo.svg";
@@ -73,8 +73,10 @@ export default function MyListingsPage() {
         await load();
         return;
       }
-      if (checkout.devMode) {
-        window.location.href = `/payment/dev?paymentId=${checkout.paymentId}&listingId=${checkout.listingId}&amount=${checkout.amount}`;
+      if (checkout.devMode && checkout.paymentId) {
+        // Local development only (the backend refuses dev mode in production).
+        await completeDevPayment(checkout.paymentId);
+        window.location.href = `/payment/success?paymentId=${checkout.paymentId}`;
         return;
       }
       if (checkout.paymentUrl) {
@@ -83,7 +85,13 @@ export default function MyListingsPage() {
       }
       throw new Error(tr("Payment link was not created", "Mokėjimo nuoroda nesukurta", "Ссылка на оплату не создана"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : tr("Payment failed", "Mokėjimas nepavyko", "Ошибка оплаты"));
+      if (isEmailNotVerifiedError(e))
+        setError(tr(
+          "Confirm your e-mail first: open the link we sent you, or request a new one in Profile.",
+          "Pirmiausia patvirtinkite el. paštą: atidarykite atsiųstą nuorodą arba užsisakykite naują profilyje.",
+          "Сначала подтвердите e-mail: откройте ссылку из письма или запросите новую в профиле."
+        ));
+      else setError(e instanceof Error ? e.message : tr("Payment failed", "Mokėjimas nepavyko", "Ошибка оплаты"));
       setBusyId(null);
     }
   };
