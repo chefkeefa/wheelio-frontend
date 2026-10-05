@@ -10,23 +10,19 @@ import {
   getSellerContact,
   me,
   removeFavorite,
-  reportListing,
   type AuthUser,
   type SellerContact,
 } from "@/lib/pirkApi";
 import AssetIcon from "@/components/ui/AssetIcon";
 
-/** Contact seller, favorites and "report listing" for the public listing page. */
+/** Contact seller, favorites and "report illegal content" for the public listing page. */
 export default function ListingActions({ listingId }: { listingId: string }) {
   const { tr } = useLanguage();
   const [user, setUser] = useState<AuthUser | null | undefined>(undefined);
   const [favorite, setFavorite] = useState(false);
   const [contact, setContact] = useState<SellerContact | null>(null);
-  const [busy, setBusy] = useState<"contact" | "favorite" | "report" | null>(null);
+  const [busy, setBusy] = useState<"contact" | "favorite" | null>(null);
   const [error, setError] = useState("");
-  const [reportOpen, setReportOpen] = useState(false);
-  const [reportText, setReportText] = useState("");
-  const [reportSent, setReportSent] = useState(false);
 
   const loginHref = `/auth/login?return=${encodeURIComponent(`/listing/${listingId}`)}`;
 
@@ -86,25 +82,6 @@ export default function ListingActions({ listingId }: { listingId: string }) {
     }
   };
 
-  const sendReport = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!user) return needLogin();
-    const text = reportText.trim();
-    if (!text) return;
-    setBusy("report");
-    setError("");
-    try {
-      await reportListing(listingId, text);
-      setReportSent(true);
-      setReportOpen(false);
-      setReportText("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : tr("Could not send the report", "Nepavyko išsiųsti pranešimo", "Не удалось отправить жалобу"));
-    } finally {
-      setBusy(null);
-    }
-  };
-
   return (
     <div className="rounded-2xl bg-card p-5 shadow-card ring-1 ring-border sm:p-6">
       {contact ? (
@@ -150,40 +127,11 @@ export default function ListingActions({ listingId }: { listingId: string }) {
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
+      {/* Notice and action under the EU Digital Services Act: open to everyone, no account needed. */}
       <div className="mt-4 border-t border-border pt-4 text-sm">
-        {reportSent ? (
-          <p className="text-emerald-600">
-            {tr("Thank you, the report was sent to moderators.", "Ačiū, pranešimas išsiųstas moderatoriams.", "Спасибо, жалоба отправлена модераторам.")}
-          </p>
-        ) : reportOpen ? (
-          <form onSubmit={sendReport} className="space-y-2">
-            <textarea
-              value={reportText}
-              onChange={(e) => setReportText(e.target.value)}
-              maxLength={255}
-              required
-              rows={3}
-              placeholder={tr("What is wrong with this listing?", "Kas negerai su šiuo skelbimu?", "Что не так с объявлением?")}
-              className="w-full rounded-lg border border-border bg-background p-3"
-            />
-            <div className="flex gap-2">
-              <button disabled={busy === "report"} className="rounded-lg bg-foreground px-4 py-2 font-semibold text-background disabled:opacity-60">
-                {tr("Send", "Siųsti", "Отправить")}
-              </button>
-              <button type="button" onClick={() => setReportOpen(false)} className="rounded-lg border border-border px-4 py-2">
-                {tr("Cancel", "Atšaukti", "Отмена")}
-              </button>
-            </div>
-          </form>
-        ) : user === null ? (
-          <Link href={loginHref} className="text-muted-foreground underline hover:text-foreground">
-            {tr("Report listing", "Pranešti apie skelbimą", "Пожаловаться на объявление")}
-          </Link>
-        ) : (
-          <button onClick={() => setReportOpen(true)} className="text-muted-foreground underline hover:text-foreground">
-            {tr("Report listing", "Pranešti apie skelbimą", "Пожаловаться на объявление")}
-          </button>
-        )}
+        <Link href={`/report?listing=${encodeURIComponent(listingId)}`} className="text-muted-foreground underline hover:text-foreground">
+          {tr("Report illegal content", "Pranešti apie neteisėtą turinį", "Сообщить о незаконном контенте")}
+        </Link>
       </div>
     </div>
   );

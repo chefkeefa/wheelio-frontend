@@ -44,10 +44,23 @@ export default function ListingReviewBar({
   };
 
   const change = async (next: ListingStatus) => {
+    let reason: string | undefined;
+    if (next === "REJECTED") {
+      // DSA Art. 17: the seller is e-mailed the reason for the rejection.
+      const answer = window.prompt(
+        tr(
+          "Reason for the seller (facts and which rule is broken). It is e-mailed to them.",
+          "Priežastis pardavėjui (faktai ir kuri taisyklė pažeista). Ji bus išsiųsta el. paštu.",
+          "Причина для продавца (факты и какое правило нарушено). Она будет отправлена по e-mail."
+        )
+      );
+      if (answer === null) return;
+      reason = answer.trim();
+    }
     setBusy(true);
     setError("");
     try {
-      await setAdminListingStatus(Number(listingId), next);
+      await setAdminListingStatus(Number(listingId), next, reason);
       onStatusChange(next);
     } catch {
       setError(tr("Could not change the status.", "Nepavyko pakeisti būsenos.", "Не удалось изменить статус."));
