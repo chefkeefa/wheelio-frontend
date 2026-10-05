@@ -15,7 +15,7 @@ export default function RulesPage() {
       title: "Rules",
       subtitle:
         "These rules help keep Wheelio safe, transparent and convenient for buyers and sellers.",
-      updated: "Last updated: 29 September 2026",
+      updated: "Last updated: 5 October 2026",
       introTitle: "General principles",
       intro:
         "By using Wheelio, creating an account, publishing a listing or contacting another user, you agree to follow these rules. Wheelio may remove content, restrict features or suspend accounts that violate them.",
@@ -98,6 +98,7 @@ export default function RulesPage() {
             "When reporting a problem, provide enough information for the support team to investigate it.",
             "Do not knowingly submit false reports or abuse the support system.",
             "Wheelio may retain support conversations where necessary to resolve disputes, prevent abuse or improve service quality.",
+            "Anyone, with or without an account, can report illegal content through the form at wheelio.lt/report or the link on each listing. We confirm receipt, a person reviews the report, and we tell the reporter the decision (EU Digital Services Act, Art. 16).",
           ],
         },
         {
@@ -116,6 +117,8 @@ export default function RulesPage() {
             "Accounts may be warned, temporarily restricted or suspended depending on the seriousness or repetition of a violation.",
             "Where legally required, Wheelio may cooperate with competent authorities.",
             "Users may contact support if they believe a moderation decision was made in error.",
+            "New listings may be checked by a moderator before they are published. Automatic signals only flag a listing for review; decisions are taken by a person.",
+            "When a listing is rejected or removed, or an account is suspended, the user receives a statement of reasons by e-mail: what was restricted, the facts, the rule or law relied on, and how to contest it. The decision can be contested by replying within 6 months, before a certified out-of-court dispute settlement body or in court. More at wheelio.lt/dsa.",
           ],
         },
         {
@@ -135,6 +138,14 @@ export default function RulesPage() {
             "Continued use of the platform after an update means the user is expected to follow the current rules.",
           ],
         },
+        {
+          title: "13. Search order and who you buy from",
+          items: [
+            "Search results are ordered by the sorting the user chooses (newest, oldest, price, mileage or year). By default the newest listings come first. Nobody can pay for a higher position.",
+            "Sellers on Wheelio can be private persons or businesses. When you buy from a private person, EU consumer protection law (for example, the 14-day right of withdrawal and the legal guarantee) does not apply to that sale.",
+            "Businesses (car dealers) must publish listings only in their own name and must comply with consumer protection law, including the price shown with all taxes.",
+          ],
+        },
       ] as RuleSection[],
       footer:
         "If you are unsure whether a listing or action is allowed, contact Wheelio support before proceeding.",
@@ -144,7 +155,7 @@ export default function RulesPage() {
       title: "Taisyklės",
       subtitle:
         "Šios taisyklės padeda išlaikyti Wheelio saugią, skaidrią ir patogią pirkėjams bei pardavėjams.",
-      updated: "Paskutinį kartą atnaujinta: 2026 m. rugsėjo 29 d.",
+      updated: "Paskutinį kartą atnaujinta: 2026 m. spalio 5 d.",
       introTitle: "Bendrieji principai",
       intro:
         "Naudodamiesi Wheelio, kurdami paskyrą, skelbdami skelbimą ar susisiekdami su kitu naudotoju sutinkate laikytis šių taisyklių. Wheelio gali pašalinti turinį, apriboti funkcijas arba sustabdyti paskyras, kurios pažeidžia taisykles.",
@@ -227,6 +238,7 @@ export default function RulesPage() {
             "Pranešdami apie problemą pateikite pakankamai informacijos, kad pagalbos komanda galėtų ją ištirti.",
             "Draudžiama sąmoningai teikti melagingus pranešimus ar piktnaudžiauti pagalbos sistema.",
             "Wheelio gali saugoti pagalbos pokalbius, kai tai būtina ginčams spręsti, piktnaudžiavimui užkirsti ar paslaugų kokybei gerinti.",
+            "Bet kas, turintis paskyrą ar ne, gali pranešti apie neteisėtą turinį forma wheelio.lt/report arba nuoroda kiekviename skelbime. Gavimą patvirtiname, pranešimą peržiūri žmogus, o apie sprendimą informuojame pranešėją (Skaitmeninių paslaugų akto 16 str.).",
           ],
         },
         {
@@ -245,6 +257,8 @@ export default function RulesPage() {
             "Priklausomai nuo pažeidimo rimtumo ir pasikartojimo paskyrai gali būti skirtas įspėjimas, laikinas apribojimas arba blokavimas.",
             "Kai to reikalauja teisės aktai, Wheelio gali bendradarbiauti su kompetentingomis institucijomis.",
             "Jei naudotojas mano, kad moderavimo sprendimas priimtas klaidingai, jis gali kreiptis į pagalbą.",
+            "Nauji skelbimai prieš paskelbiant gali būti tikrinami moderatoriaus. Automatiniai signalai tik pažymi skelbimą peržiūrai; sprendimus priima žmogus.",
+            "Atmetus ar pašalinus skelbimą arba užblokavus paskyrą, naudotojas el. paštu gauna motyvuotą sprendimą: kas apribota, faktai, taisyklė ar teisės aktas ir kaip ginčyti. Sprendimą galima ginčyti atsakius per 6 mėnesius, sertifikuotoje neteisminio ginčų sprendimo institucijoje arba teisme. Daugiau: wheelio.lt/dsa.",
           ],
         },
         {
@@ -264,6 +278,14 @@ export default function RulesPage() {
             "Toliau naudodamasis platforma po taisyklių atnaujinimo naudotojas turi laikytis galiojančios taisyklių versijos.",
           ],
         },
+        {
+          title: "13. Paieškos rezultatų tvarka ir iš ko perkate",
+          items: [
+            "Paieškos rezultatai rikiuojami pagal naudotojo pasirinktą tvarką (naujausi, seniausi, kaina, rida ar metai). Numatytuoju atveju pirmiausia rodomi naujausi skelbimai. Aukštesnės vietos nupirkti negalima.",
+            "Wheelio pardavėjai gali būti privatūs asmenys arba įmonės. Perkant iš privataus asmens, ES vartotojų apsaugos teisė (pvz. 14 dienų teisė atsisakyti sutarties ir teisinė garantija) šiam pirkimui netaikoma.",
+            "Įmonės (automobilių prekeiviai) skelbimus turi teikti tik savo vardu ir laikytis vartotojų teisių apsaugos teisės aktų, įskaitant kainos nurodymą su visais mokesčiais.",
+          ],
+        },
       ] as RuleSection[],
       footer:
         "Jei abejojate, ar konkretus skelbimas ar veiksmas yra leidžiamas, prieš tęsdami kreipkitės į Wheelio pagalbą.",
@@ -273,7 +295,7 @@ export default function RulesPage() {
       title: "Правила",
       subtitle:
         "Эти правила помогают сделать Wheelio безопасной, прозрачной и удобной площадкой для покупателей и продавцов.",
-      updated: "Последнее обновление: 29 сентября 2026 г.",
+      updated: "Последнее обновление: 5 октября 2026 г.",
       introTitle: "Общие принципы",
       intro:
         "Используя Wheelio, создавая аккаунт, публикуя объявление или связываясь с другим пользователем, вы соглашаетесь соблюдать эти правила. Wheelio может удалить контент, ограничить функции или приостановить аккаунты, нарушающие правила.",
@@ -356,6 +378,7 @@ export default function RulesPage() {
             "При обращении указывайте достаточно информации, чтобы команда могла разобраться в проблеме.",
             "Запрещено намеренно подавать ложные жалобы или злоупотреблять службой поддержки.",
             "Wheelio может хранить переписку с поддержкой, если это необходимо для разрешения споров, предотвращения злоупотреблений или улучшения качества сервиса.",
+            "Любой, с аккаунтом или без, может сообщить о незаконном контенте через форму wheelio.lt/report или ссылку в каждом объявлении. Мы подтверждаем получение, жалобу рассматривает человек, и мы сообщаем заявителю решение (Акт ЕС о цифровых услугах, ст. 16).",
           ],
         },
         {
@@ -374,6 +397,8 @@ export default function RulesPage() {
             "В зависимости от серьёзности и повторяемости нарушения аккаунт может получить предупреждение, временное ограничение или блокировку.",
             "Когда это требуется законом, Wheelio может сотрудничать с компетентными органами.",
             "Если пользователь считает решение модерации ошибочным, он может обратиться в поддержку.",
+            "Новые объявления могут проверяться модератором до публикации. Автоматические сигналы лишь отмечают объявление для проверки; решения принимает человек.",
+            "При отклонении или снятии объявления либо блокировке аккаунта пользователь получает по e-mail мотивированное решение: что ограничено, факты, правило или закон и как обжаловать. Решение можно обжаловать, ответив в течение 6 месяцев, в сертифицированном органе внесудебного урегулирования споров или в суде. Подробнее: wheelio.lt/dsa.",
           ],
         },
         {
@@ -391,6 +416,14 @@ export default function RulesPage() {
             "Правила могут обновляться при изменении функций Wheelio, законодательства или практик безопасности.",
             "Актуальная версия публикуется на этой странице.",
             "При дальнейшем использовании платформы после обновления пользователь должен соблюдать действующую версию правил.",
+          ],
+        },
+        {
+          title: "13. Порядок результатов поиска и у кого вы покупаете",
+          items: [
+            "Результаты поиска упорядочены по выбранной пользователем сортировке (новые, старые, цена, пробег или год). По умолчанию сначала новые объявления. Купить более высокое место нельзя.",
+            "Продавцами на Wheelio могут быть частные лица или компании. При покупке у частного лица законы ЕС о защите потребителей (например, 14-дневное право отказа и законная гарантия) на эту сделку не распространяются.",
+            "Компании (автодилеры) должны публиковать объявления только от своего имени и соблюдать законы о защите прав потребителей, включая указание цены со всеми налогами.",
           ],
         },
       ] as RuleSection[],
