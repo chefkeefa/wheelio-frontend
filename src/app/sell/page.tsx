@@ -11,6 +11,9 @@ import {
   getCatalogOptions,
   getPaymentConfig,
   startCheckout,
+  completeDevPayment,
+  emailBlocksPublishing,
+  isEmailNotVerifiedError,
   validatePromoCode,
   uploadListingImage,
   classifyListingPhoto,
@@ -1120,6 +1123,12 @@ export default function SellPage() {
   };
 
   // Create a PENDING_PAYMENT listing, upload photos, then start checkout.
+  const EMAIL_FIRST = tr(
+    "Confirm your e-mail first: open the link we sent you, or request a new one in Profile. Then publish again.",
+    "Pirmiausia patvirtinkite el. paštą: atidarykite atsiųstą nuorodą arba užsisakykite naują profilyje. Tada skelbkite dar kartą.",
+    "Сначала подтвердите e-mail: откройте ссылку из письма или запросите новую в профиле. Затем опубликуйте снова."
+  );
+
   const publish = async () => {
     setPublishError("");
     setPublishedListingId(null);
@@ -1165,6 +1174,12 @@ export default function SellPage() {
         setPromoValid(true);
       }
 
+      // Checked before the listing is created, so no half-finished listing is left behind.
+      if (await emailBlocksPublishing()) {
+        setPublishError(EMAIL_FIRST);
+        return;
+      }
+
       const created = await createPendingListing({
         mark: mark.id,
         model: model.id,
@@ -1191,8 +1206,10 @@ export default function SellPage() {
         setPublishedListingId(checkout.listingId);
         return;
       }
-      if (checkout.devMode) {
-        window.location.href = `/payment/dev?paymentId=${checkout.paymentId}&listingId=${checkout.listingId}&amount=${checkout.amount}`;
+      if (checkout.devMode && checkout.paymentId) {
+        // Local development only (the backend refuses dev mode in production).
+        await completeDevPayment(checkout.paymentId);
+        window.location.href = `/payment/success?paymentId=${checkout.paymentId}`;
         return;
       }
       if (!checkout.paymentUrl) throw new Error("Payment URL was not returned");
@@ -1200,6 +1217,10 @@ export default function SellPage() {
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         window.location.href = "/auth/login?return=/sell";
+        return;
+      }
+      if (isEmailNotVerifiedError(error)) {
+        setPublishError(EMAIL_FIRST);
         return;
       }
       if (error instanceof ApiError && error.status === 403 && /phone/i.test(error.message)) {

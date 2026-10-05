@@ -16,6 +16,7 @@ import {
   setAdminListingStatus,
   setComplaintStatus,
   setUserDisabled,
+  eraseUser,
   setUserSupportRole,
   type AdminComplaint,
   type AdminListing,
@@ -201,7 +202,11 @@ export default function AdminPage() {
                         onClick={() => {
                           const disable = !Number(u.disabled);
                           const q = disable
-                            ? tr("Block this user?", "Užblokuoti naudotoją?", "Заблокировать пользователя?")
+                            ? tr(
+                                "Block this user? Their listings will be taken down and they will be signed out.",
+                                "Užblokuoti naudotoją? Jo skelbimai bus pašalinti, o jis atjungtas.",
+                                "Заблокировать пользователя? Его объявления будут сняты, а сессии завершены."
+                              )
                             : tr("Unblock this user?", "Atblokuoti naudotoją?", "Разблокировать пользователя?");
                           if (window.confirm(q)) run(() => setUserDisabled(u.id, disable));
                         }}
@@ -227,6 +232,25 @@ export default function AdminPage() {
                           </button>
                         );
                       })()}
+                      {!String(u.email || "").endsWith("@deleted.invalid") && (
+                        <button
+                          disabled={busy}
+                          title={tr("GDPR request: delete personal data and listings", "BDAR prašymas: ištrinti asmens duomenis ir skelbimus", "Запрос по GDPR: удалить личные данные и объявления")}
+                          onClick={() => {
+                            const typed = window.prompt(
+                              tr(
+                                `This permanently deletes the personal data and listings of ${u.email}. Type the e-mail to confirm.`,
+                                `Tai negrįžtamai ištrins ${u.email} asmens duomenis ir skelbimus. Įveskite el. paštą patvirtinimui.`,
+                                `Это навсегда удалит личные данные и объявления ${u.email}. Введите e-mail для подтверждения.`
+                              )
+                            );
+                            if (typed !== null && typed.trim().toLowerCase() === String(u.email).toLowerCase()) run(() => eraseUser(u.id));
+                          }}
+                          className="ml-2 rounded border border-red-500/50 px-3 py-1 font-semibold text-red-600"
+                        >
+                          {tr("Erase data", "Ištrinti duomenis", "Удалить данные")}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

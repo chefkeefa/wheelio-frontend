@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import SellDraftCard from "@/components/SellDraftCard";
 import { ApiError } from "@/lib/http";
-import { changeEmail, changePassword, me, updateProfile, type AuthUser } from "@/lib/pirkApi";
+import { changeEmail, changePassword, me, requestEmailVerification, updateProfile, type AuthUser } from "@/lib/pirkApi";
 import { usePhoneVerificationConfig, verificationOff } from "@/lib/usePhoneVerification";
 
 export default function ProfilePage() {
@@ -64,6 +64,7 @@ export default function ProfilePage() {
                 <button disabled={saving} className="rounded-lg bg-accent px-4 py-2 font-bold text-accent-foreground disabled:opacity-60">{saving ? "…" : tr("Save changes", "Išsaugoti", "Сохранить")}</button>
               </form>
               <Info label="E-mail" value={user.email} />
+              <EmailStatus verified={user.emailVerified} tr={tr} />
             </section>
             <section className="rounded-2xl border border-border bg-card p-6">
               <h2 className="text-xl font-bold">{tr("Security", "Saugumas", "Безопасность")}</h2>
@@ -91,6 +92,32 @@ export default function ProfilePage() {
         )}
       </div>
     </main>
+  );
+}
+
+/** Confirmation state of the account's e-mail; nothing is shown while confirmation is off on the backend. */
+function EmailStatus({ verified, tr }: { verified: boolean | null | undefined; tr: (en: string, lt: string, ru: string) => string }) {
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState("");
+  if (verified === null || verified === undefined) return null;
+  if (verified) return <div className="mt-2 text-sm font-semibold text-emerald-600">{tr("E-mail confirmed", "El. paštas patvirtintas", "E-mail подтверждён")}</div>;
+  const send = async () => {
+    setBusy(true); setNote("");
+    try {
+      const r = await requestEmailVerification();
+      setNote(r.alreadyVerified
+        ? tr("Already confirmed. Reload the page.", "Jau patvirtinta. Perkraukite puslapį.", "Уже подтверждён. Обновите страницу.")
+        : tr("Link sent. Check your inbox (and spam).", "Nuoroda išsiųsta. Patikrinkite paštą (ir šlamštą).", "Ссылка отправлена. Проверьте почту (и спам)."));
+    } catch (e) {
+      setNote(e instanceof Error ? e.message : String(e));
+    } finally { setBusy(false); }
+  };
+  return (
+    <div className="mt-3 rounded-xl bg-amber-500/10 p-4">
+      <div className="text-sm font-semibold text-amber-700 dark:text-amber-400">{tr("E-mail not confirmed: confirm it to publish listings.", "El. paštas nepatvirtintas: patvirtinkite, kad galėtumėte skelbti.", "E-mail не подтверждён: подтвердите его, чтобы публиковать объявления.")}</div>
+      <button type="button" disabled={busy} onClick={send} className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground disabled:opacity-60">{busy ? "…" : tr("Send confirmation link", "Siųsti patvirtinimo nuorodą", "Отправить ссылку")}</button>
+      {note && <p className="mt-2 text-sm">{note}</p>}
+    </div>
   );
 }
 
@@ -141,10 +168,19 @@ function CredentialsSection({
     setBusy("email");
     try {
       const next = email.trim().toLowerCase();
-      await changeEmail(next, hasPassword ? emailPassword : undefined);
-      onEmailChanged(next);
+      const result = await changeEmail(next, hasPassword ? emailPassword : undefined);
       setEmail(""); setEmailPassword("");
-      setMessage(tr("E-mail changed.", "El. paštas pakeistas.", "E-mail изменён."));
+      if (result.pending) {
+        // The address changes only after the link sent to it is opened.
+        setMessage(tr(
+          `We sent a confirmation link to ${next}. Your e-mail changes after you open it.`,
+          `Išsiuntėme patvirtinimo nuorodą į ${next}. El. paštas pasikeis, kai ją atidarysite.`,
+          `Мы отправили ссылку на ${next}. E-mail изменится после того, как вы её откроете.`
+        ));
+      } else {
+        onEmailChanged(next);
+        setMessage(tr("E-mail changed.", "El. paštas pakeistas.", "E-mail изменён."));
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : tr("Could not change the e-mail.", "Nepavyko pakeisti el. pašto.", "Не удалось изменить e-mail."));
     } finally { setBusy(null); }
