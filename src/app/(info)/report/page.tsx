@@ -82,8 +82,8 @@ function ReportInner() {
 
   if (sent)
     return (
-      <div className="page text-foreground">
-        <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-6 shadow-card">
+      <div className="text-foreground">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
           <h1 className="text-2xl font-extrabold">{tr("Thank you, we received your report", "Ačiū, pranešimą gavome", "Спасибо, жалоба получена")}</h1>
           <p className="mt-3 leading-7 text-muted-foreground">
             {tr(
@@ -100,8 +100,8 @@ function ReportInner() {
     );
 
   return (
-    <div className="page text-foreground">
-      <div className="mx-auto max-w-2xl">
+    <div className="text-foreground">
+      <div>
         <h1 className="page-title">{tr("Report illegal content", "Pranešti apie neteisėtą turinį", "Сообщить о незаконном контенте")}</h1>
         <p className="mt-3 leading-7 text-muted-foreground">
           {tr(
@@ -205,7 +205,7 @@ function ReportInner() {
 
 export default function ReportPage() {
   return (
-    <Suspense fallback={<div className="page min-h-[60vh]" />}>
+    <Suspense fallback={<div className="min-h-[60vh]" />}>
       <ReportInner />
     </Suspense>
   );

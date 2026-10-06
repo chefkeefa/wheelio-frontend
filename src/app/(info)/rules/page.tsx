@@ -1,6 +1,7 @@
 "use client";
 
 import { useLanguage } from "@/context/LanguageContext";
+import { InfoArticle, InfoList, InfoSection } from "@/components/info/InfoArticle";
 
 type RuleSection = {
   title: string;
@@ -433,50 +434,22 @@ export default function RulesPage() {
   }[language];
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 md:py-14 lg:px-8">
-        <div className="mb-8">
-          <h1 className="page-title">
-            {copy.title}
-          </h1>
-          <p className="mt-4 max-w-3xl text-lg leading-8 text-muted-foreground">
-            {copy.subtitle}
-          </p>
-          <p className="mt-3 text-sm text-muted-foreground">{copy.updated}</p>
-        </div>
-
-        <section className="mb-6 rounded-2xl border border-accent/70 bg-card p-6 shadow-sm md:p-8">
-          <h2 className="text-2xl font-bold text-accent-ink">{copy.introTitle}</h2>
-          <p className="mt-3 leading-7 text-foreground/90">{copy.intro}</p>
-        </section>
-
-        <div className="space-y-5">
-          {copy.sections.map((section) => (
-            <section
-              key={section.title}
-              className="rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8"
-            >
-              <h2 className="text-xl font-bold md:text-2xl">{section.title}</h2>
-
-              <ul className="mt-4 space-y-3">
-                {section.items.map((item) => (
-                  <li
-                    key={item}
-                    className="flex gap-3 leading-7 text-foreground/90"
-                  >
-                    <span className="mt-[10px] h-2 w-2 shrink-0 rounded-full bg-accent" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-
-        <div className="mt-8 rounded-2xl border border-accent/50 bg-accent/10 p-5 text-sm leading-6">
-          {copy.footer}
-        </div>
-      </div>
-    </main>
+    <InfoArticle
+      title={copy.title}
+      meta={copy.updated}
+      intro={<p className="text-muted-foreground">{copy.subtitle}</p>}
+    >
+      <InfoSection title={copy.introTitle}>
+        <p className="text-[15px] leading-7 text-foreground/90 md:text-base">{copy.intro}</p>
+      </InfoSection>
+      {copy.sections.map((section) => (
+        <InfoSection key={section.title} title={section.title}>
+          <InfoList items={section.items} />
+        </InfoSection>
+      ))}
+      <InfoSection>
+        <p className="rounded-xl border border-accent/50 bg-accent/10 p-4 text-sm leading-6">{copy.footer}</p>
+      </InfoSection>
+    </InfoArticle>
   );
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { InfoArticle, InfoList, InfoSection } from "@/components/info/InfoArticle";
 
 export default function AboutPage() {
   const { language } = useLanguage();
@@ -70,56 +71,50 @@ export default function AboutPage() {
   }[language];
 
   return (
-    <div className="page text-foreground">
-      <div className="mx-auto max-w-3xl">
-        <h1 className="page-title">{copy.title}</h1>
-
-        <section className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-card sm:p-10">
-          <h2 className="text-2xl font-bold tracking-tight text-accent-ink md:text-3xl">{copy.who}</h2>
-
-          <div className="mt-5 space-y-5 text-base leading-7 text-foreground/90 md:text-lg md:leading-8">
+    <>
+      <InfoArticle title={copy.title}>
+        <InfoSection title={copy.who}>
+          <div className="space-y-4 text-[15px] leading-7 text-foreground/90 md:text-base">
             <p>
               <strong className="text-foreground">Wheelio</strong> {copy.intro}
             </p>
             <p>{copy.decision}</p>
           </div>
-
-          <h3 className="mt-8 text-lg font-bold text-foreground md:text-xl">{copy.why}</h3>
-          <ul className="mt-4 space-y-3 text-base leading-7 text-foreground/90 md:text-lg md:leading-8">
-            {[
+        </InfoSection>
+        <InfoSection title={copy.why}>
+          <InfoList
+            items={[
               [copy.verifiedTitle, copy.verifiedText],
               [copy.filtersTitle, copy.filtersText],
               [copy.directTitle, copy.directText],
               [copy.uiTitle, copy.uiText],
               [copy.updatesTitle, copy.updatesText],
             ].map(([title, text]) => (
-              <li key={title} className="flex gap-3">
-                <span className="mt-[0.7em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-                <span>
-                  <span className="font-semibold text-foreground">{title}</span> {text}
-                </span>
-              </li>
+              <>
+                <span className="font-semibold text-foreground">{title}</span> {text}
+              </>
             ))}
-          </ul>
+          />
+        </InfoSection>
+        <InfoSection>
+          <p className="text-[15px] leading-7 text-foreground/90 md:text-base">{copy.mission}</p>
+        </InfoSection>
+      </InfoArticle>
 
-          <p className="mt-8 border-t border-border pt-6 text-base leading-7 text-foreground/90 md:text-lg md:leading-8">{copy.mission}</p>
-        </section>
-
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/"
-            className="inline-flex h-12 items-center justify-center rounded-xl bg-accent px-6 text-base font-bold text-accent-foreground transition hover:brightness-105"
-          >
-            {copy.browse}
-          </Link>
-          <Link
-            href="/sell"
-            className="inline-flex h-12 items-center justify-center rounded-xl border border-border bg-card px-6 text-base font-bold text-foreground transition hover:border-accent"
-          >
-            {copy.sell}
-          </Link>
-        </div>
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <Link
+          href="/"
+          className="inline-flex h-12 items-center justify-center rounded-xl bg-accent px-6 text-base font-bold text-accent-foreground transition hover:brightness-105"
+        >
+          {copy.browse}
+        </Link>
+        <Link
+          href="/sell"
+          className="inline-flex h-12 items-center justify-center rounded-xl border border-border bg-card px-6 text-base font-bold text-foreground transition hover:border-accent"
+        >
+          {copy.sell}
+        </Link>
       </div>
-    </div>
+    </>
   );
 }

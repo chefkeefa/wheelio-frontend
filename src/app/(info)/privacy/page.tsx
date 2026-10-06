@@ -1,6 +1,7 @@
 "use client";
 
 import { useLanguage } from "@/context/LanguageContext";
+import { InfoArticle, InfoList, InfoSection } from "@/components/info/InfoArticle";
 import { COMPANY, SUPPORT_EMAIL } from "@/lib/company";
 
 type Section = { title: string; items: string[] };
@@ -196,27 +197,12 @@ export default function PrivacyPage() {
   }[language];
 
   return (
-    <div className="page text-foreground">
-      <div className="mx-auto max-w-3xl">
-        <h1 className="page-title">{copy.title}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{copy.updated}</p>
-        <p className="mt-6 text-base leading-7 text-foreground/90">{copy.intro}</p>
-        <div className="mt-8 space-y-6">
-          {copy.sections.map((section) => (
-            <section key={section.title} className="rounded-2xl border border-border bg-card p-6 shadow-card">
-              <h2 className="text-lg font-bold">{section.title}</h2>
-              <ul className="mt-3 space-y-2 text-sm leading-6 text-foreground/90 md:text-base md:leading-7">
-                {section.items.map((item) => (
-                  <li key={item} className="flex gap-3">
-                    <span className="mt-[0.7em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-      </div>
-    </div>
+    <InfoArticle title={copy.title} meta={copy.updated} intro={copy.intro}>
+      {copy.sections.map((section) => (
+        <InfoSection key={section.title} title={section.title}>
+          <InfoList items={section.items} />
+        </InfoSection>
+      ))}
+    </InfoArticle>
   );
 }
