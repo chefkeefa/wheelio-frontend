@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { FormEvent, Suspense, useEffect, useState } from "react";
@@ -52,7 +53,7 @@ function LoginInner() {
         </form>
         <div className="my-5 flex items-center gap-3"><div className="h-px flex-1 bg-border"/><span className="text-xs font-semibold text-muted-foreground">{tr("or","arba","или")}</span><div className="h-px flex-1 bg-border"/></div>
         <a href={googleLoginUrl()} className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-border bg-background font-bold transition hover:bg-muted">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-lg font-black text-[#4285F4]">G</span>
+          <img src="/icons/google.svg" alt="" width={20} height={20} className="h-5 w-5" />
           {tr("Continue with Google","Tęsti su Google","Войти через Google")}
         </a>
         <p className="mt-2 text-center text-xs leading-5 text-muted-foreground">

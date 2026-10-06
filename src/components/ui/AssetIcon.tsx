@@ -23,6 +23,7 @@ export type AssetIconName =
   | "euro"
   | "external-link"
   | "eye"
+  | "eye-off"
   | "filter"
   | "fuel"
   | "gauge"
