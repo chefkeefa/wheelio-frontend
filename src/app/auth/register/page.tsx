@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const off = verificationOff(usePhoneVerificationConfig());
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const set = (key: keyof typeof form, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
   async function submit(e: FormEvent) {
@@ -103,8 +104,18 @@ export default function RegisterPage() {
               "Минимум 8 символов: заглавная буква, цифра и спецсимвол."
             )}
           </p>
+          <label className="flex gap-3 text-sm leading-6 md:col-span-2">
+            <input type="checkbox" required checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-1 h-4 w-4 shrink-0 accent-[hsl(var(--accent))]" />
+            <span>
+              {tr("I am at least 18 years old and agree to the ", "Man yra bent 18 metų ir sutinku su ", "Мне есть 18 лет, и я принимаю ")}
+              <Link href="/rules" target="_blank" className="font-semibold underline">{tr("Rules", "Taisyklėmis", "Правила")}</Link>
+              {tr(". I have read the ", ". Susipažinau su ", ". Я ознакомился(-ась) с ")}
+              <Link href="/privacy" target="_blank" className="font-semibold underline">{tr("Privacy policy", "Privatumo politika", "Политикой конфиденциальности")}</Link>
+              .
+            </span>
+          </label>
           {error && <div className="rounded-lg bg-red-500/10 p-3 text-red-600 md:col-span-2">{error}</div>}
-          <button disabled={loading || (!token && !off)} className="h-12 rounded-lg bg-primary font-bold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-50 md:col-span-2">
+          <button disabled={loading || !agreed || (!token && !off)} className="h-12 rounded-lg bg-primary font-bold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-50 md:col-span-2">
             {loading ? "…" : tr("Create account", "Sukurti paskyrą", "Создать аккаунт")}
           </button>
         </form>
@@ -118,6 +129,11 @@ export default function RegisterPage() {
           {tr("Continue with Google", "Tęsti su Google", "Продолжить с Google")}
         </a>
         <p className="mt-2 text-center text-xs text-muted-foreground">
+          {tr(
+            "By continuing with Google you confirm you are 18 or older, agree to the Rules and have read the Privacy policy. ",
+            "Tęsdami su Google patvirtinate, kad jums yra bent 18 metų, sutinkate su Taisyklėmis ir susipažinote su Privatumo politika. ",
+            "Продолжая с Google, вы подтверждаете, что вам есть 18 лет, принимаете Правила и ознакомились с Политикой конфиденциальности. "
+          )}
           {tr(
             "Google accounts verify the phone number later, before publishing a listing.",
             "Google paskyroms telefonas patvirtinamas vėliau, prieš paskelbiant skelbimą.",

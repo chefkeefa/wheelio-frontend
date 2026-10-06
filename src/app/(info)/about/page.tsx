@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { InfoArticle, InfoList, InfoSection } from "@/components/info/InfoArticle";
 
 export default function AboutPage() {
   const { language } = useLanguage();
@@ -21,8 +22,8 @@ export default function AboutPage() {
       directText: "between buyers and sellers.",
       uiTitle: "Fast and responsive UI",
       uiText: "across all devices.",
-      updatesTitle: "Constant updates",
-      updatesText: "new features and improvements every month.",
+      updatesTitle: "We are not the seller",
+      updatesText: "you agree the deal directly with the seller, and Wheelio is not a party to the sale.",
       mission: "Our mission is to build a trusted community around car buying and selling in Lithuania and beyond — so you spend less time searching and more time driving.",
       browse: "Browse cars",
       sell: "Sell your car",
@@ -41,8 +42,8 @@ export default function AboutPage() {
       directText: "tarp pirkėjų ir pardavėjų.",
       uiTitle: "Greita ir patogi sąsaja",
       uiText: "visuose įrenginiuose.",
-      updatesTitle: "Nuolatiniai atnaujinimai",
-      updatesText: "naujos funkcijos ir patobulinimai kiekvieną mėnesį.",
+      updatesTitle: "Mes nesame pardavėjas",
+      updatesText: "sandorį sudarote tiesiogiai su pardavėju, o Wheelio nėra pirkimo–pardavimo sutarties šalis.",
       mission: "Mūsų tikslas – kurti patikimą automobilių pirkimo ir pardavimo bendruomenę Lietuvoje ir už jos ribų, kad mažiau laiko praleistumėte ieškodami ir daugiau – vairuodami.",
       browse: "Peržiūrėti automobilius",
       sell: "Parduoti automobilį",
@@ -61,8 +62,8 @@ export default function AboutPage() {
       directText: "между покупателями и продавцами.",
       uiTitle: "Быстрый и адаптивный интерфейс",
       uiText: "на любых устройствах.",
-      updatesTitle: "Постоянные обновления",
-      updatesText: "новые функции и улучшения каждый месяц.",
+      updatesTitle: "Мы не продавец",
+      updatesText: "сделку вы заключаете напрямую с продавцом, Wheelio не является стороной договора купли-продажи.",
       mission: "Наша цель — создать надёжное сообщество вокруг покупки и продажи автомобилей в Литве и за её пределами, чтобы вы тратили меньше времени на поиск и больше — на дорогу.",
       browse: "Смотреть автомобили",
       sell: "Продать автомобиль",
@@ -70,56 +71,50 @@ export default function AboutPage() {
   }[language];
 
   return (
-    <div className="page text-foreground">
-      <div className="mx-auto max-w-3xl">
-        <h1 className="page-title">{copy.title}</h1>
-
-        <section className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-card sm:p-10">
-          <h2 className="text-2xl font-bold tracking-tight text-accent-ink md:text-3xl">{copy.who}</h2>
-
-          <div className="mt-5 space-y-5 text-base leading-7 text-foreground/90 md:text-lg md:leading-8">
+    <>
+      <InfoArticle title={copy.title}>
+        <InfoSection title={copy.who}>
+          <div className="space-y-4 text-[15px] leading-7 text-foreground/90 md:text-base">
             <p>
               <strong className="text-foreground">Wheelio</strong> {copy.intro}
             </p>
             <p>{copy.decision}</p>
           </div>
-
-          <h3 className="mt-8 text-lg font-bold text-foreground md:text-xl">{copy.why}</h3>
-          <ul className="mt-4 space-y-3 text-base leading-7 text-foreground/90 md:text-lg md:leading-8">
-            {[
+        </InfoSection>
+        <InfoSection title={copy.why}>
+          <InfoList
+            items={[
               [copy.verifiedTitle, copy.verifiedText],
               [copy.filtersTitle, copy.filtersText],
               [copy.directTitle, copy.directText],
               [copy.uiTitle, copy.uiText],
               [copy.updatesTitle, copy.updatesText],
             ].map(([title, text]) => (
-              <li key={title} className="flex gap-3">
-                <span className="mt-[0.7em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-                <span>
-                  <span className="font-semibold text-foreground">{title}</span> {text}
-                </span>
-              </li>
+              <>
+                <span className="font-semibold text-foreground">{title}</span> {text}
+              </>
             ))}
-          </ul>
+          />
+        </InfoSection>
+        <InfoSection>
+          <p className="text-[15px] leading-7 text-foreground/90 md:text-base">{copy.mission}</p>
+        </InfoSection>
+      </InfoArticle>
 
-          <p className="mt-8 border-t border-border pt-6 text-base leading-7 text-foreground/90 md:text-lg md:leading-8">{copy.mission}</p>
-        </section>
-
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/"
-            className="inline-flex h-12 items-center justify-center rounded-xl bg-accent px-6 text-base font-bold text-accent-foreground transition hover:brightness-105"
-          >
-            {copy.browse}
-          </Link>
-          <Link
-            href="/sell"
-            className="inline-flex h-12 items-center justify-center rounded-xl border border-border bg-card px-6 text-base font-bold text-foreground transition hover:border-accent"
-          >
-            {copy.sell}
-          </Link>
-        </div>
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <Link
+          href="/"
+          className="inline-flex h-12 items-center justify-center rounded-xl bg-accent px-6 text-base font-bold text-accent-foreground transition hover:brightness-105"
+        >
+          {copy.browse}
+        </Link>
+        <Link
+          href="/sell"
+          className="inline-flex h-12 items-center justify-center rounded-xl border border-border bg-card px-6 text-base font-bold text-foreground transition hover:border-accent"
+        >
+          {copy.sell}
+        </Link>
       </div>
-    </div>
+    </>
   );
 }

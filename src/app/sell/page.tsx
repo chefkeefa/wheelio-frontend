@@ -591,6 +591,8 @@ export default function SellPage() {
   const [publishError, setPublishError] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [promoValid, setPromoValid] = useState(false);
+  // Consumer law: before a paid service starts at once, the buyer asks for it and acknowledges losing the 14-day withdrawal right.
+  const [withdrawalAck, setWithdrawalAck] = useState(false);
   const [promoChecking, setPromoChecking] = useState(false);
   const [publishedListingId, setPublishedListingId] = useState<number | null>(null);
   const [publishedForReview, setPublishedForReview] = useState(false);
@@ -1135,6 +1137,17 @@ export default function SellPage() {
   const publish = async () => {
     setPublishError("");
     setPublishedListingId(null);
+
+    if (paymentConfig?.paymentsEnabled !== false && !promoValid && !withdrawalAck) {
+      setPublishError(
+        tr(
+          "Please tick the box about immediate publication before paying.",
+          "Prieš mokėdami pažymėkite langelį dėl skelbimo paskelbimo iš karto.",
+          "Перед оплатой отметьте галочку о немедленной публикации."
+        )
+      );
+      return;
+    }
 
     const mark = marks.find((item) => item.name === draft.mark);
     const model = models.find((item) => item.name === draft.model);
@@ -2044,6 +2057,18 @@ export default function SellPage() {
                         </div>
                         {promoValid && <StatusNote type="success" className="mt-3">{tr("Code applied — this listing is free.", "Kodas pritaikytas — skelbimas nemokamas.", "Промокод применён — публикация бесплатна.")}</StatusNote>}
                         </>)}
+                        {!paymentsOff && !promoValid && (
+                          <label className="mt-4 flex gap-3 text-sm leading-6 text-foreground">
+                            <input type="checkbox" checked={withdrawalAck} onChange={(e) => setWithdrawalAck(e.target.checked)} className="mt-1 h-4 w-4 shrink-0 accent-[hsl(var(--accent))]" />
+                            <span>
+                              {tr(
+                                "I ask Wheelio to publish my listing right after payment and understand that I lose my 14-day right of withdrawal once the listing is published. The price is final and includes all taxes.",
+                                "Prašau Wheelio paskelbti skelbimą iškart po apmokėjimo ir suprantu, kad paskelbus skelbimą netenku 14 dienų teisės atsisakyti sutarties. Kaina galutinė, su visais mokesčiais.",
+                                "Прошу Wheelio опубликовать объявление сразу после оплаты и понимаю, что после публикации теряю 14-дневное право на отказ от договора. Цена итоговая, со всеми налогами."
+                              )}
+                            </span>
+                          </label>
+                        )}
                         {paymentConfig?.devMode && (
                           <div className="mt-3 text-xs font-bold text-amber-700 dark:text-amber-300">
                             DEV MODE — {tr("test payment is enabled", "įjungtas bandomasis mokėjimas", "включена тестовая оплата")}
@@ -2086,6 +2111,12 @@ export default function SellPage() {
                         {publishing && <AssetIcon name="spinner" size={20} className="animate-spin" />}
                         {publishedListingId ? tr("My listings", "Mano skelbimai", "Мои объявления") : paymentsOff ? tr("Publish", "Paskelbti", "Опубликовать") : promoValid ? tr("Publish for free", "Paskelbti nemokamai", "Опубликовать бесплатно") : tr("Pay & publish", "Mokėti ir paskelbti", "Оплатить и опубликовать")}
                       </button>
+                      {!publishedListingId && (
+                        <p className="mt-3 text-center text-xs leading-5 text-muted-foreground">
+                          {tr("By publishing you confirm the listing follows the ", "Skelbdami patvirtinate, kad skelbimas atitinka ", "Публикуя, вы подтверждаете, что объявление соответствует ")}
+                          <a href="/rules" target="_blank" rel="noopener" className="underline">{tr("Rules", "Taisykles", "Правилам")}</a>.
+                        </p>
+                      )}
                     </div>
                   </div>
 

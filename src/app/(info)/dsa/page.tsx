@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { InfoArticle, InfoList, InfoSection } from "@/components/info/InfoArticle";
 import { COMPANY, SUPPORT_EMAIL } from "@/lib/company";
 
 type Section = { id: string; title: string; items: React.ReactNode[] };
@@ -195,24 +196,12 @@ export default function DsaPage() {
   }[language];
 
   return (
-    <div className="page text-foreground">
-      <div className="mx-auto max-w-3xl">
-        <h1 className="page-title">{copy.title}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{copy.updated}</p>
-        <p className="mt-4 leading-7 text-muted-foreground">{copy.intro}</p>
-        <div className="mt-8 space-y-4">
-          {copy.sections.map((section) => (
-            <section key={section.id} id={section.id} className="rounded-2xl border border-border bg-card p-6 shadow-card">
-              <h2 className="text-lg font-bold">{section.title}</h2>
-              <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-foreground/90">
-                {section.items.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-      </div>
-    </div>
+    <InfoArticle title={copy.title} meta={copy.updated} intro={copy.intro}>
+      {copy.sections.map((section) => (
+        <InfoSection key={section.id} id={section.id} title={section.title}>
+          <InfoList items={section.items} />
+        </InfoSection>
+      ))}
+    </InfoArticle>
   );
 }

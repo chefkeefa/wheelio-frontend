@@ -55,6 +55,16 @@ function LoginInner() {
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-lg font-black text-[#4285F4]">G</span>
           {tr("Continue with Google","Tęsti su Google","Войти через Google")}
         </a>
+        <p className="mt-2 text-center text-xs leading-5 text-muted-foreground">
+          {tr(
+            "If you are new, continuing with Google creates an account: you confirm you are 18 or older, agree to the ",
+            "Jei esate naujas naudotojas, tęsiant su Google sukuriama paskyra: patvirtinate, kad jums yra bent 18 metų, sutinkate su ",
+            "Если вы новый пользователь, вход через Google создаёт аккаунт: вы подтверждаете, что вам есть 18 лет, принимаете "
+          )}
+          <Link href="/rules" className="underline">{tr("Rules","Taisyklėmis","Правила")}</Link>
+          {tr(" and have read the "," ir susipažinote su "," и ознакомились с ")}
+          <Link href="/privacy" className="underline">{tr("Privacy policy","Privatumo politika","Политикой конфиденциальности")}</Link>.
+        </p>
         <div className="mt-5 flex justify-between gap-4 text-sm font-semibold">
           <Link href="/auth/register" className="hover:text-accent-ink">{tr("Create account","Sukurti paskyrą","Создать аккаунт")}</Link>
           <Link href="/auth/forgot-password" className="hover:text-accent-ink">{tr("Forgot password?","Pamiršote slaptažodį?","Забыли пароль?")}</Link>
