@@ -504,6 +504,8 @@ export type ListingCreatePayload = {
   /** Regitra owner declaration code, required unless ltRegistered is false. */
   sdk?: string;
   ltRegistered?: boolean;
+  /** Optional 17-character VIN, shown on the listing page. */
+  vin?: string;
 };
 
 /**

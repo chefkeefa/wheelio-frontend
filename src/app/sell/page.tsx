@@ -1284,6 +1284,7 @@ export default function SellPage() {
         details: { year, mileage: Number.isFinite(mileage) ? mileage : 0 },
         city: draft.city.trim() || undefined,
         ...(draft.notRegisteredInLt ? { ltRegistered: false } : { sdk: normalizeSdk(draft.sdk) ?? "", ltRegistered: true }),
+        ...(listingVin ? { vin: listingVin } : {}),
         options: [...featureKeys(draft.features).filter((key) => key !== "service-book"), ...(draft.hasServiceBook ? ["service-book"] : [])],
       });
 
@@ -1365,6 +1366,9 @@ export default function SellPage() {
     ? `${tr("Draft saved", "Juodraštis išsaugotas", "Черновик сохранён")} ${lastSaved.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`
     : tr("Draft not saved yet", "Juodraštis dar neišsaugotas", "Черновик ещё не сохранён");
 
+  // Sent with the listing only when it is a valid VIN (a plate number typed here is not).
+  const typedVin = draft.plateOrVin.toUpperCase().replace(/[\s-]+/g, "");
+  const listingVin = vinInputProblem(typedVin) ? "" : typedVin;
   const listingTitle = [draft.mark, draft.model].filter(Boolean).join(" ") || tr("Your car", "Jūsų automobilis", "Ваш автомобиль");
   const coverUrl = photos[0] ? photoUrl(photos[0]) : "/images/no-photo.svg";
   const paymentsOff = paymentConfig?.paymentsEnabled === false;
@@ -1598,6 +1602,11 @@ export default function SellPage() {
                       "17 characters, from the registration certificate (field E) or the plate under the windscreen. Search by number plate is not available.",
                       "17 simbolių, iš registracijos liudijimo (E laukas) arba lentelės po priekiniu stiklu. Paieška pagal valstybinį numerį negalima.",
                       "17 символов, из техпаспорта (поле E) или с таблички под лобовым стеклом. Поиск по госномеру недоступен."
+                    )}{" "}
+                    {tr(
+                      "The VIN is shown in the listing so buyers can check the car.",
+                      "VIN rodomas skelbime, kad pirkėjai galėtų patikrinti automobilį.",
+                      "VIN будет виден в объявлении, чтобы покупатель мог проверить машину."
                     )}
                   </Hint>
                   {vinStatus && <StatusNote type={vinStatus.type} className="mt-3">{vinStatus.text}</StatusNote>}
@@ -2138,6 +2147,7 @@ export default function SellPage() {
                         {[
                           [tr("Engine", "Variklis", "Двигатель"), draft.engine || "—"],
                           [tr("Mileage", "Rida", "Пробег"), draft.mileage ? `${Number(draft.mileage).toLocaleString("lt-LT")} km` : "—"],
+                          ["VIN", listingVin || "—"],
                           ["SDK", draft.notRegisteredInLt ? tr("Not registered in Lithuania", "Neregistruotas Lietuvoje", "Не зарегистрирован в Литве") : normalizeSdk(draft.sdk) || "—"],
                           [tr("Condition", "Būklė", "Состояние"), conditionOptions.find((option) => option.value === draft.condition)?.title || "—"],
                           [tr("Equipment", "Komplektacija", "Комплектация"), chosenOptions.size ? tr(`${chosenOptions.size} options`, `${chosenOptions.size} pasirinkimai`, `${chosenOptions.size} опций`) : "—"],

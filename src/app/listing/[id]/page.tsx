@@ -159,6 +159,7 @@ export default function ListingDetailsPage() {
     { label: tr("Model", "Modelis", "Модель"), value: data.model ?? null },
     { label: tr("Version", "Modifikacija", "Модификация"), value: specs?.modification ?? null },
     { label: tr("City", "Miestas", "Город"), value: data.city ?? null },
+    { label: "VIN", value: data.vin ?? null },
     {
       label: "SDK",
       value: data.sdk ?? (data.ltRegistered === false ? tr("Not registered in Lithuania", "Neregistruotas Lietuvoje", "Не зарегистрирован в Литве") : null),

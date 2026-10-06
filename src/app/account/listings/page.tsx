@@ -282,6 +282,7 @@ function EditListingPanel({
   const [description, setDescription] = useState(item.description || "");
   const [sdk, setSdk] = useState(item.sdk || "");
   const [notLt, setNotLt] = useState(item.ltRegistered === false);
+  const [vin, setVin] = useState(item.vin || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const images = item.images || [];
@@ -302,10 +303,15 @@ function EditListingPanel({
       setError(tr("Enter the SDK: 8 letters or digits from Regitra.", "Įveskite SDK: 8 Regitros raidės ar skaitmenys.", "Укажите SDK: 8 букв или цифр из Regitra."));
       return;
     }
+    const vinCode = vin.toUpperCase().replace(/[\s-]+/g, "");
+    if (vinCode && !/^[A-HJ-NPR-Z0-9]{17}$/.test(vinCode)) {
+      setError(tr("A VIN has 17 letters and digits, without I, O and Q.", "VIN turi 17 raidžių ir skaitmenų, be I, O ir Q.", "В VIN 17 букв и цифр, без I, O и Q."));
+      return;
+    }
     setSaving(true);
     setError("");
     try {
-      await editListing(item.id, { price: value, description: description.trim(), ...(notLt ? { ltRegistered: false } : { sdk: code!, ltRegistered: true }) });
+      await editListing(item.id, { price: value, description: description.trim(), vin: vinCode, ...(notLt ? { ltRegistered: false } : { sdk: code!, ltRegistered: true }) });
       await onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : tr("Could not save", "Nepavyko išsaugoti", "Не удалось сохранить"));
@@ -371,6 +377,10 @@ function EditListingPanel({
       <label className="block text-sm font-semibold">
         {tr("SDK (Regitra owner declaration code)", "SDK (savininko deklaravimo kodas)", "SDK (код декларации владельца)")}
         <input value={notLt ? "" : sdk} disabled={notLt} maxLength={9} placeholder="ABCDEFGH" onChange={(e) => setSdk(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ""))} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 disabled:opacity-60" />
+      </label>
+      <label className="block text-sm font-semibold">
+        VIN
+        <input value={vin} maxLength={20} placeholder="WVGZZZ7LZ5D012345" onChange={(e) => setVin(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 font-mono tracking-wide" />
       </label>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={notLt} onChange={(e) => setNotLt(e.target.checked)} className="h-4 w-4" />
