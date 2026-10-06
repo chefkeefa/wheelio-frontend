@@ -506,10 +506,16 @@ export type ListingCreatePayload = {
   ltRegistered?: boolean;
 };
 
-/** Factory equipment of a catalog modification, used to pre-fill the seller's list. */
-export async function getCatalogOptions(modificationId: string): Promise<string[]> {
-  const data = await fetchJson<{ options?: unknown }>(`/catalog/options/${encodeURIComponent(modificationId)}`);
-  return Array.isArray(data?.options) ? data.options.filter((x): x is string => typeof x === "string") : [];
+/**
+ * Factory equipment of a catalog modification, used to pre-fill the seller's list.
+ * source "exact": the version's own list; "similar": what all catalogued trims of the closest related version have.
+ */
+export async function getCatalogOptions(modificationId: string): Promise<{ keys: string[]; source: "exact" | "similar" | null }> {
+  const data = await fetchJson<{ options?: unknown; source?: unknown }>(`/catalog/options/${encodeURIComponent(modificationId)}`);
+  const keys = Array.isArray(data?.options) ? data.options.filter((x): x is string => typeof x === "string") : [];
+  // Older backends send no source: their list is always the version's own.
+  const source = data?.source === "similar" ? "similar" : keys.length ? "exact" : null;
+  return { keys, source };
 }
 
 export function createPendingListing(payload: ListingCreatePayload) {

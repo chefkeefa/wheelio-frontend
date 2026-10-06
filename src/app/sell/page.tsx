@@ -578,7 +578,9 @@ export default function SellPage() {
   const [engineOptions, setEngineOptions] = useState<EngineOption[]>([]);
   const [configurationLoading, setConfigurationLoading] = useState(false);
   // Factory equipment of the chosen modification, offered as a starting list.
-  const [factoryOptions, setFactoryOptions] = useState<{ modificationId: string; keys: string[] } | null>(null);
+  const [factoryOptions, setFactoryOptions] = useState<{ modificationId: string; keys: string[]; source: "exact" | "similar" | null } | null>(null);
+  // Equipment ticked automatically for the current version; replaced on a version change while the seller hasn't edited it.
+  const autoOptions = useRef<string[] | null>(null);
   const [openOptionGroups, setOpenOptionGroups] = useState<string[]>(["comfort", "parking"]);
 
   // VIN autofill
@@ -623,17 +625,29 @@ export default function SellPage() {
     getPaymentConfig().then(setPaymentConfig).catch(() => setPaymentConfig(null));
   }, []);
 
-  // Pre-fill equipment from the catalog once a modification is chosen and nothing is ticked yet.
+  // Pre-fill equipment from the catalog once a modification is chosen, unless the seller has already ticked their own.
   const chosenOptions = new Set(featureKeys(draft.features));
   const chosenModificationId = engineOptions.find((option) => option.value === draft.engine)?.modificationId || "";
   useEffect(() => {
     if (!chosenModificationId) return;
     let cancelled = false;
     getCatalogOptions(chosenModificationId)
-      .then((keys) => {
+      .then(({ keys, source }) => {
         if (cancelled) return;
-        setFactoryOptions({ modificationId: chosenModificationId, keys });
-        if (keys.length) setDraft((d) => (featureKeys(d.features).length ? d : { ...d, features: keys }));
+        setFactoryOptions({ modificationId: chosenModificationId, keys, source });
+        setDraft((d) => {
+          const current = featureKeys(d.features).filter((key) => key !== "service-book");
+          const previous = autoOptions.current;
+          const untouched = current.length === 0 || (previous !== null && current.length === previous.length && current.every((key) => previous.includes(key)));
+          if (!untouched) return d;
+          autoOptions.current = keys;
+          const keep = featureKeys(d.features).filter((key) => key === "service-book");
+          return { ...d, features: [...keys, ...keep] };
+        });
+        if (keys.length) {
+          const groups = CAR_OPTION_GROUPS.filter((group) => group.options.some((option) => keys.includes(option.key))).map((group) => group.id);
+          setOpenOptionGroups((list) => [...new Set([...list, ...groups])]);
+        }
       })
       .catch(() => {
         if (!cancelled) setFactoryOptions(null);
@@ -1753,21 +1767,36 @@ export default function SellPage() {
                         {tr(`${chosenOptions.size} selected`, `Pasirinkta: ${chosenOptions.size}`, `Выбрано: ${chosenOptions.size}`)}
                       </span>
                     </div>
+                    {factoryOptions && factoryOptions.modificationId === chosenModificationId && factoryOptions.keys.length === 0 && (
+                      <p className="mb-3 text-xs text-muted-foreground">
+                        {tr(
+                          "The catalog has no factory equipment for this version. Tick what your car has.",
+                          "Kataloge nėra šios modifikacijos gamyklinės komplektacijos. Pažymėkite, ką turi jūsų automobilis.",
+                          "В каталоге нет заводской комплектации этой модификации. Отметьте, что есть в вашей машине."
+                        )}
+                      </p>
+                    )}
                     {factoryOptions && factoryOptions.modificationId === chosenModificationId && factoryOptions.keys.length > 0 && (
                       <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                         <span>
-                          {tr(
-                            "Factory equipment of this version is ticked. Untick what your car doesn't have and add the rest.",
-                            "Pažymėta gamyklinė šios modifikacijos komplektacija. Nuimkite tai, ko jūsų automobilis neturi, ir pridėkite trūkstamą.",
-                            "Отмечена заводская комплектация этой модификации. Снимите то, чего в вашей машине нет, и добавьте недостающее."
-                          )}
+                          {factoryOptions.source === "similar"
+                            ? tr(
+                                "Standard equipment of similar versions of this model is ticked. Check it: untick what your car doesn't have and add the rest.",
+                                "Pažymėta standartinė panašių šio modelio modifikacijų komplektacija. Patikrinkite: nuimkite tai, ko neturite, ir pridėkite trūkstamą.",
+                                "Отмечена базовая комплектация похожих модификаций этой модели. Проверьте: снимите то, чего в вашей машине нет, и добавьте недостающее."
+                              )
+                            : tr(
+                                "Factory equipment of this version is ticked. Untick what your car doesn't have and add the rest.",
+                                "Pažymėta gamyklinė šios modifikacijos komplektacija. Nuimkite tai, ko jūsų automobilis neturi, ir pridėkite trūkstamą.",
+                                "Отмечена заводская комплектация этой модификации. Снимите то, чего в вашей машине нет, и добавьте недостающее."
+                              )}
                         </span>
                         <button
                           type="button"
                           className="font-semibold text-accent-ink hover:underline"
                           onClick={() => setDraft((d) => ({ ...d, features: [...new Set([...featureKeys(d.features), ...factoryOptions.keys])] }))}
                         >
-                          {tr("Tick factory equipment", "Pažymėti gamyklinę", "Отметить заводскую")}
+                          {factoryOptions.source === "similar" ? tr("Tick standard equipment", "Pažymėti standartinę", "Отметить базовую") : tr("Tick factory equipment", "Pažymėti gamyklinę", "Отметить заводскую")}
                         </button>
                       </div>
                     )}

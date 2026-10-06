@@ -49,6 +49,13 @@ export default function MyListingsPage() {
   useEffect(() => { getMyModerationDecisions().then(setDecisions).catch(() => setDecisions([])); }, []);
   useEffect(() => { getPaymentConfig().then((c) => { setPaymentsOff(c.paymentsEnabled === false); setModerationOn(c.moderationEnabled === true); }).catch(() => {}); }, []);
 
+  const isFinished = (status?: ListingStatus) => status === "SOLD" || status === "CLOSED";
+  const current = items.filter((item) => !isFinished(item.status));
+  // Most recently finished first.
+  const finished = items
+    .filter((item) => isFinished(item.status))
+    .sort((a, b) => (b.updatedAt || b.createdAt || "").localeCompare(a.updatedAt || a.createdAt || ""));
+
   const changeStatus = async (id: string, status: "SOLD" | "CLOSED") => {
     const question =
       status === "SOLD"
@@ -122,32 +129,48 @@ export default function MyListingsPage() {
             <Link href="/sell" className="mt-6 inline-flex rounded-xl bg-accent px-5 py-3 font-bold text-accent-foreground">{tr("Create listing", "Sukurti skelbimą", "Создать объявление")}</Link>
           </div>
         ) : (
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {items.map((item) => (
-              <article key={item.id} className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-                <div className="relative h-52 bg-muted">
-                  <img src={item.thumbnail || FALLBACK_IMAGE} alt={item.title} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_IMAGE; }} />
-                  <StatusBadge status={item.status} language={language} paymentsOff={paymentsOff} />
-                </div>
-                <div className="p-5">
-                  <h2 className="text-xl font-extrabold">{item.title}</h2>
-                  <div className="mt-2 text-xl font-extrabold text-accent-ink">{formatPrice(item.price)}</div>
-                  <div className="mt-2 text-sm text-muted-foreground">{formatMileage(item.mileage)} km{item.createdAt ? ` · ${new Date(item.createdAt).toLocaleDateString(language === "LT" ? "lt-LT" : language === "RU" ? "ru-RU" : "en-GB")}` : ""}</div>
+          <>
+            {current.length > 0 && (
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {current.map((item) => (
+                  <article key={item.id} className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                    <div className="relative h-52 bg-muted">
+                      <img src={item.thumbnail || FALLBACK_IMAGE} alt={item.title} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_IMAGE; }} />
+                      <StatusBadge status={item.status} language={language} paymentsOff={paymentsOff} />
+                    </div>
+                    <div className="p-5">
+                      <h2 className="text-xl font-extrabold">{item.title}</h2>
+                      <div className="mt-2 text-xl font-extrabold text-accent-ink">{formatPrice(item.price)}</div>
+                      <div className="mt-2 text-sm text-muted-foreground">{formatMileage(item.mileage)} km{item.createdAt ? ` · ${formatDate(item.createdAt, language)}` : ""}</div>
 
-                  {item.status === "REJECTED" && <RejectionReason decision={decisions.find((d) => String(d.listingId) === String(item.id))} tr={tr} />}
+                      {item.status === "REJECTED" && <RejectionReason decision={decisions.find((d) => String(d.listingId) === String(item.id))} tr={tr} />}
 
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {item.status === "ACTIVE" && <Link href={`/listing/${item.id}`} className="rounded-lg border border-border px-4 py-2 text-sm font-bold hover:border-accent">{tr("Open", "Atidaryti", "Открыть")}</Link>}
-                    {item.status === "PENDING_PAYMENT" && <button disabled={busyId === item.id} onClick={() => pay(item.id)} className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground disabled:opacity-50">{paymentsOff ? tr("Publish", "Paskelbti", "Опубликовать") : tr("Pay & publish", "Apmokėti ir paskelbti", "Оплатить и опубликовать")}</button>}
-                    {item.status === "ACTIVE" && <button disabled={busyId === item.id} onClick={() => changeStatus(item.id, "SOLD")} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{tr("Mark as sold", "Pažymėti kaip parduotą", "Отметить проданным")}</button>}
-                    {(item.status === "ACTIVE" || item.status === "PENDING_PAYMENT") && <button disabled={busyId === item.id} onClick={() => changeStatus(item.id, "CLOSED")} className="rounded-lg border border-border px-4 py-2 text-sm font-bold text-muted-foreground hover:text-foreground disabled:opacity-50">{tr("Take down", "Išimti", "Снять")}</button>}
-                    {item.status !== "SOLD" && item.status !== "CLOSED" && <button onClick={() => setEditingId(editingId === item.id ? null : item.id)} className="rounded-lg border border-border px-4 py-2 text-sm font-bold hover:border-accent">{tr("Edit", "Redaguoti", "Редактировать")}</button>}
-                  </div>
-                  {editingId === item.id && <EditListingPanel item={item} tr={tr} moderationOn={moderationOn} onDone={async () => { setEditingId(null); await load(); }} onReload={load} />}
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        {item.status === "ACTIVE" && <Link href={`/listing/${item.id}`} className="rounded-lg border border-border px-4 py-2 text-sm font-bold hover:border-accent">{tr("Open", "Atidaryti", "Открыть")}</Link>}
+                        {item.status === "PENDING_PAYMENT" && <button disabled={busyId === item.id} onClick={() => pay(item.id)} className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground disabled:opacity-50">{paymentsOff ? tr("Publish", "Paskelbti", "Опубликовать") : tr("Pay & publish", "Apmokėti ir paskelbti", "Оплатить и опубликовать")}</button>}
+                        {item.status === "ACTIVE" && <button disabled={busyId === item.id} onClick={() => changeStatus(item.id, "SOLD")} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{tr("Mark as sold", "Pažymėti kaip parduotą", "Отметить проданным")}</button>}
+                        {(item.status === "ACTIVE" || item.status === "PENDING_PAYMENT") && <button disabled={busyId === item.id} onClick={() => changeStatus(item.id, "CLOSED")} className="rounded-lg border border-border px-4 py-2 text-sm font-bold text-muted-foreground hover:text-foreground disabled:opacity-50">{tr("Take down", "Išimti", "Снять")}</button>}
+                        <button onClick={() => setEditingId(editingId === item.id ? null : item.id)} className="rounded-lg border border-border px-4 py-2 text-sm font-bold hover:border-accent">{tr("Edit", "Redaguoti", "Редактировать")}</button>
+                      </div>
+                      {editingId === item.id && <EditListingPanel item={item} tr={tr} moderationOn={moderationOn} onDone={async () => { setEditingId(null); await load(); }} onReload={load} />}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+
+            {finished.length > 0 && (
+              <section className={current.length > 0 ? "mt-12" : ""}>
+                <div className="mb-4 flex items-baseline gap-3 border-b border-border pb-3">
+                  <h2 className="text-lg font-extrabold">{tr("Sold and withdrawn", "Parduoti ir išimti", "Проданные и снятые")}</h2>
+                  <span className="text-sm text-muted-foreground">{finished.length}</span>
                 </div>
-              </article>
-            ))}
-          </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {finished.map((item) => <FinishedListingCard key={item.id} item={item} language={language} tr={tr} />)}
+                </div>
+              </section>
+            )}
+          </>
         )}
       </div>
     </main>
@@ -174,29 +197,65 @@ function RejectionReason({ decision, tr }: { decision?: ModerationDecision; tr: 
   );
 }
 
+/** Sold or withdrawn listing: a quiet archive card with the outcome and its date instead of a status pill. */
+function FinishedListingCard({ item, language, tr }: { item: ListingDetail; language: string; tr: (en: string, lt: string, ru: string) => string }) {
+  const sold = item.status === "SOLD";
+  const date = item.updatedAt || item.createdAt;
+  return (
+    <article className="flex min-w-0 gap-4 rounded-2xl border border-border bg-card p-3">
+      <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-xl bg-muted sm:h-28 sm:w-40">
+        <img
+          src={item.thumbnail || FALLBACK_IMAGE}
+          alt={item.title}
+          className={`h-full w-full object-cover ${sold ? "" : "opacity-60 grayscale"}`}
+          onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_IMAGE; }}
+        />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col justify-center">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+          <span className={`inline-flex items-center gap-1.5 whitespace-nowrap font-bold ${sold ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+            <AssetIcon name={sold ? "check-circle" : "eye-off"} size={14} />
+            {sold ? tr("Sold", "Parduota", "Продано") : tr("Withdrawn", "Išimtas iš pardavimo", "Снято с продажи")}
+          </span>
+          {date && <span className="whitespace-nowrap text-muted-foreground">{formatDate(date, language)}</span>}
+        </div>
+        <h3 className="mt-1.5 truncate text-base font-extrabold">{item.title}</h3>
+        <div className="mt-1 text-sm text-muted-foreground">
+          <span className="font-bold text-foreground">{formatPrice(item.price)}</span> · {formatMileage(item.mileage)} km
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">{tr("Not shown to buyers", "Pirkėjams nerodomas", "Не показывается покупателям")}</p>
+      </div>
+    </article>
+  );
+}
+
 function StatusBadge({ status, language, paymentsOff }: { status?: ListingStatus; language: string; paymentsOff?: boolean }) {
   const labels: Record<string, [string, string, string]> = {
     ACTIVE: ["Active", "Aktyvus", "Активно"],
-    SOLD: ["Sold", "Parduota", "Продано"],
-    CLOSED: ["Closed", "Uždarytas", "Закрыто"],
     PENDING_PAYMENT: paymentsOff ? ["Not published", "Nepaskelbtas", "Не опубликовано"] : ["Payment required", "Laukia apmokėjimo", "Ожидает оплаты"],
     PENDING_REVIEW: ["Under review", "Tikrinamas", "На проверке"],
     REJECTED: ["Rejected", "Atmestas", "Отклонено"],
   };
-  const colors: Record<string, string> = {
-    ACTIVE: "bg-emerald-600 text-white",
-    SOLD: "bg-blue-600 text-white",
-    CLOSED: "bg-zinc-700 text-white",
-    PENDING_PAYMENT: "bg-accent text-accent-foreground",
-    PENDING_REVIEW: "bg-amber-500 text-white",
-    REJECTED: "bg-red-600 text-white",
+  const dots: Record<string, string> = {
+    ACTIVE: "bg-emerald-400",
+    PENDING_PAYMENT: "bg-accent",
+    PENDING_REVIEW: "bg-amber-300",
+    REJECTED: "bg-red-500",
   };
-  const key = status || "CLOSED";
-  const label = labels[key] || labels.CLOSED;
+  if (!status || !labels[status]) return null;
+  const label = labels[status];
   const text = language === "LT" ? label[1] : language === "RU" ? label[2] : label[0];
-  return <span className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-extrabold ${colors[key] || colors.CLOSED}`}>{text}</span>;
+  return (
+    <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/65 px-2.5 py-1 text-xs font-bold text-white backdrop-blur-sm">
+      <span className={`h-1.5 w-1.5 rounded-full ${dots[status]}`} />
+      {text}
+    </span>
+  );
 }
 
+function formatDate(value: string, language: string) {
+  return new Date(value).toLocaleDateString(language === "LT" ? "lt-LT" : language === "RU" ? "ru-RU" : "en-GB");
+}
 function formatPrice(value: number) {
   return new Intl.NumberFormat("lt-LT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
 }
