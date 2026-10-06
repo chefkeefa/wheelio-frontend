@@ -10,10 +10,9 @@ import {
   replyToSupportTicket,
   type SupportReplyEmailError,
   type SupportTicketReply,
-  getLiveSupportMessages,
   listSupportConversations,
   listSupportTickets,
-  liveSupportStreamUrl,
+  pollLiveSupport,
   sendAgentSupportMessage,
   setSupportConversationClosed,
   setSupportTicketStatus,
@@ -72,12 +71,13 @@ function SupportDesk() {
 
   useEffect(()=>{
     if(!selected)return;
-    let source:EventSource|null=null;
-    getLiveSupportMessages(selected).then(setMessages).catch(e=>setError(e instanceof Error?e.message:String(e)));
-    source=new EventSource(liveSupportStreamUrl(selected),{withCredentials:true});
-    const handler=(event:MessageEvent)=>{try{const m=JSON.parse(event.data) as LiveSupportMessage;setMessages(cur=>cur.some(x=>x.id===m.id)?cur:[...cur,m]);}catch{}};
-    source.addEventListener("message",handler as EventListener);
-    return()=>{source?.removeEventListener("message",handler as EventListener);source?.close();};
+    // Clear the previous chat at once, so its messages never show under another customer's name.
+    setMessages([]);
+    return pollLiveSupport(selected,undefined,{
+      onHistory:setMessages,
+      onNew:fresh=>setMessages(cur=>[...cur,...fresh.filter(m=>!cur.some(x=>x.id===m.id))]),
+      onHistoryError:e=>setError(e instanceof Error?e.message:String(e)),
+    });
   },[selected]);
 
   const current=useMemo(()=>conversations.find(c=>c.id===selected)||null,[conversations,selected]);

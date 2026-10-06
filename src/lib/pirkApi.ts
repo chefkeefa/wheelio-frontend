@@ -636,8 +636,12 @@ export function startLiveSupport(payload: { name?: string; email?: string; phone
 // The guest chat token goes in a header, not the URL, so it does not end up in server or proxy logs.
 const supportTokenHeaders = (token?: string): Record<string, string> => (token ? { "X-Support-Token": token } : {});
 
-export function getLiveSupportMessages(id: number, token?: string) {
-  return fetchJson<LiveSupportMessage[]>(`/support/live/${id}/messages`, { headers: supportTokenHeaders(token) });
+/** after = id of the last message already shown: the API then returns only newer messages. */
+export function getLiveSupportMessages(id: number, token?: string, after?: number) {
+  return fetchJson<LiveSupportMessage[]>(`/support/live/${id}/messages${after ? `?after=${after}` : ""}`, {
+    headers: supportTokenHeaders(token),
+    timeoutMs: 10000,
+  });
 }
 
 export function sendLiveSupportMessage(id: number, message: string, token?: string) {
@@ -649,11 +653,58 @@ export function sendLiveSupportMessage(id: number, message: string, token?: stri
 }
 
 /**
- * EventSource cannot send headers: the API authorises the stream with the HttpOnly chat cookie it sets when
- * the chat starts or its history is loaded, so open the stream after getLiveSupportMessages succeeds.
+ * Keeps a live chat up to date by asking for messages newer than the last one every few seconds (paused while
+ * the tab is hidden). It replaces the old EventSource stream: on the hosting every open stream held one of the
+ * API's few connections, and a few of them (a support agent clicking through chats) made every request time out.
+ * onHistory gets the full history once; onNew gets only new messages; onHistoryError gets the error if the
+ * first load fails, and polling then stops. Returns a function that stops polling.
  */
-export function liveSupportStreamUrl(id: number) {
-  return buildUrl(`/support/live/${id}/stream`);
+export function pollLiveSupport(
+  id: number,
+  token: string | undefined,
+  handlers: {
+    onHistory: (messages: LiveSupportMessage[]) => void;
+    onNew: (messages: LiveSupportMessage[]) => void;
+    onHistoryError?: (error: unknown) => void;
+    intervalMs?: () => number;
+  },
+) {
+  let stopped = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let after = 0;
+  const interval = () => handlers.intervalMs?.() ?? 4000;
+  const next = () => {
+    if (!stopped) timer = setTimeout(tick, interval());
+  };
+  const tick = async () => {
+    if (stopped) return;
+    if (typeof document !== "undefined" && document.hidden) return next();
+    try {
+      const fresh = await getLiveSupportMessages(id, token, after);
+      if (stopped) return;
+      if (fresh.length) {
+        after = Math.max(after, ...fresh.map((m) => m.id));
+        handlers.onNew(fresh);
+      }
+    } catch {
+      // the next tick retries
+    }
+    next();
+  };
+  getLiveSupportMessages(id, token)
+    .then((history) => {
+      if (stopped) return;
+      after = history.reduce((max, m) => Math.max(max, m.id), 0);
+      handlers.onHistory(history);
+      next();
+    })
+    .catch((e) => {
+      if (!stopped) handlers.onHistoryError?.(e);
+    });
+  return () => {
+    stopped = true;
+    if (timer) clearTimeout(timer);
+  };
 }
 
 export function listSupportConversations(page = 0, size = 50) {

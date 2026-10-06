@@ -2,9 +2,9 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
+import { ApiError } from "@/lib/http";
 import {
-  getLiveSupportMessages,
-  liveSupportStreamUrl,
+  pollLiveSupport,
   sendLiveSupportMessage,
   sendSupportTicket,
   startLiveSupport,
@@ -75,42 +75,18 @@ function LiveChat({ tr }: { tr: (en: string, lt: string, ru: string) => string }
 
   useEffect(() => {
     if (!chat) return;
-    let source: EventSource | null = null;
-    let cancelled = false;
-
-    const onMessage = (event: MessageEvent) => {
-      try {
-        const incoming = JSON.parse(event.data) as LiveSupportMessage;
-        setMessages((current) =>
-          current.some((item) => item.id === incoming.id)
-            ? current
-            : [...current, incoming]
-        );
-      } catch {}
-    };
-    // Loading the history also gives the browser the chat cookie the stream needs, so the stream opens after it.
-    getLiveSupportMessages(chat.id, chat.token)
-      .then((history) => {
-        if (cancelled) return;
-        setMessages(history);
-        source = new EventSource(liveSupportStreamUrl(chat.id), { withCredentials: true });
-        source.addEventListener("message", onMessage as EventListener);
-        source.onerror = () => {
-          // Browser automatically reconnects SSE. Do not replace the chat with an error screen.
-        };
-      })
-      .catch(() => {
-        if (!cancelled) {
+    return pollLiveSupport(chat.id, chat.token, {
+      onHistory: setMessages,
+      onNew: (incoming) =>
+        setMessages((current) => [...current, ...incoming.filter((m) => !current.some((item) => item.id === m.id))]),
+      onHistoryError: (e) => {
+        // Only a chat the API no longer knows or lets us read is forgotten; a timeout keeps it.
+        if (e instanceof ApiError && (e.status === 403 || e.status === 404)) {
           localStorage.removeItem("wheelio-live-support"); localStorage.removeItem("pirkauto-live-support");
           setChat(null);
         }
-      });
-
-    return () => {
-      cancelled = true;
-      source?.removeEventListener("message", onMessage as EventListener);
-      source?.close();
-    };
+      },
+    });
   }, [chat]);
 
   useEffect(() => {
