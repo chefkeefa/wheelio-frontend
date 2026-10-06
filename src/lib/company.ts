@@ -2,6 +2,10 @@
 // Company details stay hidden until they are set: a marketplace without a named operator looks
 // untrustworthy, but made-up details would be worse.
 export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@wheelio.lt";
+/** Business offers and partnerships. */
+export const PARTNERS_EMAIL = process.env.NEXT_PUBLIC_PARTNERS_EMAIL || "partners@wheelio.lt";
+/** Spam, abuse and security reports (illegal content goes through /report). */
+export const ABUSE_EMAIL = process.env.NEXT_PUBLIC_ABUSE_EMAIL || "abuse@wheelio.lt";
 
 export const COMPANY = {
   /** Legal name, e.g. "MB Wheelio" or "UAB ...". */

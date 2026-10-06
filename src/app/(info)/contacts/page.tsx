@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { InfoArticle, InfoSection } from "@/components/info/InfoArticle";
 import AssetIcon from "@/components/ui/AssetIcon";
-import { COMPANY, HAS_COMPANY_DETAILS, SUPPORT_EMAIL } from "@/lib/company";
+import { ABUSE_EMAIL, COMPANY, HAS_COMPANY_DETAILS, PARTNERS_EMAIL, SUPPORT_EMAIL } from "@/lib/company";
 
 export default function ContactsPage() {
   const { tr } = useLanguage();
@@ -59,6 +59,21 @@ export default function ContactsPage() {
             </p>
           </Link>
         </div>
+        <dl className="mt-5 grid gap-x-6 gap-y-2 text-[15px] leading-6 sm:grid-cols-[180px_1fr]">
+          {[
+            [tr("Business and partnerships", "Verslas ir partnerystė", "Бизнес и партнёрство"), PARTNERS_EMAIL],
+            [tr("Spam, abuse, security", "Šlamštas, piktnaudžiavimas, saugumas", "Спам, злоупотребления, безопасность"), ABUSE_EMAIL],
+          ].map(([label, email]) => (
+            <div key={email} className="contents">
+              <dt className="text-muted-foreground">{label}</dt>
+              <dd>
+                <a href={`mailto:${email}`} className="font-medium text-accent-ink underline">
+                  {email}
+                </a>
+              </dd>
+            </div>
+          ))}
+        </dl>
       </InfoSection>
 
       {HAS_COMPANY_DETAILS && (

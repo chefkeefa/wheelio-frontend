@@ -1,0 +1,4 @@
+Contact: mailto:abuse@wheelio.lt
+Expires: 2027-10-06T00:00:00.000Z
+Preferred-Languages: lt, en, ru
+Canonical: https://wheelio.lt/.well-known/security.txt
