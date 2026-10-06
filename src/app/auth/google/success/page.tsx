@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { me } from "@/lib/pirkApi";
+import { takeReturnPath } from "@/lib/safeReturn";
 import { loadPhoneVerificationConfig, needsPhone } from "@/lib/usePhoneVerification";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -14,10 +15,11 @@ export default function GoogleSuccessPage() {
 
   useEffect(()=>{
     Promise.all([me(),loadPhoneVerificationConfig()]).then(([user,config])=>{
+      const target=takeReturnPath("/");
       if(needsPhone(user,config)){
-        router.replace("/verify-phone?return=/");
+        router.replace(`/verify-phone?return=${encodeURIComponent(target)}`);
       }else{
-        router.replace("/");
+        router.replace(target);
       }
       router.refresh();
     }).catch(e=>setError(e instanceof Error?e.message:String(e)));

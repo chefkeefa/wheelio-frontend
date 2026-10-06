@@ -18,8 +18,14 @@ import {
   validatePromoCode,
   uploadListingImage,
   classifyListingPhoto,
+  getPriceEstimate,
+  lookupVin,
+  me,
   type PhotoViewType,
   type PaymentConfig,
+  type PriceEstimate,
+  type VinDecoded,
+  type VinLookup,
 } from "@/lib/pirkApi";
 import { CAR_OPTION_GROUPS, featureKeys } from "@/lib/carOptions";
 import {
@@ -31,16 +37,18 @@ import {
 } from "@/lib/sellDraft";
 import { LT_CITIES } from "@/lib/cities";
 import AssetIcon from "@/components/ui/AssetIcon";
+import Combobox from "@/components/ui/Combobox";
+import { useRouter } from "next/navigation";
 
 // --------- ВСПОМОГАТЕЛЬНОЕ ---------
 
 
 const CAR_API = `${BACKEND_ORIGIN}/cars`;
-const NHTSA_VIN_API = "https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues";
 
 type CarMark = {
   id: string;
   name: string;
+  cyrillicName?: string | null;
 };
 
 type CarModel = {
@@ -91,26 +99,6 @@ type ConfigurationInfo = {
   modifications?: ModificationInfo[] | null;
 };
 
-type VinDecodeResult = {
-  Make?: string;
-  Model?: string;
-  ModelYear?: string;
-  Series?: string;
-  Trim?: string;
-  BodyClass?: string;
-  Doors?: string;
-  DriveType?: string;
-  TransmissionStyle?: string;
-  TransmissionSpeeds?: string;
-  DisplacementL?: string;
-  EngineCylinders?: string;
-  EngineHP?: string;
-  EngineKW?: string;
-  EngineModel?: string;
-  FuelTypePrimary?: string;
-  ErrorCode?: string;
-  ErrorText?: string;
-};
 
 type VinStatus = {
   type: "success" | "warning" | "error";
@@ -175,7 +163,7 @@ function localPowerKw(spec?: Specifications | null) {
   return hp && hp > 0 ? hp * 0.735499 : null;
 }
 
-function vinPowerKw(decoded: VinDecodeResult) {
+function vinPowerKw(decoded: VinDecoded) {
   const kw = toNumber(decoded.EngineKW);
   if (kw && kw > 0) return kw;
   const hp = toNumber(decoded.EngineHP);
@@ -246,6 +234,36 @@ function vinYearCandidates(vin: string) {
   return years;
 }
 
+/** Lithuanian car plates: three letters and three digits (ABC123, ABC 123); also shorter custom and older plates. */
+const LT_PLATE_RE = /^(?:[A-Z]{3}\d{3}|[A-Z]{2}\d{3,4}|\d{3}[A-Z]{2,3}|[A-Z]{1,3}\d{1,5})$/;
+
+type VinInputProblem = { kind: "plate"; value: string } | { kind: "letters" } | { kind: "length"; length: number };
+
+/** Why the text cannot be decoded as a VIN, or null when it is a valid VIN. */
+function vinInputProblem(value: string): VinInputProblem | null {
+  if (/^[A-HJ-NPR-Z0-9]{17}$/.test(value)) return null;
+  if (value.length <= 8 && LT_PLATE_RE.test(value)) return { kind: "plate", value };
+  if (value.length === 17 && /^[A-Z0-9]+$/.test(value)) return { kind: "letters" };
+  return { kind: "length", length: value.length };
+}
+
+/** Catalog model for a decoded name: an exact match, else the single model whose name starts the decoded one. */
+function matchCatalogModel(models: CarModel[], decoded: string): CarModel | null {
+  const key = normalizeCatalogValue(decoded);
+  if (!key) return null;
+  const exact = models.find((item) => normalizeCatalogValue(item.name) === key);
+  if (exact) return exact;
+  const prefixed = models.filter((item) => {
+    const name = normalizeCatalogValue(item.name);
+    return name.length >= 2 && key.startsWith(name);
+  });
+  if (!prefixed.length) return null;
+  // "Golf Plus" must win over "Golf" for "Golf Plus 1.6": take the longest name, unless two are equally long.
+  prefixed.sort((a, b) => normalizeCatalogValue(b.name).length - normalizeCatalogValue(a.name).length);
+  const best = normalizeCatalogValue(prefixed[0].name).length;
+  return prefixed.filter((item) => normalizeCatalogValue(item.name).length === best).length === 1 ? prefixed[0] : null;
+}
+
 function makeEngineLabel(
   generation: GenerationInfo,
   configuration: ConfigurationInfo,
@@ -290,7 +308,7 @@ function flattenEngineOptions(
 }
 
 function scoreModification(
-  decoded: VinDecodeResult,
+  decoded: VinDecoded,
   generation: GenerationInfo,
   configuration: ConfigurationInfo,
   modification: ModificationInfo,
@@ -422,18 +440,18 @@ function cx(...cls: Array<string | false | null | undefined>) {
   return cls.filter(Boolean).join(" ");
 }
 
-// подсказка цены (MVP-фикция)
-function usePriceHint(draft: ListingDraft) {
-  return useMemo(() => {
-    if (!draft.mark || !draft.model || !draft.year) return null;
-    const base = 10000;
-    const year = parseInt(draft.year || "0", 10);
-    const age = year ? Math.max(0, 2025 - year) : 5;
-    const adj = Math.max(2000, 15000 - age * 700);
-    const low = Math.max(2000, base + adj - 1500);
-    const high = base + adj + 800;
-    return { low, high };
-  }, [draft.mark, draft.model, draft.year]);
+/** Most photos a listing can have; the backend enforces the same limit (MAX_LISTING_IMAGES). */
+const MAX_PHOTOS = 15;
+
+/** Viewing hours offered in the contacts step. */
+const VIEWING_HOURS = Array.from({ length: 17 }, (_, i) => i + 7); // 07:00 … 23:00
+const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
+
+/** "any", or a range "18:00–21:00" written by the hour selects; anything else (old free text) reads as not set. */
+function parseHours(value: string): { any: boolean; from: number | null; to: number | null } {
+  if (value === "any") return { any: true, from: null, to: null };
+  const m = value.match(/^(\d{2}):00–(\d{2}):00$/);
+  return m ? { any: false, from: Number(m[1]), to: Number(m[2]) } : { any: false, from: null, to: null };
 }
 
 function formatEUR(n: number) {
@@ -557,11 +575,29 @@ function StatusNote({ type, children, className = "" }: { type: keyof typeof STA
 // --------- СТРАНИЦА ---------
 export default function SellPage() {
   const { language, tr } = useLanguage();
+  const router = useRouter();
+  // Selling needs an account: signed-out visitors go to the login page and come back here afterwards.
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    me()
+      .then(() => alive && setSignedIn(true))
+      .catch((e) => {
+        if (!alive) return;
+        if (e instanceof ApiError && (e.status === 401 || e.status === 403)) router.replace("/auth/login?return=/sell");
+        // Network trouble: show the form; publishing checks the session again.
+        else setSignedIn(true);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [router]);
 
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<ListingDraft>(INITIAL);
   const [photos, setPhotos] = useState<File[]>([]); // в память, в localStorage не кладём
   const [photoMeta, setPhotoMeta] = useState<Record<string, PhotoMeta>>({});
+  const [photoLimitHit, setPhotoLimitHit] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [draftSavedNotice, setDraftSavedNotice] = useState(false);
 
@@ -683,7 +719,9 @@ export default function SellPage() {
 
         const data = await response.json();
         const loaded: CarMark[] = Array.isArray(data?.content) ? data.content : [];
-        loaded.sort((a, b) => a.name.localeCompare(b.name));
+        // Latin names first; the catalog's "sports cars and replicas" group has only a Cyrillic name.
+        const latin = (name: string) => /^[A-Za-z0-9]/.test(name);
+        loaded.sort((a, b) => Number(latin(b.name)) - Number(latin(a.name)) || a.name.localeCompare(b.name));
 
         if (!cancelled) setMarks(loaded);
       } catch (error) {
@@ -822,169 +860,152 @@ export default function SellPage() {
   }, [draft.mark, draft.model, draft.year, marks, models]);
 
   const autofillByVin = async () => {
-    const vin = draft.plateOrVin.trim().toUpperCase();
+    const vin = draft.plateOrVin.toUpperCase().replace(/[\s-]+/g, "");
     setVinStatus(null);
 
-    if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) {
+    const problem = vinInputProblem(vin);
+    if (problem) {
       setVinStatus({
-        type: "error",
-        text: tr("Autofill works only with a valid 17-character VIN. Lithuanian plate lookup is not connected yet.", "Automatinis užpildymas veikia tik su galiojančiu 17 simbolių VIN. Lietuvos numerių paieška dar neprijungta.", "Автозаполнение работает только с корректным 17-значным VIN. Поиск по литовскому госномеру пока не подключён."),
+        type: "warning",
+        text:
+          problem.kind === "plate"
+            ? tr(
+                `${problem.value} looks like a Lithuanian number plate. Searching by plate is not available: Regitra does not offer a public lookup. Enter the 17-character VIN from the registration certificate (field E) or the plate under the windscreen, or choose the make and model below.`,
+                `${problem.value} panašu į Lietuvos valstybinį numerį. Paieška pagal numerį negalima: Regitra neteikia viešos paieškos. Įveskite 17 simbolių VIN iš registracijos liudijimo (E laukas) arba lentelės po priekiniu stiklu, arba pasirinkite markę ir modelį žemiau.`,
+                `${problem.value} похоже на литовский госномер. Поиск по номеру недоступен: у Regitra нет публичного поиска. Введите 17-значный VIN из техпаспорта (поле E) или с таблички под лобовым стеклом, либо выберите марку и модель ниже.`
+              )
+            : problem.kind === "letters"
+            ? tr(
+                "A VIN never contains the letters I, O or Q. Check the code: they are usually the digits 1 and 0.",
+                "VIN niekada nebūna raidžių I, O ar Q. Patikrinkite kodą: dažniausiai tai skaitmenys 1 ir 0.",
+                "В VIN не бывает букв I, O и Q. Проверьте код: обычно это цифры 1 и 0."
+              )
+            : tr(
+                `A VIN has exactly 17 characters; this one has ${problem.length}.`,
+                `VIN turi lygiai 17 simbolių, o šis – ${problem.length}.`,
+                `В VIN ровно 17 символов, а здесь ${problem.length}.`
+              ),
       });
       return;
     }
 
     setVinLoading(true);
-
     try {
-      const response = await fetch(
-        `${NHTSA_VIN_API}/${encodeURIComponent(vin)}?format=json`,
-        { cache: "no-store" }
-      );
-
-      if (!response.ok) {
-        throw new Error(`VIN service returned ${response.status}`);
-      }
-
-      const data = await response.json();
-      const decoded: VinDecodeResult | undefined = data?.Results?.[0];
-      if (!decoded) throw new Error(tr("VIN service returned no vehicle data.", "VIN paslauga negrąžino automobilio duomenų.", "VIN-сервис не вернул данные автомобиля."));
-
-      const decodedMake = (decoded.Make || "").trim();
-      const decodedModel = (decoded.Model || "").trim();
-      const decodedYear = Number((decoded.ModelYear || "").trim());
-
-      if (!decodedMake || !decodedModel || !Number.isInteger(decodedYear)) {
-        throw new Error(
-          decoded.ErrorText ||
-            tr(
-              "VIN did not return a complete make, model and model year. Please choose the missing values manually.",
-              "VIN negrąžino visų markės, modelio ir modelio metų duomenų. Trūkstamas reikšmes pasirinkite rankiniu būdu.",
-              "VIN не вернул полные данные о марке, модели и модельном годе. Выберите недостающие значения вручную."
-            )
-        );
-      }
-
-      // 1) MAKE: exact normalized match only. No fuzzy guessing.
-      const makeKey = normalizeCatalogValue(decodedMake);
-      const matchedMark = marks.find(
-        (item) =>
-          normalizeCatalogValue(item.name) === makeKey ||
-          normalizeCatalogValue(item.id) === makeKey
-      );
-
-      if (!matchedMark) {
-        setDraft((current) => ({
-          ...current,
-          plateOrVin: vin,
-          year: "",
-          engine: "",
-        }));
+      let lookup: VinLookup;
+      try {
+        lookup = await lookupVin(vin);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          window.location.href = "/auth/login?return=/sell";
+          return;
+        }
         setVinStatus({
-          type: "warning",
-          text: `VIN decoded as ${decodedMake} ${decodedModel}, model year ${decodedYear}, but this make was not matched exactly in the Wheelio catalog. Nothing else was guessed.`,
+          type: "error",
+          text: tr(
+            "The VIN check did not answer. Try again in a minute or choose the car below.",
+            "VIN patikra neatsakė. Bandykite po minutės arba pasirinkite automobilį žemiau.",
+            "Проверка VIN не ответила. Попробуйте через минуту или выберите автомобиль ниже."
+          ),
         });
         return;
       }
 
-      // 2) MODEL: fetch local models and require exact normalized match.
+      const decoded: VinDecoded = lookup.nhtsa || {};
+      const decoderDown = lookup.nhtsaStatus === "unavailable";
+      const decodedModel = (decoded.Model || "").trim();
+      const decodedYear = Number((decoded.ModelYear || "").trim());
+
+      // 1) MAKE: vPIC's make matched exactly to the catalog, else the manufacturer code of the VIN.
+      const makeKey = normalizeCatalogValue(decoded.Make);
+      const matchedMark =
+        (makeKey && marks.find((item) => normalizeCatalogValue(item.name) === makeKey || normalizeCatalogValue(item.id) === makeKey)) ||
+        (lookup.wmiMake ? marks.find((item) => item.id === lookup.wmiMake) : undefined);
+
+      if (!matchedMark) {
+        setDraft((current) => ({ ...current, plateOrVin: vin }));
+        setVinStatus({
+          type: "warning",
+          text: tr(
+            "The make could not be recognised from this VIN. Check the code or choose the make and model below.",
+            "Pagal šį VIN markės atpažinti nepavyko. Patikrinkite kodą arba pasirinkite markę ir modelį žemiau.",
+            "По этому VIN марку определить не удалось. Проверьте код или выберите марку и модель ниже."
+          ),
+        });
+        return;
+      }
+
+      // 2) MODEL: exact match, or one catalog model whose name starts the decoded one ("Golf" for "Golf Variant").
       const modelResponse = await fetch(`${CAR_API}/${encodeURIComponent(matchedMark.id)}`);
       if (!modelResponse.ok) throw new Error(`Models returned ${modelResponse.status}`);
-
       const modelData = await modelResponse.json();
       const localModels: CarModel[] = Array.isArray(modelData) ? modelData : [];
       localModels.sort((a, b) => a.name.localeCompare(b.name));
       setModels(localModels);
+      const matchedModel = matchCatalogModel(localModels, decodedModel);
 
-      const modelKey = normalizeCatalogValue(decodedModel);
-      const matchedModel = localModels.find(
-        (item) => normalizeCatalogValue(item.name) === modelKey
-      );
+      const notFromDecoder = decoderDown
+        ? tr(
+            " The public VIN decoder is not answering right now, so model and year were not read.",
+            " Viešasis VIN dekoderis šiuo metu neatsako, todėl modelis ir metai nenuskaityti.",
+            " Публичный декодер VIN сейчас не отвечает, поэтому модель и год не прочитаны."
+          )
+        : tr(
+            " For many European cars the public VIN database knows only the make.",
+            " Daugelio Europos automobilių viešoji VIN duomenų bazė žino tik markę.",
+            " Для многих европейских автомобилей публичная база VIN знает только марку."
+          );
 
       if (!matchedModel) {
-        setDraft((current) => ({
-          ...current,
-          plateOrVin: vin,
-          mark: matchedMark.name,
-          model: "",
-          year: "",
-          engine: "",
-        }));
+        setDraft((current) => ({ ...current, plateOrVin: vin, mark: matchedMark.name, model: "", year: "", engine: "" }));
         setVinStatus({
           type: "warning",
-          text: `Make matched (${matchedMark.name}), but VIN model “${decodedModel}” has no exact match in the local catalog. Model/configuration were left for manual selection.`,
+          text:
+            tr(`Make: ${matchedMark.name}. Choose the model and year yourself.`, `Markė: ${matchedMark.name}. Modelį ir metus pasirinkite patys.`, `Марка: ${matchedMark.name}. Модель и год выберите сами.`) +
+            (decodedModel
+              ? tr(` The decoder reports “${decodedModel}”, which is not in our list.`, ` Dekoderis nurodo „${decodedModel}“, kurio nėra mūsų sąraše.`, ` Декодер сообщает «${decodedModel}», такой модели нет в нашем списке.`)
+              : notFromDecoder),
         });
         return;
       }
 
-      // 3) MODEL YEAR: cross-check two independent sources:
-      // NHTSA's decoded ModelYear and VIN position 10. Position 10 repeats every
-      // 30 years, so we disambiguate it using the local model production range.
-      const localVinYearCandidates = vinYearCandidates(vin).filter((year) =>
-        modelSupportsYear(matchedModel, year)
-      );
-
-      let verifiedYear: number | null = null;
-      if (
-        modelSupportsYear(matchedModel, decodedYear) &&
-        localVinYearCandidates.includes(decodedYear)
-      ) {
-        verifiedYear = decodedYear;
-      } else if (localVinYearCandidates.length === 1) {
-        verifiedYear = localVinYearCandidates[0];
-      }
+      // 3) MODEL YEAR: only when vPIC's year and VIN position 10 agree and the model was built that year.
+      // Position 10 alone is not trusted: many European makers do not encode the year there.
+      const verifiedYear =
+        Number.isInteger(decodedYear) && modelSupportsYear(matchedModel, decodedYear) && vinYearCandidates(vin).includes(decodedYear)
+          ? decodedYear
+          : null;
 
       if (!verifiedYear) {
-        setDraft((current) => ({
-          ...current,
-          plateOrVin: vin,
-          mark: matchedMark.name,
-          model: matchedModel.name,
-          year: "",
-          engine: "",
-        }));
+        setDraft((current) => ({ ...current, plateOrVin: vin, mark: matchedMark.name, model: matchedModel.name, year: "", engine: "" }));
         setVinStatus({
           type: "warning",
-          text: `VIN year is ambiguous. Decoder reports ${decodedYear}, while VIN position 10/local production years do not confirm one unique year for ${matchedModel.name}. Year and configuration were left for manual selection.`,
+          text:
+            tr(
+              `Found ${matchedMark.name} ${matchedModel.name}. Enter the model year yourself: it cannot be read reliably from this VIN.`,
+              `Rasta: ${matchedMark.name} ${matchedModel.name}. Modelio metus įveskite patys: iš šio VIN jų patikimai nuskaityti negalima.`,
+              `Найдено: ${matchedMark.name} ${matchedModel.name}. Модельный год введите сами: из этого VIN его нельзя надёжно прочитать.`
+            ),
         });
         return;
       }
 
       // 4) GENERATION: select only if exactly one local generation covers this year.
-      const generationsResponse = await fetch(
-        `${CAR_API}/${encodeURIComponent(matchedMark.id)}/${encodeURIComponent(matchedModel.id)}`
-      );
+      const generationsResponse = await fetch(`${CAR_API}/${encodeURIComponent(matchedMark.id)}/${encodeURIComponent(matchedModel.id)}`);
       if (!generationsResponse.ok) throw new Error(`Generations returned ${generationsResponse.status}`);
-
       const generationsData = await generationsResponse.json();
-      const allGenerations: GenerationInfo[] = Array.isArray(generationsData)
-        ? generationsData
-        : [];
-      const matchingGenerations = allGenerations.filter((generation) =>
-        generationSupportsYear(generation, verifiedYear)
-      );
+      const allGenerations: GenerationInfo[] = Array.isArray(generationsData) ? generationsData : [];
+      const matchingGenerations = allGenerations.filter((generation) => generationSupportsYear(generation, verifiedYear));
 
       setGenerationCandidates(matchingGenerations);
       setMatchedGeneration(matchingGenerations.length === 1 ? matchingGenerations[0] : null);
       setEngineOptions([]);
+      setDraft((current) => ({ ...current, plateOrVin: vin, mark: matchedMark.name, model: matchedModel.name, year: String(verifiedYear), engine: "" }));
 
-      // Fill only the fields that are already verified.
-      setDraft((current) => ({
-        ...current,
-        plateOrVin: vin,
-        mark: matchedMark.name,
-        model: matchedModel.name,
-        year: String(verifiedYear),
-        engine: "",
-      }));
-
+      const found = `${matchedMark.name} ${matchedModel.name}, ${verifiedYear}`;
       if (matchingGenerations.length !== 1) {
-        const names = matchingGenerations.map((g) => g.name).filter(Boolean).join(", ");
         setVinStatus({
           type: "warning",
-          text:
-            matchingGenerations.length === 0
-              ? `VIN matched ${matchedMark.name} ${matchedModel.name}, model year ${verifiedYear}, but no local generation covers that year. Configuration was not guessed.`
-              : `VIN matched ${matchedMark.name} ${matchedModel.name}, model year ${verifiedYear}, but several generations overlap that year (${names}). Configuration was not guessed.`,
+          text: tr(`Found ${found}. Choose the engine / configuration below.`, `Rasta: ${found}. Variklį / komplektaciją pasirinkite žemiau.`, `Найдено: ${found}. Двигатель / комплектацию выберите ниже.`),
         });
         return;
       }
@@ -995,17 +1016,10 @@ export default function SellPage() {
       const configurationsResponse = await fetch(
         `${CAR_API}/${encodeURIComponent(matchedMark.id)}/${encodeURIComponent(matchedModel.id)}/${encodeURIComponent(generation.id)}`
       );
-      if (!configurationsResponse.ok) {
-        throw new Error(`Configurations returned ${configurationsResponse.status}`);
-      }
-
+      if (!configurationsResponse.ok) throw new Error(`Configurations returned ${configurationsResponse.status}`);
       const configurationsData = await configurationsResponse.json();
-      const configurations: ConfigurationInfo[] = Array.isArray(configurationsData)
-        ? configurationsData
-        : [];
-
-      const options = flattenEngineOptions(generation, configurations);
-      setEngineOptions(options);
+      const configurations: ConfigurationInfo[] = Array.isArray(configurationsData) ? configurationsData : [];
+      setEngineOptions(flattenEngineOptions(generation, configurations));
 
       const scored: ScoredModification[] = [];
       for (const configuration of configurations) {
@@ -1013,35 +1027,70 @@ export default function SellPage() {
           scored.push(scoreModification(decoded, generation, configuration, modification));
         }
       }
-
       const winner = chooseStrictModification(scored);
 
       if (winner) {
-        setDraft((current) => ({
-          ...current,
-          engine: winner.option.value,
-        }));
+        setDraft((current) => ({ ...current, engine: winner.option.value }));
         setVinStatus({
           type: "success",
-          text: tr(`VIN matched exactly: ${matchedMark.name} ${matchedModel.name}, model year ${verifiedYear}, generation ${generation.name}. Engine/configuration was selected only because multiple independent VIN parameters agreed with one local catalog entry.`, `VIN tiksliai sutapo: ${matchedMark.name} ${matchedModel.name}, modelio metai ${verifiedYear}, karta ${generation.name}. Variklis / komplektacija pasirinkta tik todėl, kad keli nepriklausomi VIN parametrai sutapo su vienu vietinio katalogo įrašu.`, `VIN совпал точно: ${matchedMark.name} ${matchedModel.name}, модельный год ${verifiedYear}, поколение ${generation.name}. Двигатель / комплектация выбраны только потому, что несколько независимых параметров VIN совпали с одной записью локального каталога.`),
+          text: tr(
+            `Found ${found}, ${generation.name}. The engine was picked because several VIN facts match one version. Check it before publishing.`,
+            `Rasta: ${found}, ${generation.name}. Variklis parinktas, nes keli VIN duomenys sutampa su viena versija. Patikrinkite prieš skelbdami.`,
+            `Найдено: ${found}, ${generation.name}. Двигатель выбран, потому что несколько данных VIN совпали с одной версией. Проверьте перед публикацией.`
+          ),
         });
       } else {
         setVinStatus({
-          type: "warning",
-          text: tr(`VIN matched ${matchedMark.name} ${matchedModel.name}, model year ${verifiedYear}, generation ${generation.name}. Engine/configuration is ambiguous, so it was not guessed — choose it from the local catalog list.`, `VIN sutapo su ${matchedMark.name} ${matchedModel.name}, modelio metai ${verifiedYear}, karta ${generation.name}. Variklis / komplektacija neaiškūs, todėl jie nebuvo spėjami — pasirinkite iš vietinio katalogo sąrašo.`, `VIN совпал с ${matchedMark.name} ${matchedModel.name}, модельный год ${verifiedYear}, поколение ${generation.name}. Двигатель / комплектация неоднозначны, поэтому они не угадывались — выберите вариант из локального каталога.`),
+          type: "success",
+          text: tr(
+            `Found ${found}, ${generation.name}. Choose the engine / configuration below.`,
+            `Rasta: ${found}, ${generation.name}. Variklį / komplektaciją pasirinkite žemiau.`,
+            `Найдено: ${found}, ${generation.name}. Двигатель / комплектацию выберите ниже.`
+          ),
         });
       }
-    } catch (error) {
+    } catch {
       setVinStatus({
         type: "error",
-        text: error instanceof Error ? error.message : tr("VIN lookup failed.", "VIN paieška nepavyko.", "Не удалось проверить VIN."),
+        text: tr(
+          "The car catalog did not answer. Try again or choose the car below.",
+          "Automobilių katalogas neatsakė. Bandykite dar kartą arba pasirinkite automobilį žemiau.",
+          "Каталог автомобилей не ответил. Попробуйте ещё раз или выберите автомобиль ниже."
+        ),
       });
     } finally {
       setVinLoading(false);
     }
   };
 
-  const priceHint = usePriceHint(draft);
+  const markOptions = useMemo(
+    () => marks.map((mark) => ({ value: mark.name, label: mark.name, aliases: [mark.cyrillicName, mark.id] })),
+    [marks]
+  );
+  const modelOptions = useMemo(
+    () => models.map((model) => ({ value: model.name, label: model.name, aliases: [model.cyrillicName] })),
+    [models]
+  );
+
+  // Price range of the same model on Wheelio. null = not enough similar listings, so nothing is suggested.
+  const [priceHint, setPriceHint] = useState<PriceEstimate | null>(null);
+  const priceMarkId = marks.find((item) => item.name === draft.mark)?.id || "";
+  const priceModelId = models.find((item) => item.name === draft.model)?.id || "";
+  const priceYear = Number(draft.year);
+  useEffect(() => {
+    setPriceHint(null);
+    if (!priceMarkId || !priceModelId || !Number.isInteger(priceYear) || priceYear < 1900) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      getPriceEstimate(priceMarkId, priceModelId, priceYear)
+        .then((estimate) => !cancelled && setPriceHint(estimate))
+        .catch(() => undefined);
+    }, 300);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [priceMarkId, priceModelId, priceYear]);
 
   // Stable component identities preserve input focus and cursor during edits.
   const L = SellLabel;
@@ -1097,10 +1146,11 @@ export default function SellPage() {
   const addPhotos = (incoming: File[]) => {
     const imageFiles = incoming.filter((file) => file.type.startsWith("image/"));
     const currentKeys = new Set(photos.map(photoKey));
-    const accepted = imageFiles.filter((file) => !currentKeys.has(photoKey(file))).slice(0, Math.max(0, 10 - photos.length));
+    const accepted = imageFiles.filter((file) => !currentKeys.has(photoKey(file))).slice(0, Math.max(0, MAX_PHOTOS - photos.length));
+    setPhotoLimitHit(imageFiles.length > accepted.length && photos.length + accepted.length >= MAX_PHOTOS);
     if (!accepted.length) return;
-    setPhotos((prev) => [...prev, ...accepted].slice(0, 10));
-    setDraft((d) => ({ ...d, photoNames: [...d.photoNames, ...accepted.map((f) => f.name)].slice(0, 10) }));
+    setPhotos((prev) => [...prev, ...accepted].slice(0, MAX_PHOTOS));
+    setDraft((d) => ({ ...d, photoNames: [...d.photoNames, ...accepted.map((f) => f.name)].slice(0, MAX_PHOTOS) }));
     accepted.forEach((file) => void classifyPhoto(file));
   };
 
@@ -1133,6 +1183,7 @@ export default function SellPage() {
       photoUrls.current.delete(key);
     }
     setPhotos((current) => current.filter((item) => photoKey(item) !== key));
+    setPhotoLimitHit(false);
     setPhotoMeta((current) => {
       const copy = { ...current };
       delete copy[key];
@@ -1233,11 +1284,12 @@ export default function SellPage() {
         details: { year, mileage: Number.isFinite(mileage) ? mileage : 0 },
         city: draft.city.trim() || undefined,
         ...(draft.notRegisteredInLt ? { ltRegistered: false } : { sdk: normalizeSdk(draft.sdk) ?? "", ltRegistered: true }),
+        ...(listingVin ? { vin: listingVin } : {}),
         options: [...featureKeys(draft.features).filter((key) => key !== "service-book"), ...(draft.hasServiceBook ? ["service-book"] : [])],
       });
 
       // Image failure should not charge the user silently. Stop before checkout.
-      for (const photo of photos.slice(0, 10)) {
+      for (const photo of photos.slice(0, MAX_PHOTOS)) {
         const detected = photoMeta[photoKey(photo)]?.label || "OTHER";
         await uploadListingImage(created.id, photo, detected);
       }
@@ -1314,6 +1366,9 @@ export default function SellPage() {
     ? `${tr("Draft saved", "Juodraštis išsaugotas", "Черновик сохранён")} ${lastSaved.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`
     : tr("Draft not saved yet", "Juodraštis dar neišsaugotas", "Черновик ещё не сохранён");
 
+  // Sent with the listing only when it is a valid VIN (a plate number typed here is not).
+  const typedVin = draft.plateOrVin.toUpperCase().replace(/[\s-]+/g, "");
+  const listingVin = vinInputProblem(typedVin) ? "" : typedVin;
   const listingTitle = [draft.mark, draft.model].filter(Boolean).join(" ") || tr("Your car", "Jūsų automobilis", "Ваш автомобиль");
   const coverUrl = photos[0] ? photoUrl(photos[0]) : "/images/no-photo.svg";
   const paymentsOff = paymentConfig?.paymentsEnabled === false;
@@ -1352,6 +1407,49 @@ export default function SellPage() {
     if (top !== undefined && top < 0) panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  /** "From" and "to" hour lists; "doesn't matter" in the first list hides the second. */
+  const hoursPicker = (id: string, value: string, onChange: (value: string) => void) => {
+    const hours = parseHours(value);
+    const from = hours.from;
+    return (
+      <div className="grid grid-cols-2 gap-2">
+        <Select
+          id={id}
+          aria-label={tr("From", "Nuo", "С")}
+          value={hours.any ? "any" : from === null ? "" : String(from)}
+          onChange={(e) => {
+            const next = e.target.value;
+            if (next === "any" || next === "") return onChange(next);
+            const start = Number(next);
+            const end = hours.to !== null && hours.to > start ? hours.to : Math.min(23, start + 3);
+            onChange(`${hourLabel(start)}–${hourLabel(end)}`);
+          }}
+        >
+          <option value="">{tr("Choose", "Pasirinkite", "Выберите")}</option>
+          <option value="any">{tr("Doesn't matter", "Nesvarbu", "Не важно")}</option>
+          {VIEWING_HOURS.slice(0, -1).map((h) => (
+            <option key={h} value={h}>{tr("from", "nuo", "с")} {hourLabel(h)}</option>
+          ))}
+        </Select>
+        {from !== null && !hours.any ? (
+          <Select
+            aria-label={tr("Until", "Iki", "До")}
+            value={String(hours.to ?? "")}
+            onChange={(e) => onChange(`${hourLabel(from)}–${hourLabel(Number(e.target.value))}`)}
+          >
+            {VIEWING_HOURS.filter((h) => h > from).map((h) => (
+              <option key={h} value={h}>{tr("until", "iki", "до")} {hourLabel(h)}</option>
+            ))}
+          </Select>
+        ) : (
+          <div className="flex h-12 items-center px-1 text-sm text-muted-foreground">
+            {hours.any ? tr("Any time that suits the buyer", "Bet kuriuo pirkėjui patogiu laiku", "В любое удобное покупателю время") : ""}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const stepFooter = (
     <div className="mt-10 border-t border-border pt-5">
       <div className="flex items-center gap-2 sm:gap-3">
@@ -1373,6 +1471,8 @@ export default function SellPage() {
       {draftNotice}
     </div>
   );
+
+  if (!signedIn) return <main className="min-h-[72vh]" aria-busy="true" />;
 
   return (
     <div>
@@ -1472,7 +1572,7 @@ export default function SellPage() {
                     lead={tr("Enter the VIN to fill in the make, model and year, or choose them yourself.", "Įveskite VIN, kad užpildytume markę, modelį ir metus, arba pasirinkite juos patys.", "Введите VIN, чтобы заполнить марку, модель и год, или выберите их сами.")}
                   />
 
-                  <L htmlFor="sell-vin">{tr("Plate (LT) or VIN", "Valst. numeris (LT) arba VIN", "Госномер (LT) или VIN")}</L>
+                  <L htmlFor="sell-vin">VIN</L>
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <Input
                       id="sell-vin"
@@ -1485,6 +1585,12 @@ export default function SellPage() {
                         setDraft({ ...draft, plateOrVin: e.target.value });
                         if (vinStatus) setVinStatus(null);
                       }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (!vinLoading) void autofillByVin();
+                        }
+                      }}
                     />
                     <button type="button" onClick={autofillByVin} disabled={vinLoading} className={cx(SECONDARY_BUTTON, "shrink-0")}>
                       {vinLoading ? <AssetIcon name="spinner" size={18} className="animate-spin" /> : <AssetIcon name="search" size={18} />}
@@ -1492,49 +1598,50 @@ export default function SellPage() {
                     </button>
                   </div>
                   <Hint>
-                    {tr("VIN autofill uses the public NHTSA vPIC decoder. Lithuanian plate lookup can be connected separately.", "VIN automatinis užpildymas naudoja viešą NHTSA vPIC dekoderį. Lietuvos valstybinių numerių paiešką galima prijungti atskirai.", "Автозаполнение VIN использует публичный декодер NHTSA vPIC. Поиск по литовскому госномеру можно подключить отдельно.")}
+                    {tr(
+                      "17 characters, from the registration certificate (field E) or the plate under the windscreen. Search by number plate is not available.",
+                      "17 simbolių, iš registracijos liudijimo (E laukas) arba lentelės po priekiniu stiklu. Paieška pagal valstybinį numerį negalima.",
+                      "17 символов, из техпаспорта (поле E) или с таблички под лобовым стеклом. Поиск по госномеру недоступен."
+                    )}{" "}
+                    {tr(
+                      "The VIN is shown in the listing so buyers can check the car.",
+                      "VIN rodomas skelbime, kad pirkėjai galėtų patikrinti automobilį.",
+                      "VIN будет виден в объявлении, чтобы покупатель мог проверить машину."
+                    )}
                   </Hint>
                   {vinStatus && <StatusNote type={vinStatus.type} className="mt-3">{vinStatus.text}</StatusNote>}
 
                   <div className="mt-7 grid grid-cols-1 gap-x-5 gap-y-5 md:grid-cols-2">
                     <div>
                       <L htmlFor="sell-mark">{tr("Mark", "Markė", "Марка")}</L>
-                      <Select
+                      <Combobox
                         id="sell-mark"
                         value={draft.mark}
                         disabled={catalogLoading}
-                        onChange={(e) => setDraft({ ...draft, mark: e.target.value, model: "", engine: "" })}
-                      >
-                        <option value="">
-                          {catalogLoading ? tr("Loading makes...", "Kraunamos markės...", "Загрузка марок...") : tr("Choose a make", "Pasirinkite markę", "Выберите марку")}
-                        </option>
-                        {draft.mark && !marks.some((mark) => mark.name === draft.mark) && <option value={draft.mark}>{draft.mark}</option>}
-                        {marks.map((mark) => (
-                          <option key={mark.id} value={mark.name}>{mark.name}</option>
-                        ))}
-                      </Select>
+                        placeholder={catalogLoading ? tr("Loading makes...", "Kraunamos markės...", "Загрузка марок...") : tr("Type or choose a make", "Įrašykite arba pasirinkite markę", "Впишите или выберите марку")}
+                        noMatchText={tr("No such make in the catalog. Check the spelling.", "Tokios markės kataloge nėra. Patikrinkite rašybą.", "Такой марки нет в каталоге. Проверьте написание.")}
+                        options={markOptions}
+                        onChange={(value) => setDraft({ ...draft, mark: value, model: "", engine: "" })}
+                      />
                     </div>
 
                     <div>
                       <L htmlFor="sell-model">{tr("Model", "Modelis", "Модель")}</L>
-                      <Select
+                      <Combobox
                         id="sell-model"
                         value={draft.model}
                         disabled={!draft.mark || modelsLoading}
-                        onChange={(e) => setDraft({ ...draft, model: e.target.value, engine: "" })}
-                      >
-                        <option value="">
-                          {!draft.mark
+                        placeholder={
+                          !draft.mark
                             ? tr("Choose a make first", "Pirmiausia pasirinkite markę", "Сначала выберите марку")
                             : modelsLoading
                             ? tr("Loading models...", "Kraunami modeliai...", "Загрузка моделей...")
-                            : tr("Choose a model", "Pasirinkite modelį", "Выберите модель")}
-                        </option>
-                        {draft.model && !models.some((model) => model.name === draft.model) && <option value={draft.model}>{draft.model}</option>}
-                        {models.map((model) => (
-                          <option key={model.id} value={model.name}>{model.name}</option>
-                        ))}
-                      </Select>
+                            : tr("Type or choose a model", "Įrašykite arba pasirinkite modelį", "Впишите или выберите модель")
+                        }
+                        noMatchText={tr(`No such ${draft.mark} model in the catalog. Check the spelling.`, `Tokio ${draft.mark} modelio kataloge nėra. Patikrinkite rašybą.`, `Такой модели ${draft.mark} нет в каталоге. Проверьте написание.`)}
+                        options={modelOptions}
+                        onChange={(value) => setDraft({ ...draft, model: value, engine: "" })}
+                      />
                     </div>
 
                     <div>
@@ -1623,9 +1730,18 @@ export default function SellPage() {
                       {tr("Drop photos here or choose files", "Nutempkite nuotraukas čia arba pasirinkite failus", "Перетащите фото сюда или выберите файлы")}
                     </span>
                     <span className="mt-1 text-xs text-muted-foreground">
-                      {tr(`Up to 10 photos · ${photos.length}/10 added`, `Iki 10 nuotraukų · pridėta ${photos.length}/10`, `До 10 фото · добавлено ${photos.length}/10`)}
+                      {tr(`Up to ${MAX_PHOTOS} photos · ${photos.length}/${MAX_PHOTOS} added`, `Iki ${MAX_PHOTOS} nuotraukų · pridėta ${photos.length}/${MAX_PHOTOS}`, `До ${MAX_PHOTOS} фото · добавлено ${photos.length}/${MAX_PHOTOS}`)}
                     </span>
                   </label>
+                  {photoLimitHit && (
+                    <StatusNote type="warning" className="mt-3">
+                      {tr(
+                        `A listing can have up to ${MAX_PHOTOS} photos, so the extra ones were not added. Remove a photo to add another.`,
+                        `Skelbime gali būti iki ${MAX_PHOTOS} nuotraukų, todėl perteklinės nepridėtos. Ištrinkite nuotrauką, kad pridėtumėte kitą.`,
+                        `В объявлении может быть до ${MAX_PHOTOS} фото, лишние не добавлены. Удалите фото, чтобы добавить другое.`
+                      )}
+                    </StatusNote>
+                  )}
 
                   {photos.length > 0 && (
                     <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
@@ -1876,24 +1992,35 @@ export default function SellPage() {
                       <Input id="sell-price" inputMode="numeric" suffix="€" placeholder="12000" className="!h-14 !text-xl font-bold" value={draft.price} onChange={(e) => setDraft({ ...draft, price: e.target.value.replace(/\D+/g, "") })} />
                       {!!draft.price && priceHint && (
                         <Hint>
-                          {tr("With this price, expected time to sell ~", "Su šia kaina numatomas pardavimo laikas ~", "С этой ценой ожидаемый срок продажи ~")}{" "}
-                          <strong className="font-semibold text-foreground">
-                            {Number(draft.price) <= priceHint.low
-                              ? tr("5–7 days", "5–7 dienos", "5–7 дней")
-                              : Number(draft.price) <= priceHint.high
-                              ? tr("1–2 weeks", "1–2 savaitės", "1–2 недели")
-                              : tr("2–4 weeks", "2–4 savaitės", "2–4 недели")}
-                          </strong>
+                          {Number(draft.price) < priceHint.low
+                            ? tr("Below the usual price of similar cars on Wheelio: it should sell faster.", "Žemiau įprastos panašių automobilių kainos Wheelio: turėtų parduoti greičiau.", "Ниже обычной цены похожих машин на Wheelio: должна продаться быстрее.")
+                            : Number(draft.price) <= priceHint.high
+                            ? tr("Within the usual price of similar cars on Wheelio.", "Įprastų panašių automobilių kainų ribose Wheelio.", "В пределах обычной цены похожих машин на Wheelio.")
+                            : tr("Above the usual price of similar cars on Wheelio: expect fewer calls.", "Aukščiau įprastos panašių automobilių kainos Wheelio: skambučių gali būti mažiau.", "Выше обычной цены похожих машин на Wheelio: звонков может быть меньше.")}
                         </Hint>
                       )}
                     </div>
-                    {priceHint && (
+                    {priceHint ? (
                       <div className="self-start rounded-xl border border-border px-4 py-3 md:mt-[26px]">
-                        <div className="text-xs font-medium text-muted-foreground">{tr("Recommended:", "Rekomenduojama:", "Рекомендуется:")}</div>
+                        <div className="text-xs font-medium text-muted-foreground">{tr("Similar cars on Wheelio:", "Panašūs automobiliai Wheelio:", "Похожие машины на Wheelio:")}</div>
                         <div className="mt-0.5 text-lg font-bold text-foreground">{formatEUR(priceHint.low)} – {formatEUR(priceHint.high)}</div>
-                        <div className="text-xs text-muted-foreground">{tr("Based on similar cars and year.", "Pagal panašius automobilius ir metus.", "На основе похожих автомобилей и года.")}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {tr(
+                            `${draft.mark} ${draft.model}, ±2 years, ${priceHint.comparables} listings. Mileage and condition are not counted.`,
+                            `${draft.mark} ${draft.model}, ±2 metai, skelbimų: ${priceHint.comparables}. Rida ir būklė neįskaičiuotos.`,
+                            `${draft.mark} ${draft.model}, ±2 года, объявлений: ${priceHint.comparables}. Пробег и состояние не учтены.`
+                          )}
+                        </div>
                       </div>
-                    )}
+                    ) : draft.mark && draft.model && draft.year ? (
+                      <p className="self-start text-xs leading-5 text-muted-foreground md:mt-[34px]">
+                        {tr(
+                          "There are not enough similar cars on Wheelio yet to suggest a price. Compare with listings of the same model and year on other sites.",
+                          "Wheelio dar per mažai panašių automobilių, kad galėtume pasiūlyti kainą. Palyginkite su to paties modelio ir metų skelbimais kitose svetainėse.",
+                          "На Wheelio пока мало похожих машин, чтобы подсказать цену. Сравните с объявлениями той же модели и года на других сайтах."
+                        )}
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="mt-7">
@@ -1967,11 +2094,11 @@ export default function SellPage() {
                   <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2">
                     <div>
                       <L htmlFor="sell-weekdays">{tr("Weekdays time", "Laikas darbo dienomis", "Время в будни")}</L>
-                      <Input id="sell-weekdays" placeholder={tr("e.g. 18:00–21:00", "pvz., 18:00–21:00", "например, 18:00–21:00")} value={draft.viewingWeekdays} onChange={(e) => setDraft({ ...draft, viewingWeekdays: e.target.value })} />
+                      {hoursPicker("sell-weekdays", draft.viewingWeekdays, (value) => setDraft((d) => ({ ...d, viewingWeekdays: value })))}
                     </div>
                     <div>
                       <L htmlFor="sell-weekend">{tr("Weekend time", "Laikas savaitgaliais", "Время в выходные")}</L>
-                      <Input id="sell-weekend" placeholder={tr("e.g. by arrangement", "pvz., susitarus", "например, по договорённости")} value={draft.viewingWeekend} onChange={(e) => setDraft({ ...draft, viewingWeekend: e.target.value })} />
+                      {hoursPicker("sell-weekend", draft.viewingWeekend, (value) => setDraft((d) => ({ ...d, viewingWeekend: value })))}
                     </div>
                   </div>
                   {stepFooter}
@@ -2020,6 +2147,7 @@ export default function SellPage() {
                         {[
                           [tr("Engine", "Variklis", "Двигатель"), draft.engine || "—"],
                           [tr("Mileage", "Rida", "Пробег"), draft.mileage ? `${Number(draft.mileage).toLocaleString("lt-LT")} km` : "—"],
+                          ["VIN", listingVin || "—"],
                           ["SDK", draft.notRegisteredInLt ? tr("Not registered in Lithuania", "Neregistruotas Lietuvoje", "Не зарегистрирован в Литве") : normalizeSdk(draft.sdk) || "—"],
                           [tr("Condition", "Būklė", "Состояние"), conditionOptions.find((option) => option.value === draft.condition)?.title || "—"],
                           [tr("Equipment", "Komplektacija", "Комплектация"), chosenOptions.size ? tr(`${chosenOptions.size} options`, `${chosenOptions.size} pasirinkimai`, `${chosenOptions.size} опций`) : "—"],

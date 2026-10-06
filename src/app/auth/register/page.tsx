@@ -1,17 +1,19 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { rememberReturnPath, returnQuery } from "@/lib/safeReturn";
 import { useLanguage } from "@/context/LanguageContext";
 import PhoneVerificationBox from "@/components/PhoneVerificationBox";
 import { googleLoginUrl, registerUser } from "@/lib/pirkApi";
 import { usePhoneVerificationConfig, verificationOff } from "@/lib/usePhoneVerification";
 
-export default function RegisterPage() {
+function RegisterInner() {
   const { tr } = useLanguage();
   const router = useRouter();
+  const returnTo = useSearchParams().get("return");
   const [form, setForm] = useState({ email: "", name: "", surname: "", city: "", address: "", zip: "", phone: "", password: "", confirm: "" });
   const [token, setToken] = useState("");
   const off = verificationOff(usePhoneVerificationConfig());
@@ -44,7 +46,7 @@ export default function RegisterPage() {
         verificationToken: token || undefined,
         password: form.password,
       });
-      router.push("/auth/login?registered=1");
+      router.push(`/auth/login?registered=1${returnQuery(returnTo, "&")}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -125,7 +127,7 @@ export default function RegisterPage() {
           <span className="text-xs font-semibold text-muted-foreground">{tr("or", "arba", "или")}</span>
           <div className="h-px flex-1 bg-border" />
         </div>
-        <a href={googleLoginUrl()} className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-border bg-background font-bold transition hover:bg-muted">
+        <a href={googleLoginUrl()} onClick={() => rememberReturnPath(returnTo)} className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-border bg-background font-bold transition hover:bg-muted">
           <img src="/icons/google.svg" alt="" width={20} height={20} className="h-5 w-5" />
           {tr("Continue with Google", "Tęsti su Google", "Продолжить с Google")}
         </a>
@@ -141,7 +143,7 @@ export default function RegisterPage() {
             "Для аккаунтов Google телефон подтверждается позже, перед публикацией объявления."
           )}
         </p>
-        <Link href="/auth/login" className="mt-5 block text-center font-semibold hover:text-accent-ink">
+        <Link href={`/auth/login${returnQuery(returnTo)}`} className="mt-5 block text-center font-semibold hover:text-accent-ink">
           {tr("Already have an account?", "Jau turite paskyrą?", "Уже есть аккаунт?")}
         </Link>
       </div>
@@ -156,4 +158,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       {children}
     </label>
   );
+}
+
+export default function RegisterPage() {
+  return <Suspense fallback={<main className="min-h-[72vh]" />}><RegisterInner /></Suspense>;
 }
