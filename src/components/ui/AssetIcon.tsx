@@ -39,6 +39,7 @@ export type AssetIconName =
   | "mail"
   | "map-pin"
   | "menu"
+  | "message"
   | "minus"
   | "moon"
   | "motorcycle"

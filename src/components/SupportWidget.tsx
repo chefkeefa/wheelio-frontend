@@ -21,7 +21,8 @@ export default function SupportWidget() {
   const { tr } = useLanguage();
   const trRef = useLatest(tr);
 
-  const hidden = pathname.startsWith("/admin");
+  // The floating button would cover the send button of buyer-seller chats; Help stays in the menu and footer.
+  const hidden = pathname.startsWith("/admin") || pathname.startsWith("/messages");
 
   const [open, setOpen] = useState(false);
   const [chat, setChat] = useState<SavedChat | null>(null);
