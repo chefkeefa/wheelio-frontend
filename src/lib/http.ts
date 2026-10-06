@@ -93,15 +93,35 @@ export async function apiFetch(url: string, init: RequestInit = {}): Promise<Res
   // NestJS rotates HttpOnly refresh cookies. Refresh once after an expired access cookie.
   const authPath = new URL(url).pathname;
   if (res.status === 401 && !/\/auth\/(login|refresh|google)(\/|$)/.test(authPath)) {
-    const token = await getCsrfToken();
-    const refreshed = await fetch(buildUrl("/auth/refresh"), {
-      method: "POST",
-      credentials: "include",
-      headers: { Accept: "application/json", ...(token ? { "X-XSRF-TOKEN": token } : {}) },
-    });
-    if (refreshed.ok) res = await send();
+    if (await refreshSession()) res = await send();
   }
   return res;
+}
+
+/**
+ * One refresh for all requests that hit 401 at the same moment: each refresh rotates the cookie, and parallel
+ * ones used to race and sign the person out.
+ */
+let refreshPending: Promise<boolean> | null = null;
+function refreshSession(): Promise<boolean> {
+  if (!refreshPending) {
+    refreshPending = (async () => {
+      try {
+        const token = await getCsrfToken();
+        const refreshed = await fetch(buildUrl("/auth/refresh"), {
+          method: "POST",
+          credentials: "include",
+          headers: { Accept: "application/json", ...(token ? { "X-XSRF-TOKEN": token } : {}) },
+        });
+        return refreshed.ok;
+      } catch {
+        return false;
+      } finally {
+        refreshPending = null;
+      }
+    })();
+  }
+  return refreshPending;
 }
 
 type FetchJsonInit = RequestInit & {

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import AssetIcon from "@/components/ui/AssetIcon";
+import { ApiError } from "@/lib/http";
 import { isAdminUser, isSupportUser, logout, me, type AuthUser } from "@/lib/pirkApi";
 import { needsPhone, usePhoneVerificationConfig, verificationOff } from "@/lib/usePhoneVerification";
 import { CHATS_CHANGED_EVENT, getUnreadChats } from "@/lib/chats";
@@ -86,8 +87,9 @@ export default function Header() {
     let alive = true;
     me().then((current) => {
       if (alive) setUser(current);
-    }).catch(() => {
-      if (alive) setUser(null);
+    }).catch((e) => {
+      // Only a 401 means signed out; a timeout or a 5xx keeps the account shown.
+      if (alive && e instanceof ApiError && e.status === 401) setUser(null);
     });
     return () => { alive = false; };
   }, [pathname]);
