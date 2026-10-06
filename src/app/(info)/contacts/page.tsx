@@ -17,6 +17,24 @@ export default function ContactsPage() {
     [tr("Phone", "Telefonas", "Телефон"), COMPANY.phone],
   ].filter(([, value]) => value);
 
+  const authorities = [
+    [
+      tr("Consumer disputes", "Vartotojų ginčai", "Споры с потребителями"),
+      tr("State Consumer Rights Protection Authority", "Valstybinė vartotojų teisių apsaugos tarnyba", "Государственная служба защиты прав потребителей"),
+      "https://www.vvtat.lt/",
+    ],
+    [
+      tr("Personal data", "Asmens duomenys", "Персональные данные"),
+      tr("State Data Protection Inspectorate", "Valstybinė duomenų apsaugos inspekcija", "Государственная инспекция по защите данных"),
+      "https://vdai.lrv.lt/",
+    ],
+    [
+      tr("Digital Services Act", "Skaitmeninių paslaugų aktas", "Акт о цифровых услугах"),
+      tr("Communications Regulatory Authority", "Ryšių reguliavimo tarnyba", "Служба регулирования связи"),
+      "https://www.rrt.lt/",
+    ],
+  ];
+
   return (
     <InfoArticle
       title={tr("Contacts", "Kontaktai", "Контакты")}
@@ -55,6 +73,29 @@ export default function ContactsPage() {
           </dl>
         </InfoSection>
       )}
+
+      <InfoSection title={tr("Complaints and supervisory authorities", "Skundai ir priežiūros institucijos", "Жалобы и надзорные органы")}>
+        <p className="text-[15px] leading-7 text-foreground/90 md:text-base">
+          {tr(
+            "Write to us first: we answer complaints within 14 days. If we cannot agree, you can contact:",
+            "Pirmiausia parašykite mums: į skundus atsakome per 14 dienų. Jei nepavyksta susitarti, galite kreiptis į:",
+            "Сначала напишите нам: на жалобы мы отвечаем в течение 14 дней. Если договориться не удалось, можно обратиться в:"
+          )}
+        </p>
+        <dl className="mt-4 grid gap-x-6 gap-y-3 text-[15px] leading-6 sm:grid-cols-[180px_1fr]">
+          {authorities.map(([label, name, href]) => (
+            <div key={href} className="contents">
+              <dt className="text-muted-foreground">{label}</dt>
+              <dd>
+                <span className="font-medium">{name}</span>{" "}
+                <a href={href} target="_blank" rel="noopener noreferrer" className="text-accent-ink underline">
+                  {href.replace(/^https:\/\/(www\.)?/, "").replace(/\/$/, "")}
+                </a>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </InfoSection>
 
       <InfoSection title={tr("Report a suspicious listing", "Pranešti apie įtartiną skelbimą", "Пожаловаться на подозрительное объявление")}>
         <p className="text-[15px] leading-7 text-foreground/90 md:text-base">
