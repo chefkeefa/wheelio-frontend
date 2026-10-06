@@ -5,9 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { useLatest } from "@/lib/useLatest";
+import { ApiError } from "@/lib/http";
 import {
-  getLiveSupportMessages,
-  liveSupportStreamUrl,
+  pollLiveSupport,
   sendLiveSupportMessage,
   startLiveSupport,
   type LiveSupportMessage,
@@ -92,50 +92,30 @@ export default function SupportWidget() {
   }, [open, chat, trRef]);
 
   useEffect(() => {
-    if (!chat) return;
+    if (!chat || hidden) return;
 
-    let source: EventSource | null = null;
-    let cancelled = false;
-
-    const onMessage = (event: MessageEvent) => {
-      try {
-        const incoming = JSON.parse(event.data) as LiveSupportMessage;
-        if (incoming.sender === "SYSTEM") return;
-
-        setMessages((current) =>
-          current.some((item) => item.id === incoming.id)
-            ? current
-            : [...current, incoming]
-        );
-
-        if (incoming.sender === "AGENT" && !openRef.current) {
-          setUnread((value) => value + 1);
-        }
-      } catch {}
+    const addNew = (incoming: LiveSupportMessage[]) => {
+      const visible = incoming.filter((item) => item.sender !== "SYSTEM");
+      setMessages((current) => [...current, ...visible.filter((m) => !current.some((item) => item.id === m.id))]);
+      const fromAgent = visible.filter((item) => item.sender === "AGENT").length;
+      if (fromAgent && !openRef.current) setUnread((value) => value + fromAgent);
     };
 
-    // Loading the history also gives the browser the chat cookie the stream needs, so the stream opens after it.
-    getLiveSupportMessages(chat.id, chat.token)
-      .then((history) => {
-        if (cancelled) return;
-        setMessages(history.filter((item) => item.sender !== "SYSTEM"));
-        source = new EventSource(liveSupportStreamUrl(chat.id), { withCredentials: true });
-        source.addEventListener("message", onMessage as EventListener);
-      })
-      .catch(() => {
-        if (!cancelled) {
+    // Open: check every 4 s; closed: every 20 s, only to show the unread badge.
+    return pollLiveSupport(chat.id, chat.token, {
+      onHistory: (history) => setMessages(history.filter((item) => item.sender !== "SYSTEM")),
+      onNew: addNew,
+      onHistoryError: (e) => {
+        // Only a chat the API no longer knows or lets us read is forgotten; a timeout keeps it.
+        if (e instanceof ApiError && (e.status === 403 || e.status === 404)) {
           localStorage.removeItem("wheelio-live-support"); localStorage.removeItem("pirkauto-live-support");
           setChat(null);
           setMessages([]);
         }
-      });
-
-    return () => {
-      cancelled = true;
-      source?.removeEventListener("message", onMessage as EventListener);
-      source?.close();
-    };
-  }, [chat]);
+      },
+      intervalMs: () => (openRef.current ? 4000 : 20000),
+    });
+  }, [chat, hidden]);
 
   useEffect(() => {
     if (open) {
