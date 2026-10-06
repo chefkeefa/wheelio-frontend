@@ -518,6 +518,38 @@ export async function getCatalogOptions(modificationId: string): Promise<{ keys:
   return { keys, source };
 }
 
+export type PriceEstimate = { low: number; high: number; comparables: number };
+
+/** Price range of the same model on Wheelio, or null when there are too few similar listings to say. */
+export async function getPriceEstimate(mark: string, model: string, year: number): Promise<PriceEstimate | null> {
+  const q = new URLSearchParams({ mark, model, year: String(year) });
+  const data = await fetchJson<{ estimate?: PriceEstimate | null }>(`/public/price-estimate?${q}`);
+  const e = data?.estimate;
+  return e && Number.isFinite(e.low) && Number.isFinite(e.high) ? e : null;
+}
+
+/** NHTSA vPIC fields the sell form reads; any of them may be missing for European cars. */
+export type VinDecoded = Partial<
+  Record<
+    | "Make" | "Model" | "ModelYear" | "Series" | "Trim" | "BodyClass" | "Doors" | "DriveType" | "TransmissionStyle"
+    | "TransmissionSpeeds" | "DisplacementL" | "EngineCylinders" | "EngineHP" | "EngineKW" | "EngineModel"
+    | "FuelTypePrimary" | "ErrorCode" | "ErrorText",
+    string
+  >
+>;
+
+export type VinLookup = {
+  vin: string;
+  /** Catalog mark id from the VIN's manufacturer code, known even when vPIC is down. */
+  wmiMake: string | null;
+  nhtsaStatus: "ok" | "no-data" | "unavailable";
+  nhtsa: VinDecoded | null;
+};
+
+export function lookupVin(vin: string) {
+  return fetchJson<VinLookup>(`/vin/${encodeURIComponent(vin)}`, { timeoutMs: 20000 });
+}
+
 export function createPendingListing(payload: ListingCreatePayload) {
   return fetchJson<{ id: number; status: string; createdAt: string }>("/listings/create", {
     method: "POST",
