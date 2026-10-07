@@ -31,8 +31,13 @@ export type Listing = {
   updatedAt?: string;
 };
 
+/** Seller block on the listing page, linking to their public page. */
+export type SellerCard = { id: number; name: string; avatarUrl: string | null; identityVerified: boolean; memberSince: string | null };
+
 export type ListingDetail = Listing & {
   description?: string;
+  /** Public listing page only. */
+  seller?: SellerCard | null;
   images?: string[];
   /** Catalog specifications of the car's version (detail endpoint only). */
   specs?: CarSpecs | null;
@@ -119,6 +124,22 @@ function normalizeListing(x: RawListing, fallbackId?: number): Listing {
   };
 }
 
+function normalizeSellerCard(x: unknown): SellerCard | null {
+  const o = x && typeof x === "object" ? (x as Record<string, unknown>) : null;
+  if (!o || !Number(o.id)) return null;
+  return {
+    id: Number(o.id),
+    name: String(o.name || ""),
+    avatarUrl: resolveApiAsset(typeof o.avatarUrl === "string" ? o.avatarUrl : null) ?? null,
+    identityVerified: o.identityVerified === true,
+    memberSince: typeof o.memberSince === "string" ? o.memberSince : null,
+  };
+}
+
+export function normalizeListings(input: unknown): Listing[] {
+  return normalizeList(input);
+}
+
 function normalizeList(input: unknown): Listing[] {
   if (!Array.isArray(input)) return [];
   return input.map((x: unknown, i: number) => normalizeListing((x && typeof x === "object" ? x : {}) as RawListing, i + 1));
@@ -135,6 +156,7 @@ function normalizeDetail(x: RawListing): ListingDetail {
     specs: x?.specs && typeof x.specs === "object" ? (x.specs as CarSpecs) : null,
     options: Array.isArray(x?.options) ? x.options.filter((k: unknown): k is string => typeof k === "string") : [],
     optionsSource: x?.optionsSource === "seller" || x?.optionsSource === "catalog" ? x.optionsSource : null,
+    seller: normalizeSellerCard(x?.seller),
   };
 }
 

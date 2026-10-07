@@ -6,10 +6,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/http";
-import { closeListing, deleteListingImage, editListing, setListingCover, getMyListings, type ListingDetail, type ListingStatus } from "@/lib/listings";
-import { completeDevPayment, getMyModerationDecisions, getPaymentConfig, isEmailNotVerifiedError, startCheckout, uploadListingImage, type ModerationDecision } from "@/lib/pirkApi";
+import { closeListing, getMyListings, type ListingDetail, type ListingStatus } from "@/lib/listings";
+import { completeDevPayment, getMyModerationDecisions, getPaymentConfig, isEmailNotVerifiedError, startCheckout, type ModerationDecision } from "@/lib/pirkApi";
+import { getMyListingsStats, removeListing, type ListingTotals } from "@/lib/profiles";
 import AssetIcon from "@/components/ui/AssetIcon";
-import { normalizeSdk } from "@/lib/sdk";
+import ListingStatsDialog from "@/components/profile/ListingStatsDialog";
 
 const FALLBACK_IMAGE = "/images/no-photo.svg";
 
@@ -19,11 +20,11 @@ export default function MyListingsPage() {
   const tr = (en: string, lt: string, ru: string) => language === "LT" ? lt : language === "RU" ? ru : en;
 
   const [items, setItems] = useState<ListingDetail[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [statsFor, setStatsFor] = useState<ListingDetail | null>(null);
+  const [totals, setTotals] = useState<Record<string, ListingTotals>>({});
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [paymentsOff, setPaymentsOff] = useState(false);
-  const [moderationOn, setModerationOn] = useState(false);
   const [error, setError] = useState("");
   const [decisions, setDecisions] = useState<ModerationDecision[]>([]);
 
@@ -31,8 +32,9 @@ export default function MyListingsPage() {
     setLoading(true);
     setError("");
     try {
-      const page = await getMyListings(0, 100);
+      const [page, stats] = await Promise.all([getMyListings(0, 100), getMyListingsStats()]);
       setItems(page.content);
+      setTotals(stats);
     } catch (e) {
       if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
         router.replace("/auth/login?return=/account/listings");
@@ -47,7 +49,7 @@ export default function MyListingsPage() {
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // Statements of reasons (DSA Art. 17) for rejected listings; older backends simply return none.
   useEffect(() => { getMyModerationDecisions().then(setDecisions).catch(() => setDecisions([])); }, []);
-  useEffect(() => { getPaymentConfig().then((c) => { setPaymentsOff(c.paymentsEnabled === false); setModerationOn(c.moderationEnabled === true); }).catch(() => {}); }, []);
+  useEffect(() => { getPaymentConfig().then((c) => { setPaymentsOff(c.paymentsEnabled === false); }).catch(() => {}); }, []);
 
   const isFinished = (status?: ListingStatus) => status === "SOLD" || status === "CLOSED";
   const current = items.filter((item) => !isFinished(item.status));
@@ -66,6 +68,25 @@ export default function MyListingsPage() {
     setError("");
     try {
       await closeListing(id, status === "SOLD");
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : tr("Action failed", "Veiksmas nepavyko", "Не удалось выполнить действие"));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const remove = async (item: ListingDetail) => {
+    const question = tr(
+      `Delete “${item.title}” for good? Photos, statistics and buyer chats are deleted too. This cannot be undone.`,
+      `Ištrinti „${item.title}“ visam laikui? Kartu ištrinamos nuotraukos, statistika ir pokalbiai su pirkėjais. To atšaukti negalima.`,
+      `Удалить «${item.title}» навсегда? Вместе с ним удалятся фото, статистика и чаты с покупателями. Отменить это нельзя.`
+    );
+    if (!window.confirm(question)) return;
+    setBusyId(item.id);
+    setError("");
+    try {
+      await removeListing(item.id);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : tr("Action failed", "Veiksmas nepavyko", "Не удалось выполнить действие"));
@@ -142,6 +163,11 @@ export default function MyListingsPage() {
                       <h2 className="text-xl font-extrabold">{item.title}</h2>
                       <div className="mt-2 text-xl font-extrabold text-accent-ink">{formatPrice(item.price)}</div>
                       <div className="mt-2 text-sm text-muted-foreground">{formatMileage(item.mileage)} km{item.createdAt ? ` · ${formatDate(item.createdAt, language)}` : ""}</div>
+                      <div className="mt-1 flex gap-4 text-sm text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5" title={tr("Views", "Peržiūros", "Просмотры")}><AssetIcon name="eye" size={15} />{totals[item.id]?.views ?? 0}</span>
+                        <span className="inline-flex items-center gap-1.5" title={tr("In favorites", "Mėgstamuose", "В избранном")}><AssetIcon name="heart" size={15} />{totals[item.id]?.favorites ?? 0}</span>
+                        <span className="inline-flex items-center gap-1.5" title={tr("Buyer chats", "Pokalbiai", "Чаты с покупателями")}><AssetIcon name="message" size={15} />{totals[item.id]?.chats ?? 0}</span>
+                      </div>
 
                       {item.status === "REJECTED" && <RejectionReason decision={decisions.find((d) => String(d.listingId) === String(item.id))} tr={tr} />}
 
@@ -150,9 +176,10 @@ export default function MyListingsPage() {
                         {item.status === "PENDING_PAYMENT" && <button disabled={busyId === item.id} onClick={() => pay(item.id)} className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground disabled:opacity-50">{paymentsOff ? tr("Publish", "Paskelbti", "Опубликовать") : tr("Pay & publish", "Apmokėti ir paskelbti", "Оплатить и опубликовать")}</button>}
                         {item.status === "ACTIVE" && <button disabled={busyId === item.id} onClick={() => changeStatus(item.id, "SOLD")} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{tr("Mark as sold", "Pažymėti kaip parduotą", "Отметить проданным")}</button>}
                         {(item.status === "ACTIVE" || item.status === "PENDING_PAYMENT") && <button disabled={busyId === item.id} onClick={() => changeStatus(item.id, "CLOSED")} className="rounded-lg border border-border px-4 py-2 text-sm font-bold text-muted-foreground hover:text-foreground disabled:opacity-50">{tr("Take down", "Išimti", "Снять")}</button>}
-                        <button onClick={() => setEditingId(editingId === item.id ? null : item.id)} className="rounded-lg border border-border px-4 py-2 text-sm font-bold hover:border-accent">{tr("Edit", "Redaguoti", "Редактировать")}</button>
+                        <Link href={`/account/listings/${item.id}/edit`} className="rounded-lg border border-border px-4 py-2 text-sm font-bold hover:border-accent">{tr("Edit", "Redaguoti", "Редактировать")}</Link>
+                        <button onClick={() => setStatsFor(item)} className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-bold hover:border-accent"><AssetIcon name="chart" size={15} />{tr("Statistics", "Statistika", "Статистика")}</button>
+                        <button disabled={busyId === item.id} onClick={() => remove(item)} className="rounded-lg border border-red-500/30 px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-500/10 disabled:opacity-50 dark:text-red-400">{tr("Delete", "Ištrinti", "Удалить")}</button>
                       </div>
-                      {editingId === item.id && <EditListingPanel item={item} tr={tr} moderationOn={moderationOn} onDone={async () => { setEditingId(null); await load(); }} onReload={load} />}
                     </div>
                   </article>
                 ))}
@@ -166,13 +193,14 @@ export default function MyListingsPage() {
                   <span className="text-sm text-muted-foreground">{finished.length}</span>
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {finished.map((item) => <FinishedListingCard key={item.id} item={item} language={language} tr={tr} />)}
+                  {finished.map((item) => <FinishedListingCard key={item.id} item={item} language={language} tr={tr} busy={busyId === item.id} onStats={() => setStatsFor(item)} onDelete={() => remove(item)} />)}
                 </div>
               </section>
             )}
           </>
         )}
       </div>
+      {statsFor && <ListingStatsDialog listingId={statsFor.id} title={statsFor.title} onClose={() => setStatsFor(null)} />}
     </main>
   );
 }
@@ -198,7 +226,21 @@ function RejectionReason({ decision, tr }: { decision?: ModerationDecision; tr: 
 }
 
 /** Sold or withdrawn listing: a quiet archive card with the outcome and its date instead of a status pill. */
-function FinishedListingCard({ item, language, tr }: { item: ListingDetail; language: string; tr: (en: string, lt: string, ru: string) => string }) {
+function FinishedListingCard({
+  item,
+  language,
+  tr,
+  busy,
+  onStats,
+  onDelete,
+}: {
+  item: ListingDetail;
+  language: string;
+  tr: (en: string, lt: string, ru: string) => string;
+  busy: boolean;
+  onStats: () => void;
+  onDelete: () => void;
+}) {
   const sold = item.status === "SOLD";
   const date = item.updatedAt || item.createdAt;
   return (
@@ -224,6 +266,10 @@ function FinishedListingCard({ item, language, tr }: { item: ListingDetail; lang
           <span className="font-bold text-foreground">{formatPrice(item.price)}</span> · {formatMileage(item.mileage)} km
         </div>
         <p className="mt-1 text-xs text-muted-foreground">{tr("Not shown to buyers", "Pirkėjams nerodomas", "Не показывается покупателям")}</p>
+        <div className="mt-2 flex gap-3 text-sm font-semibold">
+          <button type="button" onClick={onStats} className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">{tr("Statistics", "Statistika", "Статистика")}</button>
+          <button type="button" disabled={busy} onClick={onDelete} className="text-red-600 underline-offset-2 hover:underline disabled:opacity-50 dark:text-red-400">{tr("Delete", "Ištrinti", "Удалить")}</button>
+        </div>
       </div>
     </article>
   );
@@ -261,168 +307,4 @@ function formatPrice(value: number) {
 }
 function formatMileage(value: number) {
   return new Intl.NumberFormat("lt-LT").format(value);
-}
-
-const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
-
-function EditListingPanel({
-  item,
-  tr,
-  moderationOn,
-  onDone,
-  onReload,
-}: {
-  item: ListingDetail;
-  moderationOn: boolean;
-  tr: (en: string, lt: string, ru: string) => string;
-  onDone: () => Promise<void>;
-  onReload: () => Promise<void>;
-}) {
-  const [price, setPrice] = useState(String(item.price || ""));
-  const [description, setDescription] = useState(item.description || "");
-  const [sdk, setSdk] = useState(item.sdk || "");
-  const [notLt, setNotLt] = useState(item.ltRegistered === false);
-  const [vin, setVin] = useState(item.vin || "");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const images = item.images || [];
-
-  const save = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const value = Number(price);
-    if (!Number.isFinite(value) || value <= 0) {
-      setError(tr("Price must be greater than zero", "Kaina turi būti didesnė už nulį", "Цена должна быть больше нуля"));
-      return;
-    }
-    if (!description.trim()) {
-      setError(tr("Description is required", "Aprašymas privalomas", "Описание обязательно"));
-      return;
-    }
-    const code = normalizeSdk(sdk);
-    if (!notLt && !code) {
-      setError(tr("Enter the SDK: 8 letters or digits from Regitra.", "Įveskite SDK: 8 Regitros raidės ar skaitmenys.", "Укажите SDK: 8 букв или цифр из Regitra."));
-      return;
-    }
-    const vinCode = vin.toUpperCase().replace(/[\s-]+/g, "");
-    if (vinCode && !/^[A-HJ-NPR-Z0-9]{17}$/.test(vinCode)) {
-      setError(tr("A VIN has 17 letters and digits, without I, O and Q.", "VIN turi 17 raidžių ir skaitmenų, be I, O ir Q.", "В VIN 17 букв и цифр, без I, O и Q."));
-      return;
-    }
-    setSaving(true);
-    setError("");
-    try {
-      await editListing(item.id, { price: value, description: description.trim(), vin: vinCode, ...(notLt ? { ltRegistered: false } : { sdk: code!, ltRegistered: true }) });
-      await onDone();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : tr("Could not save", "Nepavyko išsaugoti", "Не удалось сохранить"));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const removePhoto = async (index: number) => {
-    if (!window.confirm(tr("Delete this photo?", "Ištrinti šią nuotrauką?", "Удалить это фото?"))) return;
-    setSaving(true);
-    setError("");
-    try {
-      await deleteListingImage(item.id, index);
-      await onReload();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : tr("Could not delete the photo", "Nepavyko ištrinti nuotraukos", "Не удалось удалить фото"));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const makeCover = async (index: number) => {
-    setSaving(true);
-    setError("");
-    try {
-      await setListingCover(item.id, index);
-      await onReload();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : tr("Could not change the cover", "Nepavyko pakeisti viršelio", "Не удалось сменить обложку"));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const addPhotos = async (files: FileList | null) => {
-    if (!files?.length) return;
-    setSaving(true);
-    setError("");
-    try {
-      for (const file of Array.from(files)) {
-        if (file.size > MAX_PHOTO_BYTES) throw new Error(tr("Each photo must be under 10 MB", "Kiekviena nuotrauka turi būti iki 10 MB", "Каждое фото должно быть меньше 10 МБ"));
-        await uploadListingImage(Number(item.id), file);
-      }
-      await onReload();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : tr("Could not upload the photo", "Nepavyko įkelti nuotraukos", "Не удалось загрузить фото"));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <form onSubmit={save} className="mt-5 space-y-3 border-t border-border pt-4">
-      <label className="block text-sm font-semibold">
-        {tr("Price, EUR", "Kaina, EUR", "Цена, EUR")}
-        <input type="number" min={1} step="1" value={price} onChange={(e) => setPrice(e.target.value)} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3" />
-      </label>
-      <label className="block text-sm font-semibold">
-        {tr("Description", "Aprašymas", "Описание")}
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={10000} rows={5} className="mt-1 w-full rounded-lg border border-border bg-background p-3" />
-      </label>
-      <label className="block text-sm font-semibold">
-        {tr("SDK (Regitra owner declaration code)", "SDK (savininko deklaravimo kodas)", "SDK (код декларации владельца)")}
-        <input value={notLt ? "" : sdk} disabled={notLt} maxLength={9} placeholder="ABCDEFGH" onChange={(e) => setSdk(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ""))} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 disabled:opacity-60" />
-      </label>
-      <label className="block text-sm font-semibold">
-        VIN
-        <input value={vin} maxLength={20} placeholder="WVGZZZ7LZ5D012345" onChange={(e) => setVin(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 font-mono tracking-wide" />
-      </label>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={notLt} onChange={(e) => setNotLt(e.target.checked)} className="h-4 w-4" />
-        {tr("Not registered in Lithuania yet (imported)", "Dar neregistruotas Lietuvoje (įvežtas)", "Ещё не зарегистрирован в Литве (ввезён)")}
-      </label>
-      <div>
-        <div className="text-sm font-semibold">{tr("Photos", "Nuotraukos", "Фото")}</div>
-        <div className="mt-2 grid grid-cols-3 gap-2">
-          {images.map((src, index) => (
-            <div key={src} className="relative h-20 overflow-hidden rounded-lg bg-muted">
-              <img src={src} alt="" className="h-full w-full object-cover" />
-              {index === 0 ? (
-                <span className="absolute bottom-1 left-1 rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-bold text-accent-foreground">
-                  {tr("Cover", "Viršelis", "Обложка")}
-                </span>
-              ) : (
-                <button type="button" disabled={saving} onClick={() => makeCover(index)} className="absolute bottom-1 left-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white hover:bg-black/85">
-                  {tr("Make cover", "Padaryti viršeliu", "Сделать обложкой")}
-                </button>
-              )}
-              <button type="button" disabled={saving} onClick={() => removePhoto(index)} aria-label={tr("Delete photo", "Ištrinti nuotrauką", "Удалить фото")} className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-black/70 text-white"><AssetIcon name="close" size={14} /></button>
-            </div>
-          ))}
-        </div>
-        <label className="mt-2 inline-block cursor-pointer text-sm font-semibold text-accent-ink">
-          + {tr("Add photos", "Pridėti nuotraukų", "Добавить фото")}
-          <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" disabled={saving} onChange={(e) => { addPhotos(e.target.files); e.target.value = ""; }} />
-        </label>
-      </div>
-      {moderationOn && item.status === "ACTIVE" && (
-        <p className="text-sm text-muted-foreground">
-          {tr(
-            "A new description or new photos are checked again: the listing is hidden until a moderator approves it.",
-            "Naujas aprašymas ar naujos nuotraukos tikrinami iš naujo: skelbimas paslepiamas, kol moderatorius jį patvirtins.",
-            "Новое описание или новые фото проверяются заново: объявление скрыто, пока модератор его не одобрит."
-          )}
-        </p>
-      )}
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <button disabled={saving} className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground disabled:opacity-60">
-        {saving ? "…" : tr("Save changes", "Išsaugoti", "Сохранить")}
-      </button>
-    </form>
-  );
 }

@@ -11,6 +11,9 @@ import ListingActions from "@/components/ListingActions";
 import ListingReviewBar from "@/components/ListingReviewBar";
 import AssetIcon from "@/components/ui/AssetIcon";
 import ListingGallery from "@/components/ListingGallery";
+import UserAvatar from "@/components/profile/UserAvatar";
+import VerifiedBadge from "@/components/profile/VerifiedBadge";
+import { trackListingView } from "@/lib/profiles";
 import LeasingCalculator from "@/components/LeasingCalculator";
 import { groupOptions } from "@/lib/carOptions";
 import { bodyLabel, driveLabel, engineLabel, gearboxLabel, specSections } from "@/lib/carSpecs";
@@ -74,6 +77,12 @@ export default function ListingDetailsPage() {
       alive = false;
     };
   }, [id, tr]);
+
+  // One view per visitor and day is counted by the server; only published listings count.
+  const viewed = data?.status === "ACTIVE" ? data.id : null;
+  useEffect(() => {
+    if (viewed) trackListingView(viewed);
+  }, [viewed]);
 
   const images = useMemo(() => {
     if (!data) return [];
@@ -222,6 +231,27 @@ export default function ListingDetailsPage() {
               </a>
             )}
           </div>
+
+          {data.seller && (
+            <Link
+              href={`/user/${data.seller.id}`}
+              className="flex items-center gap-3.5 rounded-2xl bg-card p-4 shadow-card ring-1 ring-border transition hover:ring-accent/60 sm:px-5"
+            >
+              <UserAvatar name={data.seller.name} src={data.seller.avatarUrl} size={52} />
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tr("Seller", "Pardavėjas", "Продавец")}</span>
+                <span className="mt-0.5 flex items-center gap-2">
+                  <span className="truncate text-lg font-bold">{data.seller.name}</span>
+                  <VerifiedBadge verified={data.seller.identityVerified} size={20} />
+                </span>
+              </span>
+              <span className="hidden items-center gap-1 text-sm font-semibold text-accent-ink sm:inline-flex">
+                {tr("All listings", "Visi skelbimai", "Все объявления")}
+                <AssetIcon name="chevron-right" size={16} />
+              </span>
+              <AssetIcon name="chevron-right" size={18} className="text-muted-foreground sm:hidden" />
+            </Link>
+          )}
 
           <ListingActions listingId={data.id} />
 
