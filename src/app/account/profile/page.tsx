@@ -8,6 +8,7 @@ import SellDraftCard from "@/components/SellDraftCard";
 import { ApiError } from "@/lib/http";
 import { changeEmail, changePassword, deleteOwnAccount, isAdminUser, me, requestEmailVerification, updateProfile, type AuthUser } from "@/lib/pirkApi";
 import { usePhoneVerificationConfig, verificationOff } from "@/lib/usePhoneVerification";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function ProfilePage() {
   const { language } = useLanguage();
@@ -162,7 +163,7 @@ function DeleteAccountSection({ user, tr }: { user: AuthUser; tr: (en: string, l
           </label>
           {hasPassword && (
             <label className="block text-sm font-semibold">{tr("Password", "Slaptažodis", "Пароль")}
-              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 h-11 w-full rounded-lg bg-muted px-3 ring-1 ring-inset ring-border outline-none focus:ring-2 focus:ring-accent" />
+              <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 h-11 w-full rounded-lg bg-muted px-3 ring-1 ring-inset ring-border outline-none focus:ring-2 focus:ring-accent" />
             </label>
           )}
           {error && <div className="rounded-lg bg-red-500/10 p-3 text-sm text-red-600">{error}</div>}
@@ -245,9 +246,9 @@ function CredentialsSection({
         {hasPassword ? (
           <form onSubmit={submitPassword} className="space-y-3">
             <div className="font-semibold">{tr("Change password", "Keisti slaptažodį", "Сменить пароль")}</div>
-            <label className="block text-sm font-semibold">{tr("Current password", "Dabartinis slaptažodis", "Текущий пароль")}<input type="password" required autoComplete="current-password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} className={input} /></label>
-            <label className="block text-sm font-semibold">{tr("New password", "Naujas slaptažodis", "Новый пароль")}<input type="password" required minLength={8} autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={input} /></label>
-            <label className="block text-sm font-semibold">{tr("Repeat new password", "Pakartokite naują slaptažodį", "Повторите новый пароль")}<input type="password" required minLength={8} autoComplete="new-password" value={repeatPassword} onChange={(e) => setRepeatPassword(e.target.value)} className={input} /></label>
+            <label className="block text-sm font-semibold">{tr("Current password", "Dabartinis slaptažodis", "Текущий пароль")}<PasswordInput required autoComplete="current-password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} className={input} /></label>
+            <label className="block text-sm font-semibold">{tr("New password", "Naujas slaptažodis", "Новый пароль")}<PasswordInput required minLength={8} autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={input} /></label>
+            <label className="block text-sm font-semibold">{tr("Repeat new password", "Pakartokite naują slaptažodį", "Повторите новый пароль")}<PasswordInput required minLength={8} autoComplete="new-password" value={repeatPassword} onChange={(e) => setRepeatPassword(e.target.value)} className={input} /></label>
             <button disabled={busy === "password"} className="rounded-lg bg-accent px-4 py-2 font-bold text-accent-foreground disabled:opacity-60">{busy === "password" ? "…" : tr("Change password", "Keisti slaptažodį", "Сменить пароль")}</button>
           </form>
         ) : (
@@ -256,7 +257,7 @@ function CredentialsSection({
         <form onSubmit={submitEmail} className="space-y-3">
           <div className="font-semibold">{tr("Change e-mail", "Keisti el. paštą", "Сменить e-mail")}</div>
           <label className="block text-sm font-semibold">{tr("New e-mail", "Naujas el. paštas", "Новый e-mail")}<input type="email" required maxLength={190} autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={input} /></label>
-          {hasPassword && <label className="block text-sm font-semibold">{tr("Current password", "Dabartinis slaptažodis", "Текущий пароль")}<input type="password" required autoComplete="current-password" value={emailPassword} onChange={(e) => setEmailPassword(e.target.value)} className={input} /></label>}
+          {hasPassword && <label className="block text-sm font-semibold">{tr("Current password", "Dabartinis slaptažodis", "Текущий пароль")}<PasswordInput required autoComplete="current-password" value={emailPassword} onChange={(e) => setEmailPassword(e.target.value)} className={input} /></label>}
           <button disabled={busy === "email"} className="rounded-lg bg-accent px-4 py-2 font-bold text-accent-foreground disabled:opacity-60">{busy === "email" ? "…" : tr("Change e-mail", "Keisti el. paštą", "Сменить e-mail")}</button>
         </form>
       </div>

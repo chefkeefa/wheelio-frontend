@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/http";
 import { confirmPasswordReset, getPasswordResetConfig } from "@/lib/pirkApi";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 function ResetPasswordInner() {
   const { tr } = useLanguage();
@@ -89,11 +90,11 @@ function ResetPasswordInner() {
           <form onSubmit={submit} className="space-y-4">
             <label className="block">
               <span className="mb-1 block font-bold">{tr("New password", "Naujas slaptažodis", "Новый пароль")}</span>
-              <input className={input} type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+              <PasswordInput className={input} autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </label>
             <label className="block">
               <span className="mb-1 block font-bold">{tr("Confirm new password", "Pakartokite naują slaptažodį", "Повторите новый пароль")}</span>
-              <input className={input} type="password" autoComplete="new-password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+              <PasswordInput className={input} autoComplete="new-password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
             </label>
             <p className="text-sm text-muted-foreground">
               {tr(
