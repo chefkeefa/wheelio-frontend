@@ -42,45 +42,77 @@ function LoginInner() {
     } finally { setLoading(false); }
   };
 
+  const field = "h-14 w-full rounded-full bg-muted px-5 text-[15px] text-foreground ring-1 ring-inset ring-border placeholder:text-muted-foreground outline-none transition focus:ring-2 focus:ring-accent";
+
   return (
     <main className="flex min-h-[72vh] items-center justify-center bg-background px-4 py-12 text-foreground">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-card sm:p-10">
-        <h1 className={`text-center text-3xl font-bold tracking-tight md:text-4xl ${forSelling ? "mb-3" : "mb-8"}`}>{tr("Login", "Prisijungti", "Войти")}</h1>
-        {forSelling && (
-          <p className="mb-8 text-center text-sm leading-6 text-muted-foreground">
-            {tr(
-              "Sign in or create an account to post a listing. You will come back to the form right after.",
-              "Prisijunkite arba susikurkite paskyrą, kad galėtumėte įdėti skelbimą. Po to grįšite į formą.",
-              "Войдите или создайте аккаунт, чтобы подать объявление. Сразу после этого вы вернётесь к форме."
-            )}
-          </p>
-        )}
-        <form onSubmit={submit} className="space-y-5">
-          <label className="block"><span className="mb-2 block font-bold">E-mail</span><input type="email" required value={email} onChange={(e)=>setEmail(e.target.value)} className="h-12 w-full rounded-lg bg-muted px-4 text-foreground ring-1 ring-inset ring-border placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-accent" /></label>
-          <label className="block"><span className="mb-2 block font-bold">{tr("Password","Slaptažodis","Пароль")}</span><input type="password" required value={password} onChange={(e)=>setPassword(e.target.value)} className="h-12 w-full rounded-lg bg-muted px-4 text-foreground ring-1 ring-inset ring-border placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-accent" /></label>
-          {notice && !error && <div className="rounded-lg bg-green-500/10 p-3 text-sm text-green-700">{notice}</div>}
-          {error && <div className="rounded-lg bg-red-500/10 p-3 text-sm text-red-600">{error}</div>}
-          <button disabled={loading} className="h-12 w-full rounded-lg bg-primary font-bold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-60">{loading ? "…" : tr("Login","Prisijungti","Войти")}</button>
+      <div className="w-full max-w-sm">
+        <h1 className="text-center text-3xl font-extrabold tracking-tight md:text-4xl">{tr("Welcome back", "Sveiki sugrįžę", "С возвращением")}</h1>
+        <p className="mt-2 text-center text-[15px] text-muted-foreground">
+          {forSelling
+            ? tr(
+                "Sign in or create an account to post a listing. You will come back to the form right after.",
+                "Prisijunkite arba susikurkite paskyrą, kad galėtumėte įdėti skelbimą. Po to grįšite į formą.",
+                "Войдите или создайте аккаунт, чтобы подать объявление. Сразу после этого вы вернётесь к форме."
+              )
+            : tr("Sign in to your Wheelio account", "Prisijunkite į savo Wheelio paskyrą", "Войдите в аккаунт Wheelio")}
+        </p>
+
+        <form onSubmit={submit} className="mt-8 space-y-4">
+          <label className="block">
+            <span className="mb-2 block px-1 text-sm font-semibold">E-mail</span>
+            <input type="email" required placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className={field} />
+          </label>
+          <label className="block">
+            <span className="mb-2 block px-1 text-sm font-semibold">{tr("Password", "Slaptažodis", "Пароль")}</span>
+            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className={field} />
+          </label>
+          <div className="flex justify-end px-1">
+            <Link href="/auth/forgot-password" className="text-sm font-semibold text-accent-ink hover:underline">
+              {tr("Forgot password?", "Pamiršote slaptažodį?", "Забыли пароль?")}
+            </Link>
+          </div>
+
+          {notice && !error && <div className="rounded-2xl bg-green-500/10 p-3 text-sm text-green-700">{notice}</div>}
+          {error && <div className="rounded-2xl bg-red-500/10 p-3 text-sm text-red-600">{error}</div>}
+
+          <button disabled={loading} className="h-14 w-full rounded-full bg-accent text-base font-bold text-accent-foreground transition hover:opacity-90 disabled:opacity-60">
+            {loading ? "…" : tr("Log in", "Prisijungti", "Войти")}
+          </button>
         </form>
-        <div className="my-5 flex items-center gap-3"><div className="h-px flex-1 bg-border"/><span className="text-xs font-semibold text-muted-foreground">{tr("or","arba","или")}</span><div className="h-px flex-1 bg-border"/></div>
-        <a href={googleLoginUrl()} onClick={() => rememberReturnPath(returnTo)} className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-border bg-background font-bold transition hover:bg-muted">
+
+        <div className="my-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs font-semibold text-muted-foreground">{tr("or", "arba", "или")}</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <a
+          href={googleLoginUrl()}
+          onClick={() => rememberReturnPath(returnTo)}
+          className="flex h-14 w-full items-center justify-center gap-3 rounded-full border border-border bg-card font-bold transition hover:bg-muted"
+        >
           <img src="/icons/google.svg" alt="" width={20} height={20} className="h-5 w-5" />
-          {tr("Continue with Google","Tęsti su Google","Войти через Google")}
+          {tr("Continue with Google", "Tęsti su Google", "Войти через Google")}
         </a>
-        <p className="mt-2 text-center text-xs leading-5 text-muted-foreground">
+
+        <p className="mt-5 text-center text-xs leading-5 text-muted-foreground">
           {tr(
             "If you are new, continuing with Google creates an account: you confirm you are 18 or older, agree to the ",
             "Jei esate naujas naudotojas, tęsiant su Google sukuriama paskyra: patvirtinate, kad jums yra bent 18 metų, sutinkate su ",
             "Если вы новый пользователь, вход через Google создаёт аккаунт: вы подтверждаете, что вам есть 18 лет, принимаете "
           )}
-          <Link href="/rules" className="underline">{tr("Rules","Taisyklėmis","Правила")}</Link>
-          {tr(" and have read the "," ir susipažinote su "," и ознакомились с ")}
-          <Link href="/privacy" className="underline">{tr("Privacy policy","Privatumo politika","Политикой конфиденциальности")}</Link>.
+          <Link href="/rules" className="underline">{tr("Rules", "Taisyklėmis", "Правила")}</Link>
+          {tr(" and have read the ", " ir susipažinote su ", " и ознакомились с ")}
+          <Link href="/privacy" className="underline">{tr("Privacy policy", "Privatumo politika", "Политикой конфиденциальности")}</Link>.
         </p>
-        <div className="mt-5 flex justify-between gap-4 text-sm font-semibold">
-          <Link href={`/auth/register${returnQuery(returnTo)}`} className="hover:text-accent-ink">{tr("Create account","Sukurti paskyrą","Создать аккаунт")}</Link>
-          <Link href="/auth/forgot-password" className="hover:text-accent-ink">{tr("Forgot password?","Pamiršote slaptažodį?","Забыли пароль?")}</Link>
-        </div>
+
+        <p className="mt-6 text-center text-sm">
+          {tr("Don't have an account?", "Neturite paskyros?", "Нет аккаунта?")}{" "}
+          <Link href={`/auth/register${returnQuery(returnTo)}`} className="font-bold text-accent-ink hover:underline">
+            {tr("Create account", "Sukurti paskyrą", "Создать аккаунт")}
+          </Link>
+        </p>
       </div>
     </main>
   );
