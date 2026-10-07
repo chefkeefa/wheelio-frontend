@@ -35,6 +35,7 @@ import {
   type AdminUser,
   type Paged,
 } from "@/lib/pirkApi";
+import { setIdentityVerified } from "@/lib/profiles";
 import AssetIcon from "@/components/ui/AssetIcon";
 
 type Tab = "listings" | "dsa" | "complaints" | "users" | "diagnostics";
@@ -399,6 +400,30 @@ export default function AdminPage() {
                           </button>
                         );
                       })()}
+                      <button
+                        disabled={busy}
+                        title={tr(
+                          "Green tick on the user's page after you have checked their ID document",
+                          "Žalia varnelė naudotojo puslapyje, kai patikrinote jo asmens dokumentą",
+                          "Зелёная галочка на странице пользователя после проверки его документа"
+                        )}
+                        onClick={() => {
+                          const q = u.identityVerified
+                            ? tr("Remove the verified identity tick?", "Pašalinti patvirtintos tapatybės varnelę?", "Снять галочку «личность подтверждена»?")
+                            : tr(
+                                "Mark the identity as verified? Do this only after checking the user's ID document.",
+                                "Pažymėti tapatybę kaip patvirtintą? Darykite tai tik patikrinę asmens dokumentą.",
+                                "Отметить личность как подтверждённую? Делайте это только после проверки документа."
+                              );
+                          if (window.confirm(q)) run(() => setIdentityVerified(u.id, !u.identityVerified));
+                        }}
+                        className={`ml-2 rounded border px-3 py-1 font-semibold ${u.identityVerified ? "border-emerald-500 bg-emerald-500/15" : "border-border"}`}
+                      >
+                        {u.identityVerified ? tr("ID verified ✓", "Tapatybė ✓", "Личность ✓") : tr("Verify ID", "Patvirtinti tapatybę", "Подтвердить личность")}
+                      </button>
+                      <a href={`/user/${u.id}`} target="_blank" rel="noopener noreferrer" className="ml-2 font-semibold underline underline-offset-2">
+                        {tr("Page", "Puslapis", "Страница")}
+                      </a>
                       {!String(u.email || "").endsWith("@deleted.invalid") && (
                         <button
                           disabled={busy}

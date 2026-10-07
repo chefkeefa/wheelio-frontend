@@ -175,6 +175,8 @@ export type AdminUser = {
   disabled: number | boolean;
   registrationDate: string | null;
   roles?: string[];
+  /** "Verified identity" badge on the user's page (set by an admin). */
+  identityVerified?: boolean;
 };
 export type ModerationFlag =
   | "NEW_ACCOUNT"
@@ -565,7 +567,8 @@ export async function uploadListingImage(listingId: number, file: File, viewType
   if (viewType) form.append("viewType", viewType);
   const response = await apiFetch(buildUrl(`/listings/${listingId}/images`), { method: "POST", body: form });
   if (!response.ok) throw await toApiError(response);
-  return response.json() as Promise<{ id: number; url: string; preview: string }>;
+  // listingStatus: PENDING_REVIEW when a new photo sent an approved listing back to review.
+  return response.json() as Promise<{ id: number; url: string; preview: string; listingStatus?: string }>;
 }
 
 

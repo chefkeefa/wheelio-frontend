@@ -38,6 +38,8 @@ export default function ListingActions({ listingId }: { listingId: string }) {
       .then(async (current) => {
         if (!alive) return;
         setUser(current);
+        // "Send a message" on the seller's page links here with ?write=1.
+        if (current && new URLSearchParams(window.location.search).get("write") === "1") setComposing(true);
         getListingChat(listingId)
           .then((c) => alive && setChat(c))
           .catch(() => alive && setChat({ chatId: null, own: false, available: true }));

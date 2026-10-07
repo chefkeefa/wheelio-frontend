@@ -124,6 +124,7 @@ export default function Header() {
   };
 
   const accountItems = [
+    ...(user ? [{ href: `/user/${user.id}`, label: tr("My page", "Mano puslapis", "Моя страница"), icon: <AssetIcon name="user" size={19} /> }] : []),
     { href: "/account/listings", label: tr("My listings", "Mano skelbimai", "Мои объявления"), icon: <AssetIcon name="car" size={19} /> },
     { href: "/messages", label: tr("Messages", "Žinutės", "Сообщения"), icon: <AssetIcon name="message" size={19} />, badge: unread },
     { href: "/account/favorites", label: tr("Favorites", "Mėgstami", "Избранное"), icon: <AssetIcon name="heart" size={19} /> },
