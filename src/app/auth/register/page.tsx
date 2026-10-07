@@ -9,6 +9,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import PhoneVerificationBox from "@/components/PhoneVerificationBox";
 import { googleLoginUrl, registerUser } from "@/lib/pirkApi";
 import { usePhoneVerificationConfig, verificationOff } from "@/lib/usePhoneVerification";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 function RegisterInner() {
   const { tr } = useLanguage();
@@ -95,10 +96,10 @@ function RegisterInner() {
             />
           </div>
           <Field label={tr("Password", "Slaptažodis", "Пароль")}>
-            <input className={input} type="password" autoComplete="new-password" required value={form.password} onChange={(e) => set("password", e.target.value)} />
+            <PasswordInput className={input} autoComplete="new-password" required value={form.password} onChange={(e) => set("password", e.target.value)} />
           </Field>
           <Field label={tr("Confirm password", "Pakartokite slaptažodį", "Повторите пароль")}>
-            <input className={input} type="password" autoComplete="new-password" required value={form.confirm} onChange={(e) => set("confirm", e.target.value)} />
+            <PasswordInput className={input} autoComplete="new-password" required value={form.confirm} onChange={(e) => set("confirm", e.target.value)} />
           </Field>
           <p className="text-sm text-muted-foreground md:col-span-2">
             {tr(

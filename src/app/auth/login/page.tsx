@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { googleLoginUrl, isLoginLockedError, login } from "@/lib/pirkApi";
 import { rememberReturnPath, returnQuery, safeReturnPath } from "@/lib/safeReturn";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 function LoginInner() {
   const { tr } = useLanguage();
@@ -65,7 +66,7 @@ function LoginInner() {
           </label>
           <label className="block">
             <span className="mb-2 block px-1 text-sm font-semibold">{tr("Password", "Slaptažodis", "Пароль")}</span>
-            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className={field} />
+            <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} className={field} />
           </label>
           <div className="flex justify-end px-1">
             <Link href="/auth/forgot-password" className="text-sm font-semibold text-accent-ink hover:underline">
