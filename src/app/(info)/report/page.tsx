@@ -15,6 +15,7 @@ function ReportInner() {
   const { tr } = useLanguage();
   const params = useSearchParams();
   const listingParam = Number(params.get("listing")) || 0;
+  const userParam = Number(params.get("user")) || 0;
   const [url, setUrl] = useState("");
   const [category, setCategory] = useState<DsaNoticeCategory | "">("");
   const [explanation, setExplanation] = useState("");
@@ -27,7 +28,8 @@ function ReportInner() {
 
   useEffect(() => {
     if (listingParam > 0) setUrl(`${window.location.origin}/listing/${listingParam}`);
-  }, [listingParam]);
+    else if (userParam > 0) setUrl(`${window.location.origin}/user/${userParam}`);
+  }, [listingParam, userParam]);
 
   useEffect(() => {
     me()

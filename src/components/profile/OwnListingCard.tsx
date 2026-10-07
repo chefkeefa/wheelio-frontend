@@ -42,11 +42,11 @@ export default function OwnListingCard({
 
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-      <Link href={`/listing/${item.id}`} className="relative block aspect-[16/10] bg-muted">
+      <Link href={`/listing/${item.id}`} className="relative block aspect-[16/10] shrink-0 bg-muted">
         <img
           src={item.thumbnail || FALLBACK_IMAGE}
           alt={title}
-          className={`h-full w-full object-cover ${finished ? "opacity-60 grayscale" : ""}`}
+          className={`absolute inset-0 h-full w-full object-cover ${finished ? "opacity-60 grayscale" : ""}`}
           onError={(e) => {
             e.currentTarget.onerror = null;
             e.currentTarget.src = FALLBACK_IMAGE;
@@ -76,25 +76,39 @@ export default function OwnListingCard({
             {n(totals?.chats ?? 0)}
           </span>
         </div>
-        <div className="mt-auto grid grid-cols-3 gap-2 pt-4">
-          <button type="button" onClick={onStats} className={`${button} border border-border hover:border-accent`}>
-            <AssetIcon name="chart" size={16} />
-            <span className="max-[380px]:sr-only">{tr("Stats", "Statistika", "Статистика")}</span>
-          </button>
+        <div className="mt-auto flex gap-2 pt-4">
           {finished ? (
-            <span className={`${button} cursor-default border border-border text-muted-foreground`} title={tr("Sold and withdrawn listings cannot be edited", "Parduotų ir išimtų skelbimų redaguoti negalima", "Проданные и снятые объявления не редактируются")}>
+            <span
+              className={`${button} flex-1 cursor-default border border-border text-muted-foreground`}
+              title={tr("Sold and withdrawn listings cannot be edited", "Parduotų ir išimtų skelbimų redaguoti negalima", "Проданные и снятые объявления не редактируются")}
+            >
               <AssetIcon name="edit" size={16} />
-              <span className="max-[380px]:sr-only">{tr("Edit", "Redaguoti", "Изменить")}</span>
+              {tr("Edit", "Redaguoti", "Изменить")}
             </span>
           ) : (
-            <Link href={`/account/listings/${item.id}/edit`} className={`${button} border border-border hover:border-accent`}>
+            <Link href={`/account/listings/${item.id}/edit`} className={`${button} flex-1 border border-border hover:border-accent`}>
               <AssetIcon name="edit" size={16} />
-              <span className="max-[380px]:sr-only">{tr("Edit", "Redaguoti", "Изменить")}</span>
+              {tr("Edit", "Redaguoti", "Изменить")}
             </Link>
           )}
-          <button type="button" disabled={busy} onClick={onDelete} className={`${button} border border-red-500/30 text-red-600 hover:bg-red-500/10 dark:text-red-400`}>
-            <AssetIcon name="trash" size={16} />
-            <span className="max-[380px]:sr-only">{tr("Delete", "Ištrinti", "Удалить")}</span>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onDelete}
+            title={tr("Delete", "Ištrinti", "Удалить")}
+            aria-label={tr("Delete", "Ištrinti", "Удалить")}
+            className={`${button} w-10 border border-red-500/30 px-0 text-red-600 hover:bg-red-500/10 dark:text-red-400`}
+          >
+            <AssetIcon name={busy ? "spinner" : "trash"} size={16} className={busy ? "animate-spin" : ""} />
+          </button>
+          <button
+            type="button"
+            onClick={onStats}
+            title={tr("Statistics", "Statistika", "Статистика")}
+            aria-label={tr("Statistics", "Statistika", "Статистика")}
+            className={`${button} w-10 border border-border px-0 hover:border-accent hover:text-accent-ink`}
+          >
+            <AssetIcon name="chart" size={16} />
           </button>
         </div>
       </div>
