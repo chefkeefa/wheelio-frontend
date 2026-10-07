@@ -37,9 +37,9 @@ export default function ListingStatsDialog({ listingId, title, onClose }: { list
   const tiles = stats
     ? [
         { icon: "eye" as const, label: tr("Views", "Peržiūros", "Просмотры"), value: stats.views, note: tr(`${stats.last7Views} in 7 days`, `${stats.last7Views} per 7 d.`, `${stats.last7Views} за 7 дней`) },
-        { icon: "phone" as const, label: tr("Phone shown", "Telefonas parodytas", "Показали телефон"), value: stats.contactViews },
-        { icon: "heart" as const, label: tr("In favorites", "Mėgstamuose", "В избранном"), value: stats.favorites },
-        { icon: "message" as const, label: tr("Buyer chats", "Pokalbiai", "Чаты с покупателями"), value: stats.chats },
+        { icon: "phone" as const, label: tr("Phone", "Telefonas", "Телефон"), hint: tr("Phone number shown", "Telefonas parodytas", "Показали телефон"), value: stats.contactViews },
+        { icon: "heart" as const, label: tr("Favorites", "Mėgstamuose", "В избранном"), value: stats.favorites },
+        { icon: "message" as const, label: tr("Chats", "Pokalbiai", "Чаты"), hint: tr("Buyer chats", "Pokalbiai su pirkėjais", "Чаты с покупателями"), value: stats.chats },
       ]
     : [];
 
@@ -69,13 +69,14 @@ export default function ListingStatsDialog({ listingId, title, onClose }: { list
           <>
             <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
               {tiles.map((t) => (
-                <div key={t.label} className="rounded-xl bg-muted/60 p-3">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                    <AssetIcon name={t.icon} size={14} />
-                    {t.label}
+                <div key={t.label} title={"hint" in t ? t.hint : undefined} className="rounded-xl bg-muted/60 p-3">
+                  {/* One-line label and a reserved note line keep the numbers on the same baseline in every tile. */}
+                  <div className="flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-muted-foreground">
+                    <AssetIcon name={t.icon} size={14} className="shrink-0" />
+                    <span className="truncate">{t.label}</span>
                   </div>
                   <div className="mt-1.5 text-2xl font-extrabold tabular-nums">{new Intl.NumberFormat(locale).format(t.value)}</div>
-                  {t.note && <div className="text-xs text-muted-foreground">{t.note}</div>}
+                  <div className="h-4 truncate text-xs text-muted-foreground">{"note" in t ? t.note : ""}</div>
                 </div>
               ))}
             </div>

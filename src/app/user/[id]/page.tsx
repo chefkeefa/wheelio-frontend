@@ -444,7 +444,7 @@ export default function UserPage() {
         </div>
       </div>
 
-      <ScrollTopButton />
+      {!statsFor && <ScrollTopButton />}
 
       {statsFor && <ListingStatsDialog listingId={statsFor.id} title={[statsFor.mark, statsFor.model, statsFor.year].filter(Boolean).join(" ") || statsFor.title} onClose={() => setStatsFor(null)} />}
     </main>
