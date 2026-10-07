@@ -7,6 +7,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import { ApiError } from "@/lib/http";
 import { confirmPasswordReset, getPasswordResetConfig } from "@/lib/pirkApi";
 import PasswordInput from "@/components/ui/PasswordInput";
+import PasswordStrength from "@/components/ui/PasswordStrength";
+import { isStrongPassword } from "@/lib/passwordPolicy";
 
 function ResetPasswordInner() {
   const { tr } = useLanguage();
@@ -92,15 +94,16 @@ function ResetPasswordInner() {
               <span className="mb-1 block font-bold">{tr("New password", "Naujas slaptažodis", "Новый пароль")}</span>
               <PasswordInput className={input} autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </label>
+            <PasswordStrength password={password} />
             <label className="block">
               <span className="mb-1 block font-bold">{tr("Confirm new password", "Pakartokite naują slaptažodį", "Повторите новый пароль")}</span>
               <PasswordInput className={input} autoComplete="new-password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
             </label>
             <p className="text-sm text-muted-foreground">
               {tr(
-                "At least 8 characters with an uppercase letter, a number and a symbol. You will be signed out on other devices.",
-                "Bent 8 simboliai: didžioji raidė, skaičius ir specialusis simbolis. Kituose įrenginiuose būsite atjungti.",
-                "Минимум 8 символов: заглавная буква, цифра и спецсимвол. На других устройствах сеанс будет завершён."
+                "You will be signed out on other devices.",
+                "Kituose įrenginiuose būsite atjungti.",
+                "На других устройствах сеанс будет завершён."
               )}
             </p>
             {error && (
@@ -111,7 +114,7 @@ function ResetPasswordInner() {
                 </Link>
               </div>
             )}
-            <button disabled={saving || !password || !confirm} className="h-12 w-full rounded-lg bg-primary font-bold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-50">
+            <button disabled={saving || !isStrongPassword(password) || !confirm} className="h-12 w-full rounded-lg bg-primary font-bold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-50">
               {saving ? "…" : tr("Save password", "Išsaugoti slaptažodį", "Сохранить пароль")}
             </button>
           </form>
