@@ -165,7 +165,14 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
     close: tr("Close", "Uždaryti", "Закрыть"),
     reset: tr("Reset all", "Išvalyti viską", "Сбросить все"),
     show: tr("Show listings", "Rodyti skelbimus", "Показать объявления"),
+    yearFrom: tr("Year from", "Metai nuo", "Год от"),
+    yearTo: tr("Year to", "Metai iki", "Год до"),
+    priceFrom: tr("Price from", "Kaina nuo", "Цена от"),
+    priceTo: tr("Price to", "Kaina iki", "Цена до"),
+    anyYear: tr("Any", "Bet kokie", "Любой"),
+    anyPrice: tr("Any", "Bet kokia", "Любая"),
   };
+  const yearAbove = (a: string, b: string) => a !== "" && b !== "" && Number(a) > Number(b);
   const showLabel = searching ? tr("Searching…", "Ieškoma…", "Ищем…") : `${labels.show} · ${countLoading ? "…" : formatNumber(count)}`;
 
   const yearOptions = useMemo(() => {
@@ -213,9 +220,8 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
       sort: EMPTY_FILTERS.sort,
     });
 
-  const yearFields = (dark: boolean) => (
+  const yearFields = () => (
     <RangeSelects
-      dark={dark}
       fromLabel={labels.from}
       toLabel={labels.to}
       options={yearOptions}
@@ -224,9 +230,8 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
       onChange={(yearMin, yearMax) => set({ yearMin, yearMax })}
     />
   );
-  const priceFields = (dark: boolean) => (
+  const priceFields = () => (
     <RangeInputs
-      dark={dark}
       fromLabel={labels.from}
       toLabel={labels.to}
       suffix="€"
@@ -312,9 +317,11 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
               <AssetIcon name="chevron-down" size={18} className="text-white/60" />
             </div>
           </div>
-          <DesktopBox icon="map-pin" label={labels.city}>
+          <DesktopShell>
             <Dropdown
-              variant="inline"
+              variant="box"
+              icon="map-pin"
+              label={labels.city}
               ariaLabel={labels.city}
               value={filters.city}
               placeholder={labels.anyCity}
@@ -322,18 +329,40 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
               onChange={(city) => set({ city })}
               searchable
               searchPlaceholder={tr("Search", "Ieškoti", "Поиск")}
-              className="w-full"
             />
-          </DesktopBox>
+          </DesktopShell>
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto]">
-          <DesktopBox icon="calendar" label={labels.year}>
-            {yearFields(true)}
-          </DesktopBox>
-          <DesktopBox icon="euro" label={`${labels.price}, €`}>
-            {priceFields(true)}
-          </DesktopBox>
+          {/* Year: left half picks "from", right half picks "to"; each half is clickable as a whole. */}
+          <DesktopShell split>
+            <Dropdown
+              variant="box"
+              icon="calendar"
+              label={labels.yearFrom}
+              ariaLabel={labels.yearFrom}
+              placeholder={labels.anyYear}
+              value={filters.yearMin}
+              options={yearOptions}
+              onChange={(yearMin) => set({ yearMin, yearMax: yearAbove(yearMin, filters.yearMax) ? yearMin : filters.yearMax })}
+              className="flex-1"
+            />
+            <Dropdown
+              variant="box"
+              label={labels.yearTo}
+              ariaLabel={labels.yearTo}
+              placeholder={labels.anyYear}
+              value={filters.yearMax}
+              options={yearOptions}
+              onChange={(yearMax) => set({ yearMax, yearMin: yearAbove(filters.yearMin, yearMax) ? yearMax : filters.yearMin })}
+              className="flex-1"
+            />
+          </DesktopShell>
+          {/* Price: same split; clicking anywhere in a half focuses its input. */}
+          <DesktopShell split>
+            <PriceHalf icon="euro" label={`${labels.priceFrom}, €`} placeholder={labels.anyPrice} value={filters.priceMin} onChange={(priceMin) => set({ priceMin })} />
+            <PriceHalf label={`${labels.priceTo}, €`} placeholder={labels.anyPrice} value={filters.priceMax} onChange={(priceMax) => set({ priceMax })} />
+          </DesktopShell>
           <button
             type="button"
             onClick={() => setParamsOpen((value) => !value)}
@@ -492,13 +521,13 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
 
       {sheet === "year" && (
         <SheetFrame title={labels.year} closeLabel={labels.close} onClose={() => setSheet(null)} footer={searchButton("min-h-12 w-full rounded-2xl bg-accent px-4 text-sm")}>
-          <div className="px-5 py-6">{yearFields(false)}</div>
+          <div className="px-5 py-6">{yearFields()}</div>
         </SheetFrame>
       )}
 
       {sheet === "price" && (
         <SheetFrame title={`${labels.price}, €`} closeLabel={labels.close} onClose={() => setSheet(null)} footer={searchButton("min-h-12 w-full rounded-2xl bg-accent px-4 text-sm")}>
-          <div className="px-5 py-6">{priceFields(false)}</div>
+          <div className="px-5 py-6">{priceFields()}</div>
         </SheetFrame>
       )}
 
@@ -686,27 +715,26 @@ function RangeSelects({
   const optionCls = dark ? "bg-white text-black" : undefined;
   if (dark) {
     return (
-      <div className="flex items-center gap-2">
+      <DesktopShell split height="h-12">
         <Dropdown
-          variant="inline"
+          variant="box"
           ariaLabel={fromLabel}
           placeholder={fromLabel}
           value={min}
           options={options}
           onChange={(value) => onChange(value, above(value, max) ? value : max)}
-          className="flex-1"
+          className="flex-1 text-sm"
         />
-        <span className="text-white/30">—</span>
         <Dropdown
-          variant="inline"
+          variant="box"
           ariaLabel={toLabel}
           placeholder={toLabel}
           value={max}
           options={options}
           onChange={(value) => onChange(above(min, value) ? value : min, value)}
-          className="flex-1"
+          className="flex-1 text-sm"
         />
-      </div>
+      </DesktopShell>
     );
   }
   return (
@@ -752,6 +780,9 @@ function RangeSelects({
   );
 }
 
+const priceDigits = (value: string) => value.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 9);
+const showPrice = (value: string) => (value ? Number(value).toLocaleString("lt-LT") : "");
+
 function RangeInputs({
   min,
   max,
@@ -759,7 +790,6 @@ function RangeInputs({
   fromLabel,
   toLabel,
   suffix,
-  dark = false,
 }: {
   min: string;
   max: string;
@@ -767,18 +797,14 @@ function RangeInputs({
   fromLabel: string;
   toLabel: string;
   suffix: string;
-  dark?: boolean;
 }) {
-  const digits = (value: string) => value.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 9);
-  const show = (value: string) => (value ? Number(value).toLocaleString("lt-LT") : "");
-  const cls = dark
-    ? "h-8 w-full min-w-0 bg-transparent text-sm text-white outline-none placeholder:text-white/55"
-    : "h-14 w-full min-w-0 rounded-xl border border-border bg-muted px-4 text-lg font-semibold text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground focus:border-accent";
+  const cls =
+    "h-14 w-full min-w-0 rounded-xl border border-border bg-muted px-4 text-lg font-semibold text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground focus:border-accent";
   return (
-    <div className={`flex items-center ${dark ? "gap-1.5" : "gap-3"}`}>
-      <input inputMode="numeric" aria-label={`${fromLabel}, ${suffix}`} placeholder={fromLabel} value={show(min)} onChange={(e) => onChange(digits(e.target.value), max)} className={cls} />
-      <span className={dark ? "text-white/40" : "text-muted-foreground"}>—</span>
-      <input inputMode="numeric" aria-label={`${toLabel}, ${suffix}`} placeholder={toLabel} value={show(max)} onChange={(e) => onChange(min, digits(e.target.value))} className={cls} />
+    <div className="flex items-center gap-3">
+      <input inputMode="numeric" aria-label={`${fromLabel}, ${suffix}`} placeholder={fromLabel} value={showPrice(min)} onChange={(e) => onChange(priceDigits(e.target.value), max)} className={cls} />
+      <span className="text-muted-foreground">—</span>
+      <input inputMode="numeric" aria-label={`${toLabel}, ${suffix}`} placeholder={toLabel} value={showPrice(max)} onChange={(e) => onChange(min, priceDigits(e.target.value))} className={cls} />
     </div>
   );
 }
@@ -813,7 +839,7 @@ function FieldLabel({ label, dark, children }: { label: string; dark: boolean; c
   return (
     <div>
       <div className={`mb-2 text-sm font-semibold ${dark ? "text-white" : "text-foreground"}`}>{label}</div>
-      {dark ? <div className="rounded-xl bg-white/[0.06] px-4 py-2 ring-1 ring-white/10">{children}</div> : children}
+      {children}
     </div>
   );
 }
@@ -859,15 +885,35 @@ function SelectField({ label, value, options, onChange, dark = false }: { label:
   );
 }
 
-function DesktopBox({ icon, label, children }: { icon: AssetIconName; label: string; children: ReactNode }) {
+/** Rounded desktop cell. Its children fill it edge to edge; `split` puts two equal halves side by side. */
+function DesktopShell({ children, split = false, height = "h-16" }: { children: ReactNode; split?: boolean; height?: string }) {
   return (
-    <div className="flex h-16 min-w-0 items-center gap-3 rounded-xl bg-white/[0.06] px-4 ring-1 ring-white/10 focus-within:ring-2 focus-within:ring-accent">
-      <AssetIcon name={icon} size={24} className="text-white/80" />
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-[13px] font-semibold leading-5 text-white">{label}</div>
-        {children}
-      </div>
+    <div
+      className={`flex ${height} min-w-0 overflow-hidden rounded-xl bg-white/[0.06] ring-1 ring-white/10 focus-within:ring-2 focus-within:ring-accent ${
+        split ? "divide-x divide-white/10 [&>*]:min-w-0 [&>*]:basis-0" : "[&>*]:w-full"
+      }`}
+    >
+      {children}
     </div>
+  );
+}
+
+/** One half of the desktop price cell: the whole half is a <label>, so a click anywhere focuses the input. */
+function PriceHalf({ icon, label, placeholder, value, onChange }: { icon?: AssetIconName; label: string; placeholder: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <label className="flex h-full flex-1 cursor-text items-center gap-3 px-4 transition hover:bg-white/[0.05] focus-within:bg-white/[0.08]">
+      {icon && <AssetIcon name={icon} size={24} className="shrink-0 text-white/80" />}
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[13px] font-semibold leading-5 text-white">{label}</span>
+        <input
+          inputMode="numeric"
+          placeholder={placeholder}
+          value={showPrice(value)}
+          onChange={(event) => onChange(priceDigits(event.target.value))}
+          className="block h-5 w-full min-w-0 bg-transparent text-sm leading-5 text-white outline-none placeholder:text-white/55"
+        />
+      </span>
+    </label>
   );
 }
 

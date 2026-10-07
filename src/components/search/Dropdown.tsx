@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import AssetIcon from "@/components/ui/AssetIcon";
+import AssetIcon, { type AssetIconName } from "@/components/ui/AssetIcon";
 
 export type DropdownOption = { value: string; label: string };
 
@@ -18,8 +18,15 @@ interface Props {
   searchPlaceholder?: string;
   /** Shows the "clear" row; off for lists that always have a value (sorting). */
   clearable?: boolean;
-  /** "inline": bare text inside a larger box; "field": a standalone rounded field. */
-  variant?: "inline" | "field";
+  /**
+   * "inline": bare text inside a larger box; "field": a standalone rounded field;
+   * "box": fills its whole parent cell (icon, small label, value), so the entire cell opens the list.
+   */
+  variant?: "inline" | "field" | "box";
+  /** "box" only: small caption above the value. */
+  label?: string;
+  /** "box" only: icon on the left. */
+  icon?: AssetIconName;
   className?: string;
 }
 
@@ -38,6 +45,8 @@ export default function Dropdown({
   searchPlaceholder,
   clearable = true,
   variant = "field",
+  label,
+  icon,
   className = "",
 }: Props) {
   const listId = useId();
@@ -135,7 +144,10 @@ export default function Dropdown({
   const triggerCls =
     variant === "inline"
       ? "h-7 text-sm"
-      : `h-12 rounded-xl bg-white/[0.06] px-4 text-sm font-semibold ring-1 transition hover:bg-white/10 ${open ? "ring-accent" : "ring-white/10"}`;
+      : variant === "box"
+        ? `h-full w-full gap-3 px-4 transition hover:bg-white/[0.05] focus-visible:bg-white/[0.08] ${open ? "bg-white/[0.08]" : ""}`
+        : `h-12 rounded-xl bg-white/[0.06] px-4 text-sm font-semibold ring-1 transition hover:bg-white/10 ${open ? "ring-accent" : "ring-white/10"}`;
+  const valueText = <span className={`min-w-0 flex-1 truncate ${current ? "text-white" : "text-white/55"}`}>{current?.label ?? placeholder}</span>;
 
   return (
     <>
@@ -150,7 +162,15 @@ export default function Dropdown({
         onKeyDown={onKeyDown}
         className={`group flex min-w-0 items-center gap-2 text-left outline-none focus-visible:text-white ${triggerCls} ${className}`}
       >
-        <span className={`min-w-0 flex-1 truncate ${current ? "text-white" : "text-white/55"}`}>{current?.label ?? placeholder}</span>
+        {variant === "box" && icon && <AssetIcon name={icon} size={24} className="shrink-0 text-white/80" />}
+        {variant === "box" && label ? (
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[13px] font-semibold leading-5 text-white">{label}</span>
+            <span className={`block truncate text-sm leading-5 ${current ? "text-white" : "text-white/55"}`}>{current?.label ?? placeholder}</span>
+          </span>
+        ) : (
+          valueText
+        )}
         <AssetIcon name="chevron-down" size={16} className={`shrink-0 text-white/50 transition ${open ? "rotate-180" : ""}`} />
       </button>
 
