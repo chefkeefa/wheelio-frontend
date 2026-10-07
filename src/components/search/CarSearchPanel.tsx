@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import AssetIcon, { type AssetIconName } from "@/components/ui/AssetIcon";
 import Dropdown from "@/components/search/Dropdown";
@@ -37,6 +37,8 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
   const [pickerStep, setPickerStep] = useState<"mark" | "model">("mark");
   const [pickerSearch, setPickerSearch] = useState("");
   const [paramsOpen, setParamsOpen] = useState(false);
+  const makeAnchorRef = useRef<HTMLDivElement>(null);
+  const [desktop, setDesktop] = useState(false);
 
   const [marks, setMarks] = useState<Array<{ id: string; name: string }>>([]);
   const [models, setModels] = useState<string[]>([]);
@@ -119,9 +121,18 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
   }, [countKey]);
 
   useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    const sync = () => setDesktop(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
     if (!sheet) return;
+    const lockScroll = !window.matchMedia("(min-width: 768px)").matches || sheet !== "make";
     const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    if (lockScroll) document.body.style.overflow = "hidden";
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setSheet(null);
     };
@@ -275,7 +286,7 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
         </div>
 
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,280px)]">
-          <div className="relative">
+          <div ref={makeAnchorRef} className="relative">
             <button
               type="button"
               onClick={openMakePicker}
@@ -349,6 +360,7 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
 
       {sheet === "make" && (
         <SheetFrame
+          mobileOnly
           title={pickerStep === "mark" ? labels.make : labels.model}
           subtitle={pickerStep === "model" ? filters.mark : undefined}
           closeLabel={labels.close}
@@ -409,6 +421,47 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
             )}
           </div>
         </SheetFrame>
+      )}
+
+      {sheet === "make" && desktop && (
+        <MakeModelPopover
+          anchorRef={makeAnchorRef}
+          onClose={() => setSheet(null)}
+          searchPlaceholder={tr("Search", "Ieškoti", "Поиск")}
+          search={pickerSearch}
+          onSearch={setPickerSearch}
+          backLabel={tr("Back", "Atgal", "Назад")}
+          onBack={
+            pickerStep === "model"
+              ? () => {
+                  setPickerSearch("");
+                  setPickerStep("mark");
+                }
+              : undefined
+          }
+          headerText={pickerStep === "mark" ? labels.make : `${labels.model} · ${filters.mark}`}
+          allLabel={pickerStep === "mark" ? tr("All makes", "Visos markės", "Все марки") : tr("All models", "Visi modeliai", "Все модели")}
+          allSelected={pickerStep === "mark" ? !filters.mark : !filters.model}
+          onAll={() => {
+            if (pickerStep === "mark") set({ mark: "", model: "" });
+            else set({ model: "" });
+            setSheet(null);
+          }}
+          names={pickerOptions}
+          isSelected={(name) => (pickerStep === "mark" ? filters.mark === name : filters.model === name)}
+          chevron={pickerStep === "mark"}
+          onPick={(name) => {
+            setPickerSearch("");
+            if (pickerStep === "mark") {
+              if (filters.mark !== name) set({ mark: name, model: "" });
+              setPickerStep("model");
+            } else {
+              set({ model: name });
+              setSheet(null);
+            }
+          }}
+          emptyText={pickerStep === "model" && modelsLoading ? tr("Loading models…", "Įkeliami modeliai…", "Загружаем модели…") : tr("Nothing found", "Nieko nerasta", "Ничего не найдено")}
+        />
       )}
 
       {sheet === "city" && (
@@ -850,6 +903,135 @@ function PickerRow({ label, selected, onClick, chevron = false }: { label: strin
   );
 }
 
+/**
+ * Desktop make / model picker: a dropdown under the make + model field, in the same style as the
+ * make field on the sell form. Mobile keeps the full-screen sheet (SheetFrame).
+ */
+function MakeModelPopover({
+  anchorRef,
+  onClose,
+  searchPlaceholder,
+  search,
+  onSearch,
+  backLabel,
+  onBack,
+  headerText,
+  allLabel,
+  allSelected,
+  onAll,
+  names,
+  isSelected,
+  chevron,
+  onPick,
+  emptyText,
+}: {
+  anchorRef: RefObject<HTMLDivElement | null>;
+  onClose: () => void;
+  searchPlaceholder: string;
+  search: string;
+  onSearch: (value: string) => void;
+  backLabel?: string;
+  onBack?: () => void;
+  headerText: string;
+  allLabel: string;
+  allSelected: boolean;
+  onAll: () => void;
+  names: string[];
+  isSelected: (name: string) => boolean;
+  chevron: boolean;
+  onPick: (name: string) => void;
+  emptyText: string;
+}) {
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const place = () => {
+      const rect = anchorRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setPosition({ top: rect.bottom + 6, left: rect.left, width: Math.max(rect.width, 320) });
+    };
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [anchorRef]);
+
+  useEffect(() => {
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (!popoverRef.current?.contains(target) && !anchorRef.current?.contains(target)) onClose();
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [anchorRef, onClose]);
+
+  if (!position) return null;
+
+  return createPortal(
+    <div
+      ref={popoverRef}
+      role="dialog"
+      aria-label={headerText}
+      style={{ top: position.top, left: position.left, width: position.width }}
+      className="fixed z-[120] flex max-h-[min(460px,calc(100vh-48px))] flex-col overflow-hidden rounded-xl bg-card text-foreground shadow-xl ring-1 ring-border"
+    >
+      <div className="flex items-center gap-2 border-b border-border p-2">
+        {onBack && (
+          <button type="button" onClick={onBack} aria-label={backLabel} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-muted">
+            <AssetIcon name="arrow-left" size={18} />
+          </button>
+        )}
+        <input
+          autoFocus
+          value={search}
+          onChange={(event) => onSearch(event.target.value)}
+          placeholder={searchPlaceholder}
+          aria-label={searchPlaceholder}
+          className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-muted px-3 text-[15px] font-medium text-foreground outline-none transition placeholder:font-normal placeholder:text-muted-foreground/70 focus:border-accent focus:bg-card"
+        />
+      </div>
+      {onBack && <p className="truncate px-4 pt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{headerText}</p>}
+      <ul className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-1.5 [scrollbar-width:thin]">
+        <li>
+          <button
+            type="button"
+            onClick={onAll}
+            className={`flex min-h-10 w-full items-center justify-between gap-3 px-4 text-left text-sm transition hover:bg-muted ${allSelected ? "font-bold text-accent-ink" : "font-semibold"}`}
+          >
+            <span className="truncate">{allLabel}</span>
+            {allSelected && <AssetIcon name="check" size={16} className="shrink-0" />}
+          </button>
+        </li>
+        {names.map((name) => {
+          const selected = isSelected(name);
+          return (
+            <li key={name}>
+              <button
+                type="button"
+                onClick={() => onPick(name)}
+                className={`flex min-h-10 w-full items-center justify-between gap-3 px-4 text-left text-sm transition hover:bg-muted ${selected ? "font-bold text-accent-ink" : "font-semibold"}`}
+              >
+                <span className="truncate">{name}</span>
+                {selected ? (
+                  <AssetIcon name="check" size={16} className="shrink-0" />
+                ) : chevron ? (
+                  <AssetIcon name="chevron-right" size={16} className="shrink-0 text-muted-foreground" />
+                ) : null}
+              </button>
+            </li>
+          );
+        })}
+        {!names.length && <li className="px-4 py-6 text-center text-sm text-muted-foreground">{emptyText}</li>}
+      </ul>
+    </div>,
+    document.body,
+  );
+}
+
 function SheetFrame({
   title,
   subtitle,
@@ -859,6 +1041,7 @@ function SheetFrame({
   backLabel,
   footer,
   tall = false,
+  mobileOnly = false,
   children,
 }: {
   title: string;
@@ -869,11 +1052,12 @@ function SheetFrame({
   backLabel?: string;
   footer: ReactNode;
   tall?: boolean;
+  mobileOnly?: boolean;
   children: ReactNode;
 }) {
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 md:items-center md:p-6"
+      className={`fixed inset-0 z-[100] flex items-end justify-center bg-black/60 md:items-center md:p-6 ${mobileOnly ? "md:hidden" : ""}`}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}

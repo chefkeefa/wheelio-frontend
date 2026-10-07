@@ -37,7 +37,7 @@ import {
 } from "@/lib/sellDraft";
 import { LT_CITIES } from "@/lib/cities";
 import AssetIcon from "@/components/ui/AssetIcon";
-import Combobox from "@/components/ui/Combobox";
+import Combobox, { type ComboboxOption } from "@/components/ui/Combobox";
 import { useRouter } from "next/navigation";
 import {
   deleteListingPhoto,
@@ -1157,6 +1157,11 @@ export default function SellForm({ editId }: { editId?: string }) {
     () => models.map((model) => ({ value: model.name, label: model.name, aliases: [model.cyrillicName] })),
     [models]
   );
+  const cityOptions = useMemo<ComboboxOption[]>(() => {
+    const cities: string[] = [...LT_CITIES];
+    if (draft.city && !cities.includes(draft.city)) cities.unshift(draft.city);
+    return cities.map((city) => ({ value: city, label: city }));
+  }, [draft.city]);
 
   // Price range of the same model on Wheelio. null = not enough similar listings, so nothing is suggested.
   const [priceHint, setPriceHint] = useState<PriceEstimate | null>(null);
@@ -1580,36 +1585,33 @@ export default function SellForm({ editId }: { editId?: string }) {
   const hoursPicker = (id: string, value: string, onChange: (value: string) => void) => {
     const hours = parseHours(value);
     const from = hours.from;
+    const fromOptions: ComboboxOption[] = [
+      { value: "any", label: tr("Doesn't matter", "Nesvarbu", "Не важно") },
+      ...VIEWING_HOURS.slice(0, -1).map((h) => ({ value: String(h), label: `${tr("from", "nuo", "с")} ${hourLabel(h)}` })),
+    ];
     return (
       <div className="grid grid-cols-2 gap-2">
-        <Select
+        <Combobox
           id={id}
-          aria-label={tr("From", "Nuo", "С")}
           value={hours.any ? "any" : from === null ? "" : String(from)}
-          onChange={(e) => {
-            const next = e.target.value;
+          placeholder={tr("Choose", "Pasirinkite", "Выберите")}
+          noMatchText={tr("Nothing found", "Nieko nerasta", "Ничего не найдено")}
+          options={fromOptions}
+          onChange={(next) => {
             if (next === "any" || next === "") return onChange(next);
             const start = Number(next);
             const end = hours.to !== null && hours.to > start ? hours.to : Math.min(23, start + 3);
             onChange(`${hourLabel(start)}–${hourLabel(end)}`);
           }}
-        >
-          <option value="">{tr("Choose", "Pasirinkite", "Выберите")}</option>
-          <option value="any">{tr("Doesn't matter", "Nesvarbu", "Не важно")}</option>
-          {VIEWING_HOURS.slice(0, -1).map((h) => (
-            <option key={h} value={h}>{tr("from", "nuo", "с")} {hourLabel(h)}</option>
-          ))}
-        </Select>
+        />
         {from !== null && !hours.any ? (
-          <Select
-            aria-label={tr("Until", "Iki", "До")}
+          <Combobox
             value={String(hours.to ?? "")}
-            onChange={(e) => onChange(`${hourLabel(from)}–${hourLabel(Number(e.target.value))}`)}
-          >
-            {VIEWING_HOURS.filter((h) => h > from).map((h) => (
-              <option key={h} value={h}>{tr("until", "iki", "до")} {hourLabel(h)}</option>
-            ))}
-          </Select>
+            placeholder={tr("Until", "Iki", "До")}
+            noMatchText={tr("Nothing found", "Nieko nerasta", "Ничего не найдено")}
+            options={VIEWING_HOURS.filter((h) => h > from).map((h) => ({ value: String(h), label: `${tr("until", "iki", "до")} ${hourLabel(h)}` }))}
+            onChange={(next) => onChange(`${hourLabel(from)}–${hourLabel(Number(next))}`)}
+          />
         ) : (
           <div className="flex h-12 items-center px-1 text-sm text-muted-foreground">
             {hours.any ? tr("Any time that suits the buyer", "Bet kuriuo pirkėjui patogiu laiku", "В любое удобное покупателю время") : ""}
@@ -2272,11 +2274,14 @@ export default function SellForm({ editId }: { editId?: string }) {
                   <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     <div>
                       <L htmlFor="sell-city">{tr("City", "Miestas", "Город")}</L>
-                      <Select id="sell-city" value={draft.city} onChange={(e) => setDraft({ ...draft, city: e.target.value })}>
-                        <option value="">{tr("Choose a city", "Pasirinkite miestą", "Выберите город")}</option>
-                        {draft.city && !(LT_CITIES as readonly string[]).includes(draft.city) && <option value={draft.city}>{draft.city}</option>}
-                        {LT_CITIES.map((city) => <option key={city} value={city}>{city}</option>)}
-                      </Select>
+                      <Combobox
+                        id="sell-city"
+                        value={draft.city}
+                        placeholder={tr("Choose a city", "Pasirinkite miestą", "Выберите город")}
+                        noMatchText={tr("Nothing found", "Nieko nerasta", "Ничего не найдено")}
+                        options={cityOptions}
+                        onChange={(city) => setDraft({ ...draft, city })}
+                      />
                     </div>
                     <div>
                       <L htmlFor="sell-area">{tr("Area / district", "Rajonas", "Район")}</L>
