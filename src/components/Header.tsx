@@ -174,7 +174,6 @@ export default function Header() {
         <div className="hidden items-center gap-2 lg:flex xl:gap-3">
           <button type="button" onClick={toggleTheme} className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition hover:bg-foreground/5" aria-label="Toggle theme">{darkMode ? <AssetIcon name="sun" size={22} /> : <AssetIcon name="moon" size={22} />}</button>
           <button type="button" onClick={toggleLanguage} className="flex h-10 items-center gap-1.5 rounded-full px-2 text-foreground transition hover:bg-foreground/5" aria-label="Change language" title="EN → LT → RU"><AssetIcon name="globe" size={21} /><span className="min-w-[20px] text-xs font-bold">{language}</span></button>
-          <button type="button" className="hidden h-10 w-10 items-center justify-center rounded-full text-foreground transition hover:bg-foreground/5 xl:flex" aria-label={tr("Recently viewed", "Neseniai peržiūrėta", "Недавно просмотренные")}><AssetIcon name="clock" size={21} /></button>
 
           <Link href="/sell" className="flex h-10 items-center gap-1.5 rounded-full bg-accent px-4 text-[15px] font-semibold text-accent-foreground transition hover:opacity-90"><AssetIcon name="plus" size={19} /><span>{t("sell")}</span></Link>
 
