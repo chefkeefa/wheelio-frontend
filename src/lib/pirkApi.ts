@@ -433,8 +433,6 @@ export async function registerUser(payload: {
   name: string;
   surname: string;
   city: string;
-  address: string;
-  zip: string;
   phone: string;
   verificationToken?: string;
   password: string;

@@ -12,6 +12,8 @@ type Props = {
   onVerified: (verificationToken: string, normalizedPhone: string) => void | Promise<void>;
   verified?: boolean;
   inputClassName?: string;
+  /** Fully rounded buttons, to match the pill-shaped fields on the register form. */
+  pill?: boolean;
   /**
    * When verification is switched off on the backend, show a button that hands the typed number to onVerified
    * with an empty token (used by /verify-phone). Registration leaves it off and just submits the typed number.
@@ -24,7 +26,8 @@ type Props = {
  * Only channels reported by GET /phone-verification/config are offered, and the success
  * message describes the channel the backend actually used (never "call" for an SMS).
  */
-export default function PhoneVerificationBox({ phone, onPhoneChange, onVerified, verified = false, inputClassName, saveWhenOff = false }: Props) {
+export default function PhoneVerificationBox({ phone, onPhoneChange, onVerified, verified = false, inputClassName, pill = false, saveWhenOff = false }: Props) {
+  const round = pill ? "rounded-full" : "rounded-lg";
   const { tr } = useLanguage();
   const config = usePhoneVerificationConfig();
   const [code, setCode] = useState("");
@@ -110,7 +113,7 @@ export default function PhoneVerificationBox({ phone, onPhoneChange, onVerified,
             onChange={(e) => onPhoneChange(e.target.value)}
           />
           {saveWhenOff && (
-            <button type="button" disabled={checking || verified || !phone.trim()} onClick={saveTyped} className="min-h-11 rounded-lg bg-primary px-5 font-bold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-50">
+            <button type="button" disabled={checking || verified || !phone.trim()} onClick={saveTyped} className={`min-h-11 ${round} bg-primary px-5 font-bold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-50`}>
               {checking ? "…" : tr("Save", "Išsaugoti", "Сохранить")}
             </button>
           )}
@@ -157,12 +160,12 @@ export default function PhoneVerificationBox({ phone, onPhoneChange, onVerified,
           onChange={(e) => onPhoneChange(e.target.value)}
         />
         {channels.includes("SMS") && (
-          <button type="button" disabled={busy || !phone.trim()} onClick={() => send("SMS")} className="min-h-11 rounded-lg border border-border px-4 font-bold hover:bg-background disabled:opacity-50">
+          <button type="button" disabled={busy || !phone.trim()} onClick={() => send("SMS")} className={`min-h-11 ${round} border border-border px-4 font-bold hover:bg-background disabled:opacity-50`}>
             {cooldown > 0 ? `SMS (${cooldown}s)` : tr("Send SMS code", "Siųsti SMS kodą", "Отправить SMS")}
           </button>
         )}
         {channels.includes("CALL") && (
-          <button type="button" disabled={busy || !phone.trim()} onClick={() => send("CALL")} className="min-h-11 rounded-lg border border-border px-4 font-bold hover:bg-background disabled:opacity-50">
+          <button type="button" disabled={busy || !phone.trim()} onClick={() => send("CALL")} className={`min-h-11 ${round} border border-border px-4 font-bold hover:bg-background disabled:opacity-50`}>
             {tr("Call me", "Paskambinti", "Позвонить")}
           </button>
         )}
@@ -178,7 +181,7 @@ export default function PhoneVerificationBox({ phone, onPhoneChange, onVerified,
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
           />
-          <button type="button" disabled={checking || code.length !== 6} onClick={check} className="min-h-11 rounded-lg bg-primary px-5 font-bold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-50">
+          <button type="button" disabled={checking || code.length !== 6} onClick={check} className={`min-h-11 ${round} bg-primary px-5 font-bold text-primary-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-50`}>
             {checking ? "…" : tr("Verify", "Patvirtinti", "Подтвердить")}
           </button>
         </div>
