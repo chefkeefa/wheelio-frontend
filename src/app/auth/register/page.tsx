@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { rememberReturnPath, returnQuery } from "@/lib/safeReturn";
 import { useLanguage } from "@/context/LanguageContext";
 import PhoneVerificationBox from "@/components/PhoneVerificationBox";
-import { googleLoginUrl, registerUser } from "@/lib/pirkApi";
+import { googleLoginUrl, registerUser, takenContactError } from "@/lib/pirkApi";
 import { usePhoneVerificationConfig, verificationOff } from "@/lib/usePhoneVerification";
 import PasswordInput from "@/components/ui/PasswordInput";
 import PasswordStrength from "@/components/ui/PasswordStrength";
@@ -21,6 +21,7 @@ function RegisterInner() {
   const [token, setToken] = useState("");
   const off = verificationOff(usePhoneVerificationConfig());
   const [error, setError] = useState("");
+  const [taken, setTaken] = useState<"PHONE_TAKEN" | "EMAIL_TAKEN" | null>(null);
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const set = (key: keyof typeof form, value: string) => setForm((f) => ({ ...f, [key]: value }));
@@ -28,6 +29,7 @@ function RegisterInner() {
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError("");
+    setTaken(null);
     if (!isStrongPassword(form.password)) {
       setError(tr("The password does not meet the requirements", "Slaptažodis neatitinka reikalavimų", "Пароль не соответствует требованиям"));
       return;
@@ -53,7 +55,9 @@ function RegisterInner() {
       });
       router.push(`/auth/login?registered=1${returnQuery(returnTo, "&")}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      const code = takenContactError(e);
+      if (code) setTaken(code);
+      else setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }
@@ -120,6 +124,17 @@ function RegisterInner() {
             </span>
           </label>
           {error && <div className="rounded-2xl bg-red-500/10 p-3 text-red-600 md:col-span-2">{error}</div>}
+          {taken && (
+            <div className="rounded-2xl bg-red-500/10 p-3 text-red-600 md:col-span-2">
+              {taken === "PHONE_TAKEN"
+                ? tr("This phone number is already registered on Wheelio.", "Šis telefono numeris jau užregistruotas Wheelio.", "Этот номер телефона уже зарегистрирован на Wheelio.")
+                : tr("This e-mail is already registered on Wheelio.", "Šis el. paštas jau užregistruotas Wheelio.", "Эта почта уже зарегистрирована на Wheelio.")}{" "}
+              {tr("A second account cannot be created: ", "Antros paskyros sukurti negalima: ", "Второй аккаунт создать нельзя: ")}
+              <Link href="/auth/login" className="font-semibold underline underline-offset-2">{tr("sign in", "prisijunkite", "войдите")}</Link>
+              {tr(" or ", " arba ", " или ")}
+              <Link href="/auth/forgot-password" className="font-semibold underline underline-offset-2">{tr("restore your account", "atkurkite paskyrą", "восстановите аккаунт")}</Link>.
+            </div>
+          )}
           <button
             disabled={loading || !agreed || !strong || mismatch || (!token && !off)}
             className="h-14 rounded-full bg-accent text-base font-bold text-accent-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 md:col-span-2"
