@@ -7,7 +7,7 @@ export type PublicProfile = {
   /** First name and the surname's initial, e.g. "Piotr K." */
   name: string;
   avatarUrl: string | null;
-  /** Set by Wheelio after checking an ID document. */
+  /** Certified profile (green tick): proper name, confirmed phone and confirmed e-mail. */
   identityVerified: boolean;
   memberSince: string | null;
   activeListings: number;
@@ -16,7 +16,11 @@ export type PublicProfile = {
   hasPhone: boolean;
   /** The signed-in visitor is this user. */
   own: boolean;
+  /** Only for the owner: which certified-profile conditions are met. */
+  certification?: Certification;
 };
+
+export type Certification = { name: boolean; phone: boolean; email: boolean; certified: boolean };
 
 /** null when the user does not exist or is blocked. */
 export async function getPublicProfile(id: string): Promise<PublicProfile | null> {
@@ -142,7 +146,7 @@ export function setListingCoverPhoto(listingId: string | number, imageId: number
   return fetchJson<{ success: boolean }>(`/listings/${listingId}/cover`, { method: "PUT", body: JSON.stringify({ imageId }) });
 }
 
-/** Admin: the "verified identity" badge, set after checking an ID document. */
-export function setIdentityVerified(userId: number, verified: boolean) {
-  return fetchJson<{ success: boolean }>(`/users/${userId}/edit`, { method: "POST", body: JSON.stringify({ identityVerified: verified }) });
+/** Admin: confirm a user's phone number by hand (while SMS codes are off), one of the certified-profile conditions. */
+export function setPhoneVerified(userId: number, verified: boolean) {
+  return fetchJson<{ success: boolean }>(`/users/${userId}/edit`, { method: "POST", body: JSON.stringify({ phoneVerified: verified }) });
 }

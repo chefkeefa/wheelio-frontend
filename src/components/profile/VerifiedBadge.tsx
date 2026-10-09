@@ -4,14 +4,14 @@ import { useLanguage } from "@/context/LanguageContext";
 import AssetIcon from "@/components/ui/AssetIcon";
 
 /**
- * Identity status next to a user's name: a green tick when Wheelio has checked the person's ID, a grey one when
- * not. Hovering (or tapping, which focuses it) shows what it means.
+ * Certified profile next to a user's name: a green tick when the name is written properly and both the phone and
+ * the e-mail are confirmed, a grey one when not. Hovering (or tapping, which focuses it) shows what it means.
  */
 export default function VerifiedBadge({ verified, size = 22 }: { verified: boolean; size?: number }) {
   const { tr } = useLanguage();
   const label = verified
-    ? tr("Identity verified", "Tapatybė patvirtinta", "Личность подтверждена")
-    : tr("Identity not verified", "Tapatybė nepatvirtinta", "Личность не подтверждена");
+    ? tr("Certified profile: phone and e-mail confirmed", "Sertifikuotas profilis: telefonas ir el. paštas patvirtinti", "Сертифицированный профиль: телефон и почта подтверждены")
+    : tr("Profile not certified", "Profilis nesertifikuotas", "Профиль не сертифицирован");
   return (
     <span tabIndex={0} aria-label={label} className="group relative inline-flex shrink-0 align-middle outline-none">
       <span

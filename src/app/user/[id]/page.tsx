@@ -8,6 +8,7 @@ import { anybody } from "@/lib/fonts";
 import { ApiError } from "@/lib/http";
 import { getMyListings, type Listing, type ListingDetail } from "@/lib/listings";
 import { me, type AuthUser } from "@/lib/pirkApi";
+import CertificationChecklist from "@/components/profile/CertificationChecklist";
 import {
   deleteAvatar,
   getMyListingsStats,
@@ -358,21 +359,8 @@ export default function UserPage() {
             </div>
           </section>
 
-          {profile.own && !profile.identityVerified && (
-            <p className="mt-4 flex items-start gap-2 rounded-xl bg-muted/60 p-3 text-sm leading-6 text-muted-foreground">
-              <AssetIcon name="shield" size={18} className="mt-0.5 shrink-0" />
-              <span>
-                {tr(
-                  "Buyers see a grey tick next to your name. To get the green one, ask support to check your ID document: ",
-                  "Pirkėjai šalia jūsų vardo mato pilką varnelę. Kad ji taptų žalia, paprašykite pagalbos tarnybos patikrinti jūsų asmens dokumentą: ",
-                  "Покупатели видят серую галочку рядом с вашим именем. Чтобы она стала зелёной, попросите поддержку проверить ваш документ: ",
-                )}
-                <Link href="/help" className="font-semibold text-foreground underline underline-offset-2">
-                  {tr("write to support", "parašykite pagalbai", "написать в поддержку")}
-                </Link>
-                .
-              </span>
-            </p>
+          {profile.own && profile.certification && !profile.certification.certified && (
+            <CertificationChecklist c={profile.certification} returnTo={`/user/${profile.id}`} />
           )}
         </aside>
 

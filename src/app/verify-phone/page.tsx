@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import PhoneVerificationBox from "@/components/PhoneVerificationBox";
-import { attachVerifiedPhone } from "@/lib/pirkApi";
+import { attachVerifiedPhone, takenContactError } from "@/lib/pirkApi";
 import { usePhoneVerificationConfig, verificationOff } from "@/lib/usePhoneVerification";
 import { safeReturnPath } from "@/lib/safeReturn";
 
@@ -18,7 +18,19 @@ function VerifyPhonePageInner() {
   const off = verificationOff(usePhoneVerificationConfig());
 
   async function attach(verificationToken: string, normalizedPhone: string) {
-    await attachVerifiedPhone(normalizedPhone, verificationToken);
+    try {
+      await attachVerifiedPhone(normalizedPhone, verificationToken);
+    } catch (e) {
+      if (takenContactError(e) === "PHONE_TAKEN")
+        throw new Error(
+          tr(
+            "This number already belongs to another Wheelio account. One number can be used by one account only.",
+            "Šis numeris jau priklauso kitai Wheelio paskyrai. Vieną numerį gali naudoti tik viena paskyra.",
+            "Этот номер уже привязан к другому аккаунту Wheelio. Один номер можно использовать только в одном аккаунте."
+          )
+        );
+      throw e;
+    }
     setVerified(true);
     setTimeout(() => router.replace(safeReturnPath(search.get("return"))), 700);
   }

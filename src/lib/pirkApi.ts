@@ -175,7 +175,7 @@ export type AdminUser = {
   disabled: number | boolean;
   registrationDate: string | null;
   roles?: string[];
-  /** "Verified identity" badge on the user's page (set by an admin). */
+  /** Certified profile: proper name, confirmed phone and confirmed e-mail. */
   identityVerified?: boolean;
 };
 export type ModerationFlag =
@@ -404,6 +404,11 @@ export async function emailBlocksPublishing(): Promise<boolean> {
 }
 export function isLoginLockedError(e: unknown) {
   return e instanceof ApiError && e.status === 429 && (e.details as { code?: string } | undefined)?.code === "LOGIN_LOCKED";
+}
+/** Registration or a phone change refused because another account already has this phone or e-mail. */
+export function takenContactError(e: unknown): "PHONE_TAKEN" | "EMAIL_TAKEN" | null {
+  const code = e instanceof ApiError && e.status === 400 ? (e.details as { code?: string } | undefined)?.code : undefined;
+  return code === "PHONE_TAKEN" || code === "EMAIL_TAKEN" ? code : null;
 }
 export function isEmailNotVerifiedError(e: unknown) {
   return e instanceof ApiError && e.status === 403 && (e.details as { code?: string } | undefined)?.code === "EMAIL_NOT_VERIFIED";
