@@ -666,6 +666,9 @@ export default function SellForm({ editId }: { editId?: string }) {
   const [editCover, setEditCover] = useState<{ existingId?: number; newKey?: string }>({});
   // Catalog version stored with the listing, picked again once the form has loaded the engine list.
   const editTarget = useRef<{ generationId: string | null; modificationId: string | null } | null>(null);
+  // The edited listing's own make and model. The catalog lists leave out makes and models not sold in Lithuania,
+  // but a listing that already has one keeps it selectable.
+  const [editCatalog, setEditCatalog] = useState<{ mark: CarMark | null; model: CarModel | null }>({ mark: null, model: null });
   const [savedEdit, setSavedEdit] = useState<{ status?: string } | null>(null);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -700,6 +703,7 @@ export default function SellForm({ editId }: { editId?: string }) {
         if (!alive) return;
         const options = form.options || [];
         editTarget.current = { generationId: form.generationId, modificationId: form.modificationId };
+        setEditCatalog({ mark: form.mark, model: form.model });
         setDraft({
           ...INITIAL,
           contactMethods: [...INITIAL.contactMethods],
@@ -817,6 +821,17 @@ export default function SellForm({ editId }: { editId?: string }) {
       cancelled = true;
     };
   }, [trRef]);
+
+  useEffect(() => {
+    const own = editCatalog.mark;
+    if (own && marks.length > 0 && !marks.some((item) => item.id === own.id)) setMarks((current) => [...current, own]);
+  }, [marks, editCatalog.mark]);
+
+  useEffect(() => {
+    const own = editCatalog.model;
+    if (!own || modelsLoading || draft.mark !== editCatalog.mark?.name || models.some((item) => item.id === own.id)) return;
+    setModels((current) => [...current, own].sort((a, b) => a.name.localeCompare(b.name)));
+  }, [models, modelsLoading, draft.mark, editCatalog]);
 
   // Загружаем модели выбранной марки
   useEffect(() => {
