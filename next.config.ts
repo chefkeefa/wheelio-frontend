@@ -46,6 +46,16 @@ const nextConfig: NextConfig = {
   images: { unoptimized: true },
   trailingSlash: true,
   poweredByHeader: false,
+  // Section folders have no page of their own; Google tries them by trimming a URL and got a 404.
+  async redirects() {
+    return [
+      { source: "/auth/", destination: "/auth/login/", permanent: true },
+      { source: "/account/", destination: "/account/listings/", permanent: true },
+      { source: "/account/listings/:id(\\d+)/", destination: "/account/listings/:id/edit/", permanent: false },
+      { source: "/payment/", destination: "/", permanent: false },
+      { source: "/user/", destination: "/", permanent: false },
+    ];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
