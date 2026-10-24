@@ -15,6 +15,7 @@ import { EMPTY_FILTERS, filtersToQuery, filtersToSearchParams, type CarFilters }
 import { useLanguage } from "@/context/LanguageContext";
 import { BACKEND_ORIGIN } from "@/lib/config";
 import AssetIcon from "@/components/ui/AssetIcon";
+import AnimatedContent from "@/components/reactbits/AnimatedContent";
 
 const PAGE_SIZE = 12;
 const BACKEND_URL = BACKEND_ORIGIN;
@@ -193,10 +194,6 @@ export default function HomePage() {
           <div className="absolute inset-x-0 bottom-0 hidden h-20 bg-gradient-to-t from-background to-transparent md:block" />
 
           <div className="container relative pt-6 md:pt-24 lg:pt-28">
-            <p className="mb-4 hidden items-center gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/80 md:flex">
-              <span className="h-px w-8 bg-white/70" />
-              {tr("Car listings in Lithuania", "Automobilių skelbimai Lietuvoje", "Автообъявления в Литве")}
-            </p>
             <h1 className="max-w-[640px] text-3xl font-bold leading-[1.08] tracking-tight text-white sm:text-5xl md:text-6xl">
               {tr("Buy or sell a car", "Pirk ar parduok automobilį", "Купи или продай автомобиль")}{" "}
               <span className="text-accent">{tr("easily", "lengvai", "легко")}</span>
@@ -218,6 +215,7 @@ export default function HomePage() {
             filters={filters}
             onChange={setFilters}
             searching={searching}
+            animateCount
             onSubmit={async () => {
               await applyFilters();
               scrollToResults();
@@ -249,9 +247,9 @@ export default function HomePage() {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 8 }).map((_, index) => (
-                <SkeletonCard key={index} />
+                <SkeletonCard key={index} compactOnMobile />
               ))}
             </div>
           ) : items.length === 0 ? (
@@ -260,7 +258,14 @@ export default function HomePage() {
               subtitle={t("noListingsSubtitle")}
             />
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <AnimatedContent
+              className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4"
+              distance={24}
+              duration={0.6}
+              ease="expo.out"
+              stagger={0.06}
+              threshold={0.05}
+            >
               {items.map((item) => (
                 <CarCard
                   key={item.id}
@@ -275,10 +280,11 @@ export default function HomePage() {
                   city={item.city}
                   favorite={favoriteIds.has(item.id)}
                   onToggleFavorite={() => toggleFavorite(item.id)}
+                  compactOnMobile
                 />
               ))}
               {!searched && items.length < 4 && <SellPromoCard />}
-            </div>
+            </AnimatedContent>
           )}
 
           {hasMore && !loading && items.length > 0 && (
