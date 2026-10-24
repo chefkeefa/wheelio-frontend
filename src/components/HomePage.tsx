@@ -15,6 +15,7 @@ import { EMPTY_FILTERS, filtersToQuery, filtersToSearchParams, type CarFilters }
 import { useLanguage } from "@/context/LanguageContext";
 import { BACKEND_ORIGIN } from "@/lib/config";
 import AssetIcon from "@/components/ui/AssetIcon";
+import AnimatedContent from "@/components/reactbits/AnimatedContent";
 
 const PAGE_SIZE = 12;
 const BACKEND_URL = BACKEND_ORIGIN;
@@ -256,7 +257,14 @@ export default function HomePage() {
               subtitle={t("noListingsSubtitle")}
             />
           ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
+            <AnimatedContent
+              className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4"
+              distance={24}
+              duration={0.6}
+              ease="expo.out"
+              stagger={0.06}
+              threshold={0.05}
+            >
               {items.map((item) => (
                 <CarCard
                   key={item.id}
@@ -275,7 +283,7 @@ export default function HomePage() {
                 />
               ))}
               {!searched && items.length < 4 && <SellPromoCard />}
-            </div>
+            </AnimatedContent>
           )}
 
           {hasMore && !loading && items.length > 0 && (
