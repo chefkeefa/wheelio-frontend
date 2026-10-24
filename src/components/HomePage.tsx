@@ -215,6 +215,7 @@ export default function HomePage() {
             filters={filters}
             onChange={setFilters}
             searching={searching}
+            animateCount
             onSubmit={async () => {
               await applyFilters();
               scrollToResults();

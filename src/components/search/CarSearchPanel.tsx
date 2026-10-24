@@ -6,6 +6,7 @@ import AssetIcon, { type AssetIconName } from "@/components/ui/AssetIcon";
 import Dropdown from "@/components/search/Dropdown";
 import { useLanguage } from "@/context/LanguageContext";
 import { BACKEND_ORIGIN } from "@/lib/config";
+import CountUp from "@/components/reactbits/CountUp";
 import { getPublicListingCount } from "@/lib/listings";
 import { LT_CITIES } from "@/lib/cities";
 import { EMPTY_FILTERS, countParameterFilters, filtersToQuery, type CarFilters } from "@/lib/carFilters";
@@ -22,6 +23,8 @@ interface Props {
   /** Runs the search with the current filters. */
   onSubmit: () => void;
   searching?: boolean;
+  /** Rolls the count in the "show listings" button like an odometer (home page). */
+  animateCount?: boolean;
 }
 
 /**
@@ -29,7 +32,7 @@ interface Props {
  * "Parameters" sheet for everything else. Mobile opens each part in a bottom sheet;
  * desktop shows year and price inline and expands the parameters under the panel.
  */
-export default function CarSearchPanel({ filters, onChange, onSubmit, searching = false }: Props) {
+export default function CarSearchPanel({ filters, onChange, onSubmit, searching = false, animateCount = false }: Props) {
   const { tr, language } = useLanguage();
   const set = (patch: Partial<CarFilters>) => onChange({ ...filters, ...patch });
 
@@ -45,6 +48,7 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
   const [modelsLoading, setModelsLoading] = useState(false);
   const [count, setCount] = useState(0);
   const [countLoading, setCountLoading] = useState(true);
+  const [countLoaded, setCountLoaded] = useState(false);
 
   const locale = language === "RU" ? "ru-RU" : language === "LT" ? "lt-LT" : "en-US";
   const formatNumber = (value: number) => new Intl.NumberFormat(locale).format(value);
@@ -111,7 +115,10 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
       } catch {
         if (!cancelled) setCount(0);
       } finally {
-        if (!cancelled) setCountLoading(false);
+        if (!cancelled) {
+          setCountLoading(false);
+          setCountLoaded(true);
+        }
       }
     }, 250);
     return () => {
@@ -173,7 +180,22 @@ export default function CarSearchPanel({ filters, onChange, onSubmit, searching 
     anyPrice: tr("Any", "Bet kokia", "Любая"),
   };
   const yearAbove = (a: string, b: string) => a !== "" && b !== "" && Number(a) > Number(b);
-  const showLabel = searching ? tr("Searching…", "Ieškoma…", "Ищем…") : `${labels.show} · ${countLoading ? "…" : formatNumber(count)}`;
+  // The animated count keeps the last number on screen while a new one loads, then rolls to it.
+  const countText =
+    animateCount && countLoaded ? (
+      <CountUp to={count} mode="roll" easing="expo" duration={0.9} trigger="load" separator={language === "EN" ? "," : "\u00a0"} />
+    ) : countLoading ? (
+      "…"
+    ) : (
+      formatNumber(count)
+    );
+  const showLabel = searching ? (
+    tr("Searching…", "Ieškoma…", "Ищем…")
+  ) : (
+    <span>
+      {labels.show} · {countText}
+    </span>
+  );
 
   const yearOptions = useMemo(() => {
     const last = new Date().getFullYear() + 1;
