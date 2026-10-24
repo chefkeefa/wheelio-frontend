@@ -23,6 +23,8 @@ export interface CarCardProps {
   /** Shows the heart button when set. */
   onToggleFavorite?: () => void;
   favorite?: boolean;
+  /** Phones get a compact row (photo left, facts right) so a list is not one screen per car. */
+  compactOnMobile?: boolean;
 }
 
 const FALLBACK_IMAGE = "/images/no-photo.svg";
@@ -60,7 +62,9 @@ export default function CarCard({
   city,
   onToggleFavorite,
   favorite = false,
+  compactOnMobile = false,
 }: CarCardProps) {
+  const c = compactOnMobile;
   const { tr } = useLanguage();
   const safeId = String(id ?? "").trim();
 
@@ -82,9 +86,9 @@ export default function CarCard({
       <Link
         href={safeId ? `/listing/${encodeURIComponent(safeId)}` : "#"}
         aria-disabled={!safeId}
-        className="flex h-full flex-col overflow-hidden rounded-2xl bg-card text-foreground shadow-card ring-1 ring-border transition-shadow duration-300 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className={`flex h-full overflow-hidden rounded-2xl bg-card text-foreground shadow-card ring-1 ring-border transition-shadow duration-300 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${c ? "flex-row sm:flex-col" : "flex-col"}`}
       >
-        <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+        <div className={`relative overflow-hidden bg-muted ${c ? "min-h-[124px] w-[42%] shrink-0 sm:aspect-[16/10] sm:min-h-0 sm:w-full" : "aspect-[16/10] w-full"}`}>
           <img
             src={imageUrl || FALLBACK_IMAGE}
             alt={title || "Car"}
@@ -97,18 +101,31 @@ export default function CarCard({
           />
         </div>
 
-        <div className="flex flex-1 flex-col p-4">
+        <div className={`flex min-w-0 flex-1 flex-col ${c ? "p-3 sm:p-4" : "p-4"}`}>
           <h3 className="truncate text-[15px] font-semibold leading-6 text-foreground">{title || "Wheelio"}</h3>
-          <div className="mt-0.5 text-xl font-extrabold tracking-tight text-foreground">{formatPrice(price)}</div>
+          <div className={`mt-0.5 font-extrabold tracking-tight text-foreground ${c ? "text-lg tabular-nums sm:text-xl" : "text-xl"}`}>{formatPrice(price)}</div>
 
           {hasSpecs && (
-            <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-border pt-3 text-xs font-medium text-muted-foreground">
-              {year && year > 0 ? <Spec icon="calendar">{year}</Spec> : null}
-              {volume ? <Spec icon="engine">{volume.toFixed(1)} l</Spec> : null}
-              {mileage && mileage > 0 ? <Spec icon="gauge">{mileage.toLocaleString("lt-LT")} km</Spec> : null}
-              {fuelLabel ? <Spec icon="fuel">{fuelLabel}</Spec> : null}
-              {city ? <span className="col-span-2 min-w-0 truncate"><Spec icon="map-pin">{city}</Spec></span> : null}
-            </div>
+            <>
+              {c && (
+              <div className="mt-2 space-y-0.5 text-[13px] leading-5 text-muted-foreground sm:hidden">
+                <p className="truncate leading-5 tabular-nums">{[year && year > 0 ? year : null, mileage && mileage > 0 ? `${mileage.toLocaleString("lt-LT")} km` : null].filter(Boolean).join(" · ")}</p>
+                <p className="truncate leading-5">{[volume ? `${volume.toFixed(1)} l` : null, fuelLabel || null].filter(Boolean).join(" · ")}</p>
+                {city ? (
+                  <p className="mt-1.5 truncate leading-5">
+                    <Spec icon="map-pin">{city}</Spec>
+                  </p>
+                ) : null}
+              </div>
+              )}
+              <div className={`mt-3 grid-cols-2 gap-x-3 gap-y-2 border-t border-border pt-3 text-xs font-medium text-muted-foreground ${c ? "hidden tabular-nums sm:grid" : "grid"}`}>
+                {year && year > 0 ? <Spec icon="calendar">{year}</Spec> : null}
+                {volume ? <Spec icon="engine">{volume.toFixed(1)} l</Spec> : null}
+                {mileage && mileage > 0 ? <Spec icon="gauge">{mileage.toLocaleString("lt-LT")} km</Spec> : null}
+                {fuelLabel ? <Spec icon="fuel">{fuelLabel}</Spec> : null}
+                {city ? <span className="col-span-2 min-w-0 truncate"><Spec icon="map-pin">{city}</Spec></span> : null}
+              </div>
+            </>
           )}
         </div>
       </Link>
@@ -122,7 +139,7 @@ export default function CarCard({
             event.stopPropagation();
             onToggleFavorite();
           }}
-          className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm transition hover:bg-black/65"
+          className={`absolute flex h-10 w-10 ${c ? "left-2 top-2 sm:left-auto sm:right-3 sm:top-3" : "right-3 top-3"} items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm transition hover:bg-black/65`}
         >
           <AssetIcon name={favorite ? "heart-filled" : "heart"} size={20} className={favorite ? "text-accent" : ""} />
         </button>
